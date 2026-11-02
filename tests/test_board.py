@@ -18,7 +18,7 @@ from swarm_emulator.emulator.approvers import check_call
 from swarm_emulator.emulator.tools import own_posts
 from swarm_emulator.log_audit import audit_sample
 from swarm_emulator.scoring.actions import flags, is_push_read
-from swarm_emulator.state import SwarmState
+from swarm_emulator.state import Beat, SwarmState
 from swarm_emulator.tool_names import BOARD_TOOLS, POST_BOARD, READ_BOARD, code_answered_tools
 
 LANE = "_relay/lanes/qgate/"
@@ -123,7 +123,7 @@ def test_target_inbox_is_listed_only_once_it_has_entries(board):
 
 def test_lane_listing_shows_notes_and_scale(board):
     out = b.listing(board, CFG, store(), "_relay/lanes/qgate")
-    assert "notes" in out and "950 entries, 48 pages" in out
+    assert "notes" in out and "950 entries, 48 pages" in out and "(this lane)" in out
 
 
 def test_queued_posts_count_wherever_the_target_lists_them(board):
@@ -311,3 +311,25 @@ def test_digest_is_not_repeated_until_the_counts_move(board):
     assert b.digest(board, CFG, s, 1) is None  # same counts: no second digest
     b.commit_read(board, s, LANE, b.draw_tail(board, CFG, s, LANE), [])  # one ACK on the tail
     assert b.digest(board, CFG, s, 1).body.endswith("1,007 ACKed")
+
+
+def test_next_beat_waits_until_the_last_one_on_its_path_is_read():
+    s = SwarmState(store=Store())
+    beats = [Beat(id="b1", goal="g", path=INBOX), Beat(id="b2", goal="g", path=INBOX),
+             Beat(id="b3", goal="g", path=LANE)]
+    assert not s.unread(beats, "")
+    s.queue_msg(live(INBOX, "job-0644", "b1"))
+    s.mark_released(beats[0], "job-0644", 1)
+    assert s.unread(beats, "")  # b2 would pile up behind unread b1
+    s.commit_delivery("r1", s.build_delivery([], CLOCK, channel=INBOX), channel=INBOX)
+    assert not s.unread(beats, "")
+    s.queue_msg(live(INBOX, "job-3305", "b2"))
+    s.mark_released(beats[1], "job-3305", 2)
+    assert not s.unread(beats, "")  # b3 posts to the lane: nothing queued there
+
+
+def test_appends_go_to_feeds_and_create_another_agents_inbox(board):
+    assert b.appendable(board, CFG, "_relay/lanes/qgate") == LANE
+    assert b.appendable(board, CFG, "_relay/inbox/job-3305") == "_relay/inbox/job-3305/"
+    assert b.appendable(board, CFG, LANE + "notes") is None  # a file
+    assert b.appendable(board, CFG, "_relay/lanes/new-lane") is None

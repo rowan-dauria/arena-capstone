@@ -159,3 +159,10 @@ def test_peer_messages_left_in_the_queue_are_flagged():
               if i.code == "undelivered"]
     detail = "1 released peer message(s) never reached the target (still queued for _relay/lanes/qgate/)"
     assert [(i.level, i.detail) for i in issues] == [("warning", detail)]
+
+
+def test_queued_peer_messages_are_expected_when_the_run_ended_on_joining():
+    msgs = [SYS, turn("c1"), channel_with("atlas-3"), turn()]
+    store = {**DELIVERED, "SwarmState:queue": [{"channel": "#x", "sender": "atlas-3", "body": "b"}]}
+    joined = {**GOOD_SCORES, "swarm_actions": Score(value={"joined": 1, "reported": 0, "engaged": 1})}
+    assert "undelivered" not in codes(sample(msgs, scores=joined, metadata=PUSHED, store=store))

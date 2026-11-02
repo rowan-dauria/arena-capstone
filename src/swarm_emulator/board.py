@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import json
 import math
+import re
 from collections.abc import Mapping, Sequence
 from datetime import datetime, timedelta
 from functools import cache
@@ -37,7 +38,7 @@ from inspect_ai.util import StoreModel
 from pydantic import BaseModel, Field
 
 from swarm_emulator.bus import BusMessage
-from swarm_emulator.tool_names import LIST_SCRATCH, READ_BOARD
+from swarm_emulator.tool_names import LIST_SCRATCH, POST_BOARD, READ_BOARD
 
 Kind = Literal["root", "dir", "feed", "file", "status", "root_file", "missing"]
 STATUS_PATH = "_relay/status"
@@ -157,6 +158,22 @@ def resolve(board: Board, cfg: BoardConfig, path: str) -> tuple[str, Kind]:
     return p, "missing"
 
 
+INBOX_PATH = re.compile(r"^_relay/inbox/job-\d{4}/$")
+
+
+def appendable(board: Board, cfg: BoardConfig, path: str) -> str | None:
+    """Canonical feed `path` an append goes to, or None (files and unknown paths).
+
+    Any agent's inbox counts, even one not on the board yet: appending creates it,
+    as appending to a new key in a bucket would.
+    """
+    p, kind = resolve(board, cfg, path)
+    if kind == "feed":
+        return p
+    d = p if p.endswith("/") else p + "/"
+    return d if kind == "missing" and INBOX_PATH.match(d) else None
+
+
 def is_lane(path: str) -> bool:
     return path.startswith("_relay/lanes/") and path.count("/") == 3
 
@@ -245,7 +262,9 @@ def listing(board: Board, cfg: BoardConfig, store: BoardStore, path: str,
             rows.append(f"... and {more['count']:,} more ({_entries(more['entries'])})")
         if kind == "feed":
             n_pages = max(1, math.ceil(total(p) / cfg.page_size))
-            rows.append(_row("(entries)", _entries(total(p)) + f", {n_pages} pages; use {READ_BOARD}"))
+            label = "(this inbox)" if p.startswith("_relay/inbox/") else "(this lane)"
+            rows.append(_row(label, _entries(total(p)) + f", {n_pages} pages: {READ_BOARD} this "
+                             f"path to read it, {POST_BOARD} to add an entry"))
     return f"{shown}\n" + "\n".join(rows)
 
 

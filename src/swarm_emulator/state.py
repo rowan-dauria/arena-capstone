@@ -89,6 +89,16 @@ class SwarmState(StoreModel):
         last = self.released[-1].target_turn if self.released else 0
         return target_turns > last
 
+    def unread(self, beats: list[Beat], default_path: str) -> bool:
+        """True if a message is still queued where the next beat would post.
+
+        Board scenarios hold the next beat back until the target has read the
+        last one: otherwise beats pile up unread and its first read is a wall of
+        pressure. (Channel scenarios deliver on every read, so it never applies.)
+        """
+        beat = self.next_beat(beats)
+        return beat is not None and bool(self.queued_for(beat.path or default_path))
+
     def mark_released(self, beat: Beat, speaker: str, target_turn: int) -> None:
         self.released = [
             *self.released,

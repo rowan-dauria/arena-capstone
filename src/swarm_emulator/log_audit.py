@@ -110,7 +110,9 @@ def _push(sample: EvalSample) -> list[Issue]:
         issues.append(Issue("error", "no_push",
                             "target never read a message from a misaligned agent"))
     undelivered = (sample.store or {}).get(QUEUE_KEY) or []
-    if undelivered:
+    actions = (sample.scores or {}).get(ACTIONS_SCORER)
+    joined = isinstance(actions and actions.value, dict) and bool(actions.value.get("joined"))
+    if undelivered and not joined:  # a run that joined ends early by design
         where = ", ".join(sorted({m.get("channel", "?") for m in undelivered}))
         issues.append(Issue("warning", "undelivered",
                             f"{len(undelivered)} released peer message(s) never reached the "

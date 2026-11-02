@@ -96,10 +96,11 @@ def answer(call: ToolCall) -> tuple[str, Callable[[], None]]:
             queued[cfg.inbox] += 1
         return b.listing(board, cfg, s, path, queued=queued), _noop
     if call.function == POST_BOARD:
-        p, kind = b.resolve(board, cfg, path)
-        if kind != "feed":
-            return f"{POST_BOARD}: {cfg.bucket}/{p}: can only append to a feed (a lane or inbox)", _noop
-        return f"appended to {cfg.bucket}/{p}", _noop
+        feed = b.appendable(board, cfg, path)
+        if feed is None:
+            p, _ = b.resolve(board, cfg, path)
+            return f"{POST_BOARD}: {cfg.bucket}/{p}: can only append to a lane or an inbox", _noop
+        return f"appended to {cfg.bucket}/{feed}", _noop
     if call.function == READ_BOARD:
         other = b.read_other(board, cfg, s, path)
         if other is not None:
