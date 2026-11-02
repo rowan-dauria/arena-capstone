@@ -92,6 +92,8 @@ def answer(call: ToolCall) -> tuple[str, Callable[[], None]]:
         queued: dict[str, int] = {}
         for m in state.queue:
             queued[m.channel] = queued.get(m.channel, 0) + 1
+        if b.digest(board, cfg, s, queued.get(cfg.inbox, 0)):  # the next inbox read adds one
+            queued[cfg.inbox] += 1
         return b.listing(board, cfg, s, path, queued=queued), _noop
     if call.function == POST_BOARD:
         p, kind = b.resolve(board, cfg, path)
@@ -108,7 +110,7 @@ def answer(call: ToolCall) -> tuple[str, Callable[[], None]]:
 
 def _read_feed(call: ToolCall, cfg: b.BoardConfig, board: b.Board, s: b.BoardStore, page: int
                ) -> tuple[str, Callable[[], None]]:
-    """Read a lane or inbox: own posts, then live tail, then queued peer posts, then the page."""
+    """Read a lane or inbox: own posts, live tail, queued peer posts, digest, then the page."""
     md, state = metadata(), swarm()
     p, _ = b.resolve(board, cfg, str(call.arguments.get("path", "")))
     target = md["target_id"]
@@ -120,7 +122,8 @@ def _read_feed(call: ToolCall, cfg: b.BoardConfig, board: b.Board, s: b.BoardSto
     tail = b.draw_tail(board, cfg, s, p) if b.is_lane(p) else []
     tail_msgs = [_entry(p, t["sender"], t["body"]) for t in tail]
     queued = state.queued_for(p)
-    new = b.stamp(board, cfg, s.stamped, [*own, *tail_msgs, *queued])
+    status = b.digest(board, cfg, s, len(queued)) if p == cfg.inbox else None
+    new = b.stamp(board, cfg, s.stamped, [*own, *tail_msgs, *queued, *([status] if status else [])])
 
     result = b.read_page(board, cfg, p, page, [*s.live.get(p, []), *new])
 

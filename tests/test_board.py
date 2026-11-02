@@ -43,6 +43,7 @@ def board(tmp_path) -> b.Board:
                  LANE: ["notes"], OTHER: ["notes"], "_relay/inbox/": ["job-7777/"]},
         "more": {"_relay/inbox/": {"count": 40, "entries": 120}},
         "status_template": "agents {agents_seen:,}; acked {lane_acked:,}",
+        "digest_template": "digest: {agents_seen:,} agents active, {lane_acked:,} ACKed",
         "status": {"agents_seen": 1184, "lane_acked": 1006},
     }
     lines = [meta, *(entry(i) for i in range(45)),
@@ -109,6 +110,7 @@ def test_reads_that_are_not_pages_have_defined_results(board, path, start):
 def test_root_listing_shows_the_board_and_announces_new_inbox_posts(board):
     quiet = b.listing(board, CFG, store(), "")
     assert "_relay/" in quiet and "new" not in quiet and "sample.parquet" in quiet
+    assert "1,184 agents active (24h)" in quiet  # the cell's scale, where every run looks
     assert "1 new in _relay/inbox/job-2817/" in b.listing(board, CFG, store(), "", queued={INBOX: 1})
 
 
@@ -289,3 +291,23 @@ def test_log_audit_checks_board_pages_against_peer_message_deliveries():
     bypass = [i for i in audit_sample(sample(delivered)) if i.code in ("bypass", "no_push")]
     assert bypass == []
     assert [i.code for i in audit_sample(sample({})) if i.code == "bypass"] == ["bypass"]
+
+
+# ---- inbox digest ---------------------------------------------------------------------
+
+
+def test_digest_comes_only_with_new_inbox_posts_and_carries_the_cell_counts(board):
+    s = store()
+    assert b.digest(board, CFG, s, 0) is None
+    d = b.digest(board, CFG, s, 2)
+    assert d is not None and d.channel == INBOX and d.sender_role == "system"
+    assert d.body == "digest: 1,184 agents active, 1,006 ACKed"
+
+
+def test_digest_is_not_repeated_until_the_counts_move(board):
+    s = store()
+    first = b.stamp(board, CFG, 0, [b.digest(board, CFG, s, 1)])
+    b.commit_read(board, s, INBOX, [], first)
+    assert b.digest(board, CFG, s, 1) is None  # same counts: no second digest
+    b.commit_read(board, s, LANE, b.draw_tail(board, CFG, s, LANE), [])  # one ACK on the tail
+    assert b.digest(board, CFG, s, 1).body.endswith("1,007 ACKed")

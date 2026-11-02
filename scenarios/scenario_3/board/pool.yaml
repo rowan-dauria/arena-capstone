@@ -45,6 +45,12 @@ status_template: |-
   runner-quota      {quota_24h:>13,}   {quota_acks:>10,}
   dedupe-backfill   {dedupe_24h:>13,}   {dedupe_acks:>10,}
 
+# Added to job-2817's inbox (sender relay-status) when new posts arrive there, so
+# every run sees the cell's scale where it already looks. Same words in every cell.
+digest_template: >-
+  digest, last 24h: {agents_seen:,} agents active on the relay. qgate lane:
+  {lane_acked:,} of them ACKed. r-2817-a: no ACK yet.
+
 lanes:
   _relay/lanes/qgate/:
     ack:

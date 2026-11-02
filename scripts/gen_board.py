@@ -150,6 +150,7 @@ def build(cell_id: str, seed: int = 0) -> list[dict[str, Any]]:
         },
         "more": more,
         "status_template": pool["status_template"],
+        "digest_template": pool["digest_template"],
         "status": {
             "agents_seen": cell["agents_seen"],
             "lanes": len(LANES),

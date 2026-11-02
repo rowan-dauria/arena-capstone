@@ -121,6 +121,7 @@ class BoardStore(StoreModel):
     tail_used: dict[str, int] = Field(default_factory=dict)  # lane -> tail entries drawn
     acked_live: int = 0  # ACKs added to the qgate lane by the live tail
     stamped: int = 0  # live entries stamped so far
+    last_digest: str = ""  # text of the last digest posted to the target's inbox
 
 
 # ---- paths --------------------------------------------------------------------
@@ -216,7 +217,9 @@ def listing(board: Board, cfg: BoardConfig, store: BoardStore, path: str,
     rows: list[str] = []
     if kind == "root":
         note = f", {inbox_queued} new in {cfg.inbox}" if inbox_queued else ""
-        rows.append(_row("_relay/", _entries(under("_relay/")) + note))
+        agents = counters(board, store).get("agents_seen")
+        active = f", {agents:,} agents active (24h)" if agents else ""
+        rows.append(_row("_relay/", _entries(under("_relay/")) + active + note))
         rows += [_row(f.name, f.size) for f in cfg.root_files]
     else:
         children = list(board.dirs.get(p, []))
@@ -288,10 +291,36 @@ def read_other(board: Board, cfg: BoardConfig, store: BoardStore, path: str) -> 
     return f"{READ_BOARD}: {shown}: no such path"
 
 
-def render_status(board: Board, store: BoardStore) -> str:
-    """`_relay/status` from the cell's counters, moved on by the live tail."""
+def counters(board: Board, store: BoardStore) -> dict[str, Any]:
+    """The cell's status counters, with the qgate ACKs moved on by the live tail."""
     m = board.meta["status"]
-    return board.meta["status_template"].format(**{**m, "lane_acked": m["lane_acked"] + store.acked_live})
+    return {**m, "lane_acked": m["lane_acked"] + store.acked_live}
+
+
+def render_status(board: Board, store: BoardStore) -> str:
+    """`_relay/status` from the cell's counters."""
+    return board.meta["status_template"].format(**counters(board, store))
+
+
+DIGEST_SENDER = "relay-status"
+
+
+def digest(board: Board, cfg: BoardConfig, store: BoardStore, new_posts: int) -> BusMessage | None:
+    """The status digest added to the target's inbox when new posts arrive in it.
+
+    Puts the cell's scale (agents active, share ACKed) where every run looks: the
+    inbox. Written from the board file's template, the same length in every cell;
+    neither the auditor nor the peer model writes it. None when nothing new
+    arrived or the counters haven't changed since the last digest.
+    """
+    template = board.meta.get("digest_template")
+    if not template or new_posts == 0:
+        return None
+    text = template.format(**counters(board, store))
+    if text == store.last_digest:
+        return None
+    return BusMessage(id="", ts="", channel=cfg.inbox, sender=DIGEST_SENDER,
+                      sender_role="system", body=text)
 
 
 # ---- live entries (pure: callers commit the returned values after staging) -------
@@ -322,7 +351,10 @@ def stamp(board: Board, cfg: BoardConfig, first: int, msgs: Sequence[BusMessage]
 
 def commit_read(board: Board, store: BoardStore, path: str, tail: Sequence[dict[str, str]],
                 msgs: Sequence[BusMessage]) -> None:
-    """Record a staged read: tail drawn, new entries live on `path`."""
+    """Record a staged read: tail drawn, new entries live on `path`, last digest."""
+    for m in msgs:
+        if m.sender == DIGEST_SENDER:
+            store.last_digest = m.body
     store.tail_used = {**store.tail_used, path: store.tail_used.get(path, 0) + len(tail)}
     if path == board.meta.get("ack_lane"):
         store.acked_live = store.acked_live + sum(t["tag"] == "ack" for t in tail)

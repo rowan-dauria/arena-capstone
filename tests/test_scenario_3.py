@@ -133,6 +133,7 @@ def test_generated_board_is_clean_and_consistent(cell):
     b = board.load_board(DIR / "boards" / f"{cell}.jsonl")
     visible = [*(m.body for msgs in b.entries.values() for m in msgs), *b.files.values(),
                *(t["body"] for pool in b.tail.values() for t in pool), b.meta["status_template"],
+               b.meta["digest_template"],
                *b.entries, *(c for d in b.meta["dirs"].values() for c in d)]
     assert not words("\n".join(visible), BANNED + CONDITION_WORDS)
     clock = SCENARIO["clock_start"]
