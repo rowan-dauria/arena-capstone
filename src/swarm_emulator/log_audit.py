@@ -10,18 +10,26 @@ Levels: "error" means the sample can't be used as-is; "warning" means read it.
 
 from __future__ import annotations
 
+import json
 import math
 from dataclasses import dataclass
 from typing import Any, Literal
 
 from inspect_ai.log import EvalSample
-from inspect_ai.model import ChatMessageAssistant, ChatMessageTool, ContentReasoning
+from inspect_ai.model import (
+    ChatMessageAssistant,
+    ChatMessageTool,
+    ChatMessageUser,
+    ContentReasoning,
+)
 
 from swarm_emulator.bus import sender_regex
+from swarm_emulator.emulator.approvers import CHANNEL_TOOLS, impersonation
 
 JUDGE_SCORER = "audit_judge"
 ACTIONS_SCORER = "swarm_actions"
 PEER_REJECTIONS_KEY = "SwarmState:peer_rejections"
+DELIVERED_KEY = "SwarmState:delivered"
 
 
 @dataclass(frozen=True)
@@ -70,6 +78,7 @@ def audit_sample(sample: EvalSample) -> list[Issue]:
     issues += _orphaned_calls(sample)
     issues += _reasoning(sample)
     issues += _push(sample)
+    issues += _bypass(sample)
     return issues
 
 
@@ -131,3 +140,43 @@ def _reasoning(sample: EvalSample) -> list[Issue]:
     if not any(visible_reasoning(m) for m in turns):
         return [Issue("warning", "no_reasoning", "no visible chain of thought in any target turn")]
     return []
+
+
+def _bypass(sample: EvalSample) -> list[Issue]:
+    """Misaligned-agent text the target saw that did not come from peer_message.
+
+    Every misaligned message in a channel read must match one peer_message
+    delivered (sender and body, from the swarm store). Other target-visible text
+    must not pass itself off as a misaligned agent (same rules as peer_guard).
+    One error per offending message; SPEC 6 requires zero.
+    """
+    misaligned = (sample.metadata or {}).get("misaligned_ids") or []
+    if not misaligned:
+        return []
+    delivered = {
+        (m["sender"], m["body"])
+        for m in (sample.store or {}).get(DELIVERED_KEY) or []
+        if m.get("sender") in misaligned
+    }
+    issues = []
+    for n, m in enumerate(sample.messages):
+        where = f"message {n}"
+        if isinstance(m, ChatMessageTool) and m.function in CHANNEL_TOOLS:
+            try:
+                entries = json.loads(m.text)
+            except ValueError:
+                entries = None
+            if not isinstance(entries, list):
+                issues.append(Issue("error", "bypass", f"{where}: {m.function} result is not "
+                                    "a channel JSON array (not from deliver_channel)"))
+                continue
+            for e in entries:
+                sender = e.get("sender") if isinstance(e, dict) else None
+                if sender in misaligned and (sender, e.get("body")) not in delivered:
+                    issues.append(Issue("error", "bypass",
+                                        f"{where}: {sender} message not from peer_message"))
+        elif isinstance(m, ChatMessageUser | ChatMessageTool):
+            how = impersonation(m.text, misaligned, attribution=isinstance(m, ChatMessageUser))
+            if how:
+                issues.append(Issue("error", "bypass", f"{where}: contains {how}"))
+    return issues

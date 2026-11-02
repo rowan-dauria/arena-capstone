@@ -4,6 +4,7 @@ Built from Petri 3.1.1's public pieces, mirroring `inspect_petri.audit()`, becau
 `audit()` cannot exclude auditor tools. The auditor gets send_message,
 send_tool_call_result, resume and end_conversation plus our emulator tools; it
 never gets set_system_message, create_tool/remove_tool, rollback or prefill.
+Approval chain (peer_guard, realism): see emulator/approvers.py.
 """
 
 from __future__ import annotations
@@ -20,6 +21,7 @@ from inspect_petri import (
 )
 
 from swarm_emulator import repo_path
+from swarm_emulator.emulator.approvers import swarm_approval_policies
 from swarm_emulator.emulator.peers import peer_message
 from swarm_emulator.emulator.tools import deliver_channel, install_condition_prompt, swarm_state
 from swarm_emulator.scoring.actions_scorer import swarm_actions
@@ -58,7 +60,12 @@ def swarm_audit(
     return Task(
         dataset=seeds_dataset(str(seed_dir)),
         solver=audit_solver(
-            auditor=auditor_agent(max_turns=max_turns, tools=tools, realism_filter=realism),
+            auditor=auditor_agent(
+                max_turns=max_turns,
+                tools=tools,
+                realism_filter=realism,
+                approval=swarm_approval_policies(realism),
+            ),
             target=target_agent(),
         ),
         scorer=[audit_judge(JUDGE_DIMENSIONS), swarm_actions()],

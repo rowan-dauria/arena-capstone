@@ -113,7 +113,7 @@ silently):
 `beats_harmless.yaml` for `suspicious_harmless`.
 
 Read them in tools via `controller().state.metadata`. Note: the existing
-`peer_guard.py` reads `scripted_peer_ids`; rename to `misaligned_ids`.
+`peer_guard` reads `misaligned_ids`.
 
 ### 3.4 Target tool names
 
@@ -154,7 +154,7 @@ swarm-emulator/
 │   ├── emulator/
 │   │   ├── tools.py               # install_condition_prompt, deliver_channel, swarm_state
 │   │   ├── peers.py               # peer_message (calls the `peer` model role)
-│   │   ├── approvers.py           # peer_guard, reject_tool (adapt from reference/)
+│   │   ├── approvers.py           # reject_tool, peer_guard, channel_realism (SPEC 4.4)
 │   │   └── prompts/               # target_system.md.j2, auditor_instructions.md, peer_persona.md.j2
 │   └── scoring/
 │       ├── actions.py             # rule-based flags
@@ -225,14 +225,32 @@ what is queued) so its improvised traffic stays consistent.
 
 ### 4.4 Approvers (`emulator/approvers.py`)
 
-Start from the existing `peer_guard.py` and its tests. Changes:
+Written from scratch (the reference `peer_guard.py` was never added to
+`reference/`). Chain, in order; Inspect stops at the first non-`escalate`:
 
-- Guarded tools: `send_message`, `send_tool_call_result`,
-  `send_file_as_tool_result`, `deliver_channel`.
-- Patterns come from `bus.sender_regex` for each id in `misaligned_ids`.
-- Reject → feedback telling the auditor to use `peer_message`.
-- Clean → `escalate` (never `approve`).
-- `reject_tool` for `search_in_files`.
+1. `reject_tool`: rejects tools the auditor must never use (`set_system_message`,
+   `create_tool`, `remove_tool`, rollback/restart, `search_in_files`), even if a
+   skill or a Petri default brings them back.
+2. `peer_guard` on `send_message`, `send_tool_call_result`,
+   `send_file_as_tool_result`, `deliver_channel`. Rejects (with feedback pointing
+   to `peer_message`/`deliver_channel`):
+   - a tool result answering `read_channel` (only `deliver_channel` may);
+   - any argument containing a rendered envelope from a misaligned agent
+     (`bus.sender_regex`, so `atlas-3` never matches `atlas-31`);
+   - in `send_message` and `deliver_channel` background: chat-style speaker
+     lines for a misaligned agent (`atlas-3: ...`, `[atlas-3] ...`). Not checked
+     in plain tool results, which may quote pre-authored artifacts (D10);
+   - `deliver_channel` background from a misaligned agent or the target.
+   Clean → `escalate` (never `approve`).
+3. `channel_realism` (realism filter on only): Petri's `realism_approver` on
+   `deliver_channel`, so improvised background traffic is realism-checked too.
+   One instance per running audit, as Petri does.
+4. Petri appends its realism approver (`send_message`, `send_tool_call_result`)
+   and a catch-all auto-approver.
+
+Rules are in the pure `check_call` (tests in `tests/test_approvers.py`). The log
+audit re-checks every transcript (`bypass` error): each misaligned message in a
+channel read must match a `peer_message` delivery in the swarm store.
 
 ### 4.5 Scoring
 
