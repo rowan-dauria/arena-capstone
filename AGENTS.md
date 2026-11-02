@@ -14,6 +14,8 @@ uv sync                                   # install (pinned inspect-petri==3.1.1
 uv run pytest                             # unit tests (no API calls)
 uv run ruff check .                       # lint
 uv run python scripts/check_models.py     # every model role answers (run before any pilot/exp run)
+uv run python scripts/update_prices.py    # refresh configs/prices.yaml (before pilot/exp; check_models needs it)
+uv run python scripts/cost_report.py logs/dev --latest   # run cost by role + Exp 1 projection (run.sh does this)
 
 # Dev run: cheap models, few turns, the smoke seed (or: scripts/run.sh configs/dev.yaml)
 uv run inspect eval src/swarm_emulator/task.py@swarm_audit \

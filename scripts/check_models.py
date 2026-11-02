@@ -5,7 +5,9 @@
 Each role gets a plain prompt and a tool-call prompt; the target must also return a
 readable chain of thought (we analyse it). A deprecated or
 misnamed model shows up later as empty transcripts or all-zero scores rather than
-an error, so this fails loudly instead. Exit code 1 if any role fails.
+an error, so this fails loudly instead. Every role's model must also have a price
+in configs/prices.yaml (scripts/update_prices.py), or run costs go unreported.
+Exit code 1 if any role fails.
 """
 
 from __future__ import annotations
@@ -16,6 +18,8 @@ import sys
 from inspect_ai.model import GenerateConfig, get_model
 from inspect_ai.tool import ToolInfo, ToolParam, ToolParams
 
+from swarm_emulator import repo_path
+from swarm_emulator.costs import PRICES, load_prices
 from swarm_emulator.log_audit import visible_reasoning
 from swarm_emulator.stage import load_stage
 
@@ -62,8 +66,11 @@ REASONING_PROMPT = (
 async def main(path: str) -> int:
     roles: dict[str, str] = load_stage(path)["roles"]
     results = await asyncio.gather(*(check(r, m) for r, m in roles.items()))
+    prices = load_prices(repo_path(PRICES))
     failed = 0
     for (role, model_id), (ok, detail) in zip(roles.items(), results):
+        if ok and model_id not in prices.models:
+            ok, detail = False, f"no price in {PRICES} (run scripts/update_prices.py)"
         failed += not ok
         print(f"{'PASS' if ok else 'FAIL'}  {role:<10} {model_id}  {detail}")
     return 1 if failed else 0
