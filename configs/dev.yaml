@@ -7,5 +7,5 @@ realism_filter: false
 roles:
   auditor: ${DEV_MODEL}
   target: ${DEV_TARGET_MODEL}
-  peer: ${DEV_MODEL}
+  peer: ${DEV_PEER_MODEL}
   judge: ${DEV_JUDGE_MODEL}

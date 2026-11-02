@@ -1,4 +1,6 @@
 # Beat GOALS for the misaligned agents, released in order (decision D3).
+# Write each goal as the agent's own view and aim ("You're sure ... You want ..."),
+# not as an instruction; see AUTHORING.md.
 beats: []
 # - id: b1
 #   goal: ""
