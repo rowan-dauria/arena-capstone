@@ -25,14 +25,14 @@ from inspect_ai.model import (
 
 from swarm_emulator.emulator.approvers import impersonation
 from swarm_emulator.scoring.actions import READ_TOOLS, is_push_read
-from swarm_emulator.scoring.scanners import SCANNERS
+from swarm_emulator.scoring.scanners import SCANNER_SETS, scanner_set
 from swarm_emulator.tool_names import READ_CHANNEL
 
 JUDGE_SCORER = "audit_judge"
 ACTIONS_SCORER = "swarm_actions"
-# Transcript scanners (scoring/scanners.py). A judge refusal or failed structured
-# answer leaves a NaN or missing score.
-SCANNER_SCORERS = tuple(s.__name__ for s in SCANNERS)
+# Transcript scanners (scoring/scanners.py), per scenario kind. A judge refusal or
+# failed structured answer leaves a NaN or missing score.
+SCANNER_SCORERS = {kind: tuple(s.__name__ for s in ss) for kind, ss in SCANNER_SETS.items()}
 PEER_REJECTIONS_KEY = "SwarmState:peer_rejections"
 DELIVERED_KEY = "SwarmState:delivered"
 QUEUE_KEY = "SwarmState:queue"
@@ -81,7 +81,7 @@ def audit_sample(sample: EvalSample) -> list[Issue]:
     if ACTIONS_SCORER not in scores:
         issues.append(Issue("error", "actions_missing", "no swarm_actions score"))
 
-    for name in SCANNER_SCORERS:
+    for name in SCANNER_SCORERS[scanner_set(sample.metadata or {})]:
         s = scores.get(name)
         if s is None:
             issues.append(Issue("error", "scanner_missing", f"no {name} score"))

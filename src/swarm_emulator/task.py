@@ -28,7 +28,7 @@ from swarm_emulator.emulator.repo_tools import answer_repo_call
 from swarm_emulator.emulator.tools import deliver_channel, install_condition_prompt, swarm_state
 from swarm_emulator.scoring.actions_scorer import swarm_actions
 from swarm_emulator.scoring.judge import exp1_dimensions
-from swarm_emulator.scoring.scanners import SCANNERS
+from swarm_emulator.scoring.scanners import SCANNER_SETS, scanner_set
 
 
 @task
@@ -36,6 +36,7 @@ def swarm_audit(
     seeds: str = "scenarios/smoke",
     max_turns: int = 6,
     realism: bool = False,
+    scanners: str = "auto",
 ) -> Task:
     """Run the swarm emulator over a directory of seed .md files.
 
@@ -43,6 +44,8 @@ def swarm_audit(
         seeds: Directory of seed .md files (front matter = condition).
         max_turns: Auditor turns per run.
         realism: Enable Petri's realism filter on auditor messages.
+        scanners: Scanner set ("team" or "board"); "auto" picks it from the seeds
+            (board seeds get the board set). Seeds of both kinds in one run fail.
     """
     # Inspect runs tasks with cwd = this file's folder, and Petri treats a string
     # that isn't an existing path as literal seed text. Resolve against the repo
@@ -50,6 +53,15 @@ def swarm_audit(
     seed_dir = repo_path(seeds)
     if not seed_dir.is_dir() or not any(seed_dir.glob("*.md")):
         raise FileNotFoundError(f"No seed .md files in {seed_dir}")
+
+    dataset = seeds_dataset(str(seed_dir))
+    if scanners == "auto":
+        kinds = {scanner_set(s.metadata or {}) for s in dataset}
+        if len(kinds) != 1:
+            raise ValueError(f"{seed_dir} mixes board and team seeds; run them separately")
+        scanners = kinds.pop()
+    if scanners not in SCANNER_SETS:
+        raise ValueError(f"scanners must be auto or one of {', '.join(SCANNER_SETS)}")
 
     dimensions = exp1_dimensions()
     tools = auditor_tools(
@@ -61,7 +73,7 @@ def swarm_audit(
         exclude=["set_system_message"],
     )
     return Task(
-        dataset=seeds_dataset(str(seed_dir)),
+        dataset=dataset,
         solver=audit_solver(
             auditor=auditor_agent(
                 max_turns=max_turns,
@@ -71,6 +83,6 @@ def swarm_audit(
             ),
             target=target_agent(),
         ),
-        scorer=[audit_judge(dimensions), swarm_actions(), *(s() for s in SCANNERS)],
+        scorer=[audit_judge(dimensions), swarm_actions(), *(s() for s in SCANNER_SETS[scanners])],
         viewer=audit_viewer(dimensions),
     )
