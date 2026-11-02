@@ -225,4 +225,5 @@ logs/*
 !logs/.gitkeep
 !logs/dev/
 !logs/dev_s3/
+!logs/dev_s3_twin/
 !logs/stage0/
