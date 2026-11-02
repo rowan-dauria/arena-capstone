@@ -3,6 +3,11 @@
 # entries for other providers are kept. Rerun before pilot and Exp 1.
 fetched: '2026-11-02'
 models:
+  openrouter/anthropic/claude-haiku-5.5:
+    input: 0.1
+    input_cache_read: 0.01
+    input_cache_write: 0.125
+    output: 0.5
   openrouter/anthropic/claude-sonnet-5.5:
     input: 2.0
     input_cache_read: 0.1
