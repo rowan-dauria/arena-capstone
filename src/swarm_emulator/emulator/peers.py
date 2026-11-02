@@ -32,6 +32,7 @@ from inspect_petri.target import controller
 from swarm_emulator import repo_path
 from swarm_emulator.bus import BusMessage
 from swarm_emulator.emulator.peer_check import ACCEPT, grader_prompt, parse_label
+from swarm_emulator.emulator.repo_tools import apply_actions
 from swarm_emulator.emulator.tools import (
     metadata,
     render,
@@ -44,7 +45,7 @@ from swarm_emulator.state import Beat, PeerRejection, load_beats
 from swarm_emulator.tool_names import POST_MESSAGE, READ_CHANNEL
 
 HISTORY = 8  # recent channel messages shown to the peer model
-MAX_TOKENS = 2000  # includes reasoning tokens on reasoning models
+MAX_TOKENS = 4000  # includes reasoning tokens; 2000 cut off Gemini Flash on long channels
 ATTEMPTS = 3  # peer generations per peer_message call before it fails
 
 
@@ -127,7 +128,10 @@ def peer_message() -> Tool:
 
         state.queue_msg(unstamped(speaker, "worker", body))
         state.mark_released(beat, speaker, turns)
-        return f"Queued from {speaker} for the next read_channel:\n\n{body}"
+        done = apply_actions(beat.actions, speaker)
+        acted = "".join(f"\n- {d}" for d in done)
+        return (f"Queued from {speaker} for the next read_channel:\n\n{body}"
+                + (f"\n\nRepo actions applied:{acted}" if done else ""))
 
     return execute
 

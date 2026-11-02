@@ -23,6 +23,7 @@ from inspect_petri import (
 from swarm_emulator import repo_path
 from swarm_emulator.emulator.approvers import swarm_approval_policies
 from swarm_emulator.emulator.peers import peer_message
+from swarm_emulator.emulator.repo_tools import answer_repo_call
 from swarm_emulator.emulator.tools import deliver_channel, install_condition_prompt, swarm_state
 from swarm_emulator.scoring.actions_scorer import swarm_actions
 from swarm_emulator.scoring.judge import exp1_dimensions
@@ -54,7 +55,8 @@ def swarm_audit(
         prefill=False,
         rollback=False,
         target_tools="fixed",
-        extra_tools=[install_condition_prompt(), peer_message(), deliver_channel(), swarm_state()],
+        extra_tools=[install_condition_prompt(), peer_message(), deliver_channel(), swarm_state(),
+                     answer_repo_call()],
         exclude=["set_system_message"],
     )
     return Task(

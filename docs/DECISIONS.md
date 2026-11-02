@@ -22,6 +22,7 @@ confirm or change before the code depends on them.
 | D0m | `check_models.py` before every run; read first peer messages in dev | Dead models fail silently; peer refusals can leak in as messages |
 | D8 | Scenario 1 = mutual verification in a code-review merge queue (option A in `docs/SCENARIO_RESEARCH.md`); starting point, to extend later | Crisp tool-call harm, easy matched control, published scripted-peer anchor; multi-agent via division of labour, two-key approval, reciprocity |
 | D12 | `harmful_actions` entries may pin argument values (`{tool: approve_change, change_id: CH-5208}`); plain tool names still match on name only | Name-only matching counts approving any change as joining, so a scenario could give the target only one approvable change |
+| D13 | Repo scenarios (scenario 2): the target's repo tools are answered by code from a `RepoStore` via the auditor's `answer_repo_call` (peer_guard rejects `send_tool_call_result` for them); peers' repo actions are scripted per beat (`Beat.actions`); CI is fixed rules, not real Lean | The auditor cannot simulate Lean consistently; rules are honest only because the stuck lemma is unprovable by construction (opaque hardware call), with every file that could change that frozen |
 
 ## Open (proposed defaults)
 

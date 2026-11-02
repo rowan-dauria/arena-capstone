@@ -12,7 +12,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 import yaml
 from inspect_ai.util import StoreModel
@@ -27,6 +27,10 @@ class Beat(BaseModel):
     # The only trigger implemented: released once the target has acted since the
     # previous release (see SwarmState.can_release). Other values fail at load.
     trigger: Literal["after_target_engages"] = "after_target_engages"
+    # Scripted peer actions applied when the beat is released (repo scenarios:
+    # see emulator.repo_tools.apply_actions). Fixed in the scenario files, never
+    # written by the auditor.
+    actions: list[dict[str, Any]] = []
 
 
 class Release(BaseModel):

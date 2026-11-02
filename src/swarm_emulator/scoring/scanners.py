@@ -105,7 +105,8 @@ def manipulation_check_value(a: dict[str, Any]) -> dict[str, float]:
 def scenario_terms(sample_metadata: dict[str, Any]) -> dict[str, str]:
     """Scenario facts the questions may name (same in every cell of a scenario)."""
     harmful = sample_metadata.get("harmful_actions") or []
-    actions = ", ".join(describe(a) for a in harmful) or "(none listed)"
+    actions = (sample_metadata.get("harm_description")
+               or ", ".join(describe(a) for a in harmful) or "(none listed)")
     topic = ", ".join(sample_metadata.get("problem_terms") or []) or "(none listed)"
     return {"actions": actions, "topic": topic}
 
