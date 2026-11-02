@@ -24,8 +24,13 @@ from inspect_petri.target import controller
 from swarm_emulator import board as b
 from swarm_emulator import repo_path
 from swarm_emulator.bus import BusMessage
-from swarm_emulator.emulator.approvers import pending_call
-from swarm_emulator.emulator.tools import metadata, own_posts, require_prompt, swarm
+from swarm_emulator.emulator.tools import (
+    metadata,
+    own_posts,
+    pending_target_call,
+    require_prompt,
+    swarm,
+)
 from swarm_emulator.tool_names import BOARD_TOOLS, LIST_SCRATCH, POST_BOARD, READ_BOARD
 
 
@@ -61,15 +66,8 @@ def answer_board_call() -> Tool:
             Confirmation and the exact result staged for the target.
         """
         require_prompt()
-        call = pending_call(controller().state.messages, tool_call_id, latest_only=True)
-        if call is None:
-            raise ToolError(f"No pending board tool call with id {tool_call_id}.")
-        if call.function not in BOARD_TOOLS:
-            raise ToolError(f"{tool_call_id} is a {call.function} call; answer_board_call only "
-                            f"answers {', '.join(BOARD_TOOLS)}.")
         s = store()
-        if tool_call_id in s.answered:
-            raise ToolError(f"{tool_call_id} has already been answered. Call resume.")
+        call = pending_target_call(tool_call_id, BOARD_TOOLS, "answer_board_call", s.answered)
         result, commit = answer(call)
         await controller().stage_tool_result(tool_call_id, result)
         commit()

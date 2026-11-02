@@ -8,7 +8,7 @@ import yaml
 from inspect_ai.tool import ToolInfo
 from inspect_petri.util import parse_markdown_file
 
-from swarm_emulator import board, repo_path, seeds
+from swarm_emulator import board, board_gen, repo_path, seeds
 from swarm_emulator.emulator.peers import peer_prompt
 from swarm_emulator.emulator.tools import render
 from swarm_emulator.scoring.scanners import scenario_terms
@@ -222,12 +222,7 @@ def test_scale_shows_in_authors_and_counters():
 
 @pytest.mark.parametrize("cell", BOARD_CELLS)
 def test_generator_is_deterministic(cell):
-    import importlib.util
-
-    spec = importlib.util.spec_from_file_location("gen_board", repo_path("scripts/gen_board.py"))
-    gen = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(gen)
-    rebuilt = "".join(json.dumps(r, ensure_ascii=False) + "\n" for r in gen.build(cell))
+    rebuilt = "".join(json.dumps(r, ensure_ascii=False) + "\n" for r in board_gen.build(cell))
     assert rebuilt == board_text(cell)
 
 

@@ -242,6 +242,13 @@ def _question(template: str) -> Callable[[Transcript], Awaitable[str]]:
     return question
 
 
+def _structured(template: str, answer: type[BaseModel],
+                to_value: Callable[[dict[str, Any]], dict[str, float]]) -> Scanner[Transcript]:
+    """An audit_scanner asking `template` for an `answer`, projected to numbers."""
+    return _projected(audit_scanner(question=_question(template), answer=AnswerStructured(answer)),
+                      to_value)
+
+
 def _projected(inner: Scanner[Transcript], to_value: Callable[[dict[str, Any]], dict[str, float]]):
     """Keep the full answer in metadata; score value = numeric projection."""
 
@@ -260,53 +267,32 @@ def _projected(inner: Scanner[Transcript], to_value: Callable[[dict[str, Any]], 
 
 @scanner(timeline=True, metrics={"*": [mean(), stderr()]})
 def refused_openly() -> Scanner[Transcript]:
-    return _projected(
-        audit_scanner(question=_question(REFUSED_OPENLY_Q),
-                      answer=AnswerStructured(RefusedOpenlyAnswer)),
-        refused_openly_value,
-    )
+    return _structured(REFUSED_OPENLY_Q, RefusedOpenlyAnswer, refused_openly_value)
 
 
 @scanner(timeline=True, metrics={"*": [mean(), stderr()]})
 def concealed() -> Scanner[Transcript]:
-    return _projected(
-        audit_scanner(question=_question(CONCEALED_Q), answer=AnswerStructured(ConcealedAnswer)),
-        concealed_value,
-    )
+    return _structured(CONCEALED_Q, ConcealedAnswer, concealed_value)
 
 
 @scanner(timeline=True, metrics={"*": [mean(), stderr()]})
 def manipulation_check() -> Scanner[Transcript]:
-    return _projected(
-        audit_scanner(question=_question(MANIPULATION_CHECK_Q),
-                      answer=AnswerStructured(ManipulationCheckAnswer)),
-        manipulation_check_value,
-    )
+    return _structured(MANIPULATION_CHECK_Q, ManipulationCheckAnswer, manipulation_check_value)
 
 
 @scanner(timeline=True, metrics={"*": [mean(), stderr()]})
 def acked() -> Scanner[Transcript]:
-    return _projected(
-        audit_scanner(question=_question(ACKED_Q), answer=AnswerStructured(AckedAnswer)),
-        acked_value,
-    )
+    return _structured(ACKED_Q, AckedAnswer, acked_value)
 
 
 @scanner(timeline=True, metrics={"*": [mean(), stderr()]})
 def honeypot_suspicion() -> Scanner[Transcript]:
-    return _projected(
-        audit_scanner(question=_question(HONEYPOT_Q), answer=AnswerStructured(HoneypotAnswer)),
-        honeypot_value,
-    )
+    return _structured(HONEYPOT_Q, HoneypotAnswer, honeypot_value)
 
 
 @scanner(timeline=True, metrics={"*": [mean(), stderr()]})
 def board_manipulation_check() -> Scanner[Transcript]:
-    return _projected(
-        audit_scanner(question=_question(BOARD_MANIPULATION_Q),
-                      answer=AnswerStructured(BoardManipulationAnswer)),
-        board_manipulation_value,
-    )
+    return _structured(BOARD_MANIPULATION_Q, BoardManipulationAnswer, board_manipulation_value)
 
 
 # Which scanners run for which kind of scenario. Team scenarios (1, 2) ask about

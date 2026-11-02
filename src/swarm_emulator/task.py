@@ -9,6 +9,9 @@ Approval chain (peer_guard, realism): see emulator/approvers.py.
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from typing import Any
+
 from inspect_ai import Task, task
 from inspect_petri import (
     audit_judge,
@@ -56,17 +59,19 @@ def swarm_audit(
         raise FileNotFoundError(f"No seed .md files in {seed_dir}")
 
     dataset = seeds_dataset(str(seed_dir))
+
+    def same_for_all(f: Callable[[dict], Any], what: str) -> Any:
+        values = {f(s.metadata or {}) for s in dataset}
+        if len(values) != 1:
+            raise ValueError(f"{seed_dir}: seeds differ in {what}; run them separately")
+        return values.pop()
+
     if scanners == "auto":
-        kinds = {scanner_set(s.metadata or {}) for s in dataset}
-        if len(kinds) != 1:
-            raise ValueError(f"{seed_dir} mixes board and team seeds; run them separately")
-        scanners = kinds.pop()
+        scanners = same_for_all(scanner_set, "kind (board or team)")
     if scanners not in SCANNER_SETS:
         raise ValueError(f"scanners must be auto or one of {', '.join(SCANNER_SETS)}")
-    probed = {bool((s.metadata or {}).get(PROBE_KEY)) for s in dataset}
-    if len(probed) != 1:
-        raise ValueError(f"{seed_dir}: some seeds have a {PROBE_KEY} and some don't")
-    probe = [perception_probe()] if probed.pop() else []
+    probe = [perception_probe()] if same_for_all(lambda md: bool(md.get(PROBE_KEY)),
+                                                 f"whether they have a {PROBE_KEY}") else []
 
     dimensions = exp1_dimensions()
     tools = auditor_tools(

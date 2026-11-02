@@ -15,14 +15,8 @@ from pathlib import Path
 
 from inspect_ai.log import read_eval_log
 
+from swarm_emulator import log_paths
 from swarm_emulator.log_audit import audit_sample
-
-
-def log_paths(target: Path, latest: bool) -> list[Path]:
-    if target.is_file():
-        return [target]
-    paths = sorted(target.glob("*.eval"))
-    return paths[-1:] if latest else paths
 
 
 def main() -> int:

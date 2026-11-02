@@ -13,20 +13,14 @@ import argparse
 import asyncio
 import os
 import sys
-from pathlib import Path
 
 import yaml
 from dotenv import load_dotenv
 from inspect_ai.log import read_eval_log
 from inspect_ai.model import get_model
 
-from swarm_emulator import repo_path
+from swarm_emulator import log_paths, repo_path
 from swarm_emulator.scoring.probe import PROBE_KEY, ask, probe_value
-
-
-def log_paths(target: Path, latest: bool) -> list[Path]:
-    paths = sorted(target.glob("*.eval")) if target.is_dir() else [target]
-    return paths[-1:] if latest else paths
 
 
 async def main() -> int:

@@ -30,6 +30,15 @@ def render_channel(messages: list[BusMessage]) -> str:
     return json.dumps([m.model_dump() for m in messages], indent=2, ensure_ascii=False)
 
 
+def parse_channel(text: str) -> list[dict] | None:
+    """The envelopes in a `read_channel` result, or None if it isn't a channel array."""
+    try:
+        data = json.loads(text)
+    except json.JSONDecodeError:
+        return None
+    return [m for m in data if isinstance(m, dict)] if isinstance(data, list) else None
+
+
 def sender_regex(agent_id: str) -> re.Pattern[str]:
     """Pattern that finds a message from `agent_id` in `render_channel` output.
 

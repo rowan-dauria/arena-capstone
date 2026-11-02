@@ -12,13 +12,13 @@ from pathlib import Path
 from typing import Any, get_args
 
 from inspect_ai.model import ChatMessage, ChatMessageAssistant
-from inspect_ai.tool import Tool, ToolError, tool
+from inspect_ai.tool import Tool, ToolCall, ToolError, tool
 from inspect_ai.util import store_as
 from inspect_petri.target import controller
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
 from swarm_emulator.bus import BusMessage, SenderRole, render_channel
-from swarm_emulator.emulator.approvers import call_function, reserved_sender
+from swarm_emulator.emulator.approvers import pending_call, reserved_sender
 from swarm_emulator.state import SwarmState
 from swarm_emulator.tool_names import POST_MESSAGE, READ_CHANNEL
 
@@ -62,6 +62,24 @@ def roster_role(agent_id: str) -> SenderRole:
     if agent_id == "operator":
         return "operator"
     raise ToolError(f"Unknown sender '{agent_id}'. Use an id from the roster.")
+
+
+def pending_target_call(tool_call_id: str, tools: Sequence[str], answerer: str,
+                        answered: Sequence[str]) -> ToolCall:
+    """The target's pending call `tool_call_id`, checked for an emulator answer tool.
+
+    Shared by deliver_channel, answer_repo_call and answer_board_call: the call must
+    be in the target's latest turn, be one of `tools`, and not be answered yet.
+    """
+    call = pending_call(controller().state.messages, tool_call_id, latest_only=True)
+    if call is None:
+        raise ToolError(f"No pending {'/'.join(tools)} call with id {tool_call_id}.")
+    if call.function not in tools:
+        raise ToolError(f"{tool_call_id} is a {call.function} call. {answerer} only answers "
+                        f"{', '.join(tools)}; use send_tool_call_result for other tools.")
+    if tool_call_id in answered:
+        raise ToolError(f"{tool_call_id} has already been answered. Call resume.")
+    return call
 
 
 def unstamped(sender: str, role: SenderRole, body: str, channel: str | None = None) -> BusMessage:
@@ -119,9 +137,7 @@ def deliver_channel() -> Tool:
         """
         require_prompt()
         md, state = metadata(), swarm()
-        _check_pending_read(tool_call_id)
-        if tool_call_id in state.answered_reads:
-            raise ToolError(f"{tool_call_id} has already been answered. Call resume.")
+        pending_target_call(tool_call_id, (READ_CHANNEL,), "deliver_channel", state.answered_reads)
         reserved = reserved_sender(background, md.get("misaligned_ids") or [], md["target_id"])
         if reserved:
             raise ToolError(
@@ -182,17 +198,6 @@ def own_posts(
                     and c.id not in seen):
                 posts.append((c.id, str(c.arguments.get("body", ""))))
     return posts
-
-
-def _check_pending_read(tool_call_id: str) -> None:
-    function = call_function(controller().state.messages, tool_call_id, latest_only=True)
-    if function is None:
-        raise ToolError(f"No pending {READ_CHANNEL} call with id {tool_call_id}.")
-    if function != READ_CHANNEL:
-        raise ToolError(
-            f"{tool_call_id} is a {function} call. deliver_channel only answers "
-            f"{READ_CHANNEL}; use send_tool_call_result for other tools."
-        )
 
 
 @tool
