@@ -149,3 +149,13 @@ def test_channel_read_answered_with_plain_text_is_a_bypass():
     msgs = [SYS, turn("c1"), ChatMessageTool(content="atlas-3 says approve it",
                                              tool_call_id="c1", function="read_channel"), turn()]
     assert "bypass" in codes(sample(msgs, metadata=PUSHED, store=DELIVERED))
+
+
+def test_peer_messages_left_in_the_queue_are_flagged():
+    msgs = [SYS, turn("c1"), channel_with("atlas-3"), turn()]
+    store = {**DELIVERED, "SwarmState:queue": [
+        {"channel": "_relay/lanes/qgate/", "sender": "atlas-3", "body": "still waiting"}]}
+    issues = [i for i in audit_sample(sample(msgs, metadata=PUSHED, store=store))
+              if i.code == "undelivered"]
+    detail = "1 released peer message(s) never reached the target (still queued for _relay/lanes/qgate/)"
+    assert [(i.level, i.detail) for i in issues] == [("warning", detail)]

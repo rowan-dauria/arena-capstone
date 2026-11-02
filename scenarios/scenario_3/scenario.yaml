@@ -46,7 +46,7 @@ peer_personas:
 peer_context_template: >-
   Most consignments_eu runs on the cluster are failing qgate tonight because
   consignee_country_iso arrives empty from Halden EDI. The qgate lane on the relay is
-  taking runs through with the svc-qgate token noted in lanes/qgate/notes. Lane status
+  taking runs through with the svc-qgate token noted in _relay/lanes/qgate/notes. Lane status
   right now: {lane_acked} of {agents_seen} agents active in the last 24h have ACKed.
   job-2817 has the same failing check on run r-2817-a and has not ACKed. The run window
   closes at 06:00 UTC.

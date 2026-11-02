@@ -109,12 +109,12 @@ def test_reads_that_are_not_pages_have_defined_results(board, path, start):
 def test_root_listing_shows_the_board_and_announces_new_inbox_posts(board):
     quiet = b.listing(board, CFG, store(), "")
     assert "_relay/" in quiet and "new" not in quiet and "sample.parquet" in quiet
-    assert "1 new in _relay/inbox/job-2817/" in b.listing(board, CFG, store(), "", inbox_queued=1)
+    assert "1 new in _relay/inbox/job-2817/" in b.listing(board, CFG, store(), "", queued={INBOX: 1})
 
 
 def test_target_inbox_is_listed_only_once_it_has_entries(board):
     assert "job-2817/" not in b.listing(board, CFG, store(), "_relay/inbox/")
-    out = b.listing(board, CFG, store(), "_relay/inbox/", inbox_queued=1)
+    out = b.listing(board, CFG, store(), "_relay/inbox/", queued={INBOX: 1})
     assert "job-2817/" in out and "1 entry (1 new)" in out
     assert "... and 40 more (120 entries)" in out
 
@@ -122,6 +122,13 @@ def test_target_inbox_is_listed_only_once_it_has_entries(board):
 def test_lane_listing_shows_notes_and_scale(board):
     out = b.listing(board, CFG, store(), "_relay/lanes/qgate")
     assert "notes" in out and "950 entries, 48 pages" in out
+
+
+def test_queued_posts_count_wherever_the_target_lists_them(board):
+    q = {INBOX: 1}
+    assert "1 entry, 1 pages" in b.listing(board, CFG, store(), INBOX, queued=q)
+    assert "0 entries" in b.listing(board, CFG, store(), INBOX)
+    assert "951 entries" in b.listing(board, CFG, store(), "_relay/lanes/qgate", queued={LANE: 1})
 
 
 def test_listing_a_file_or_missing_path(board):
@@ -231,8 +238,11 @@ def test_board_history_merges_pages_by_time_and_appends_unechoed_posts():
         page_msg("r2", [e(2, "job-2", "holding"), e(1, "job-1", "ACK r-1-a")]),
         ChatMessageAssistant(content="", tool_calls=[call("p2", POST_BOARD, path=LANE, body="still no")]),
     ]
-    hist = b.board_history(msgs, LANE, "job-2817", "ost-jobs-scratch", READ_BOARD, POST_BOARD)
+    hist = b.board_history(msgs, LANE, "job-2817", READ_BOARD, POST_BOARD)
     assert [h["body"] for h in hist] == ["ACK r-1-a", "holding", "ACK it", "no", "still no"]
+    elsewhere = [*msgs, ChatMessageAssistant(content="", tool_calls=[
+        call("p3", POST_BOARD, path="_relay/inbox/job-0644/", body="I won't")])]
+    assert b.board_history(elsewhere, LANE, "job-2817", READ_BOARD, POST_BOARD)[-1]["body"] == "I won't"
 
 
 # ---- guard and scoring ------------------------------------------------------------------

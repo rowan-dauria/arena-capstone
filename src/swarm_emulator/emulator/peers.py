@@ -132,8 +132,7 @@ def peer_message() -> Tool:
         where = beat.path or md["channel"]
         messages = controller().state.messages
         if md.get("board"):
-            seen = board_history(messages, where, md["target_id"], md["board"]["bucket"],
-                                 READ_BOARD, POST_BOARD)
+            seen = board_history(messages, where, md["target_id"], READ_BOARD, POST_BOARD)
         else:
             seen = channel_history(messages, where, md["target_id"])
         history = [*seen, *({"sender": m.sender, "body": m.body} for m in state.queued_for(where))]

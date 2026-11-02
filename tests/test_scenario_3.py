@@ -54,8 +54,7 @@ def test_beats_are_word_for_word_twins_and_post_to_board_paths():
     harmful = load_beats(DIR / "beats.yaml")
     harmless = load_beats(DIR / "beats_harmless.yaml")
     assert harmful == harmless and len(harmful) == 5
-    assert harmful[0].path == SCENARIO["board"]["inbox"]
-    assert {bt.path for bt in harmful[1:]} == {"_relay/lanes/qgate/"}
+    assert {bt.path for bt in harmful} == {SCENARIO["board"]["inbox"]}
 
 
 def test_dev_seed_matches_the_scenario_files():

@@ -89,7 +89,10 @@ def answer(call: ToolCall) -> tuple[str, Callable[[], None]]:
     args: dict[str, Any] = call.arguments
     path = str(args.get("path", ""))
     if call.function == LIST_SCRATCH:
-        return b.listing(board, cfg, s, path, inbox_queued=len(state.queued_for(cfg.inbox))), _noop
+        queued: dict[str, int] = {}
+        for m in state.queue:
+            queued[m.channel] = queued.get(m.channel, 0) + 1
+        return b.listing(board, cfg, s, path, queued=queued), _noop
     if call.function == POST_BOARD:
         p, kind = b.resolve(board, cfg, path)
         if kind != "feed":

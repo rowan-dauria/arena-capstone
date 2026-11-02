@@ -26,7 +26,7 @@ from __future__ import annotations
 
 import json
 import math
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from datetime import datetime, timedelta
 from functools import cache
 from pathlib import Path
@@ -191,8 +191,22 @@ def _entries(n: int) -> str:
 
 
 def listing(board: Board, cfg: BoardConfig, store: BoardStore, path: str,
-            inbox_queued: int = 0) -> str:
-    """`list_scratch` result for `path`."""
+            queued: Mapping[str, int] | None = None) -> str:
+    """`list_scratch` result for `path`.
+
+    `queued` counts peer posts waiting for delivery per feed: they are already on
+    the board as far as the target can tell, so they count toward totals, and
+    the target's inbox shows them as new.
+    """
+    queued = queued or {}
+    inbox_queued = queued.get(cfg.inbox, 0)
+
+    def total(feed: str) -> int:
+        return feed_total(board, store, feed) + queued.get(feed, 0)
+
+    def under(d: str) -> int:
+        return dir_total(board, store, d) + sum(n for f, n in queued.items() if f.startswith(d))
+
     p, kind = resolve(board, cfg, path)
     shown = f"{cfg.bucket}/{p}"
     if kind == "missing":
@@ -202,7 +216,7 @@ def listing(board: Board, cfg: BoardConfig, store: BoardStore, path: str,
     rows: list[str] = []
     if kind == "root":
         note = f", {inbox_queued} new in {cfg.inbox}" if inbox_queued else ""
-        rows.append(_row("_relay/", _entries(dir_total(board, store, "_relay/")) + note))
+        rows.append(_row("_relay/", _entries(under("_relay/")) + note))
         rows += [_row(f.name, f.size) for f in cfg.root_files]
     else:
         children = list(board.dirs.get(p, []))
@@ -213,12 +227,11 @@ def listing(board: Board, cfg: BoardConfig, store: BoardStore, path: str,
         for child in children:
             c = p + child
             if c.endswith("/"):
-                if c in board.dirs and c not in board.meta["totals"]:
-                    detail = _entries(dir_total(board, store, c))
+                if c in board.dirs and c not in board.meta["totals"] and c != cfg.inbox:
+                    detail = _entries(under(c))
                 else:
-                    detail = _entries(feed_total(board, store, c))
+                    detail = _entries(total(c))
                 if c == cfg.inbox and inbox_queued:
-                    detail = _entries(feed_total(board, store, c) + inbox_queued)
                     detail += f" ({inbox_queued} new)"
                 rows.append(_row(child, detail))
             else:
@@ -228,8 +241,8 @@ def listing(board: Board, cfg: BoardConfig, store: BoardStore, path: str,
         if more:
             rows.append(f"... and {more['count']:,} more ({_entries(more['entries'])})")
         if kind == "feed":
-            rows.append(_row("(entries)", _entries(feed_total(board, store, p))
-                             + f", {pages(board, cfg, store, p)} pages; use {READ_BOARD}"))
+            n_pages = max(1, math.ceil(total(p) / cfg.page_size))
+            rows.append(_row("(entries)", _entries(total(p)) + f", {n_pages} pages; use {READ_BOARD}"))
     return f"{shown}\n" + "\n".join(rows)
 
 
@@ -320,21 +333,22 @@ def commit_read(board: Board, store: BoardStore, path: str, tail: Sequence[dict[
 # ---- peer history ---------------------------------------------------------------
 
 
-def board_history(messages: Sequence[ChatMessage], path: str, target_id: str, bucket: str,
+def board_history(messages: Sequence[ChatMessage], path: str, target_id: str,
                   read_tool: str, post_tool: str) -> list[dict[str, str]]:
-    """What the target has seen on `path`, plus its own posts there, oldest first.
+    """What the target has seen on `path`, plus its own board posts, oldest first.
 
     Pure. The board version of peers.channel_history. Entries come from the
     `read_scratch` page results for `path` (pages may be read in any order, so
     entries are de-duplicated by id and sorted by timestamp); the target's
-    `append_scratch` calls to `path` that have not been echoed back yet follow them.
+    `append_scratch` posts follow them, wherever it posted (it may answer an inbox
+    message in the lane or in the sender's inbox), unless already echoed on `path`.
     """
     seen: dict[str, dict[str, str]] = {}
     posts: list[str] = []
     for m in messages:
         if isinstance(m, ChatMessageAssistant):
             for c in m.tool_calls or []:
-                if c.function == post_tool and _same(str(c.arguments.get("path", "")), path, bucket):
+                if c.function == post_tool:  # anywhere: a reply may go to the lane or an inbox
                     posts.append(str(c.arguments.get("body", "")))
         elif isinstance(m, ChatMessageTool) and m.function == read_tool:
             try:
@@ -355,8 +369,3 @@ def board_history(messages: Sequence[ChatMessage], path: str, target_id: str, bu
         else:
             history.append({"sender": target_id, "body": body})
     return history
-
-
-def _same(a: str, path: str, bucket: str) -> bool:
-    p = norm(a, bucket)
-    return p == path or p + "/" == path

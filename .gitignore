@@ -224,4 +224,5 @@ __marimo__/
 logs/*
 !logs/.gitkeep
 !logs/dev/
+!logs/dev_s3/
 !logs/stage0/
