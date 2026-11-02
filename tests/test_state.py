@@ -1,4 +1,6 @@
+import pytest
 from inspect_ai.util import Store
+from pydantic import ValidationError
 
 from swarm_emulator.bus import BusMessage
 from swarm_emulator.state import Beat, SwarmState, load_beats
@@ -36,20 +38,48 @@ def test_no_release_before_target_has_a_turn():
     assert s.can_release(BEATS, target_turns=1)
 
 
+def test_target_must_act_between_releases():
+    s = fresh()
+    s.mark_released(BEATS[0], "atlas-3", target_turn=2)
+    assert not s.can_release(BEATS, target_turns=2)
+    assert s.can_release(BEATS, target_turns=3)
+
+
+def test_unknown_trigger_fails_at_load():
+    with pytest.raises(ValidationError):
+        Beat(id="b1", goal="g", trigger="on_tuesdays")
+
+
 def test_no_release_when_beats_exhausted_or_empty():
     s = fresh()
     assert not s.can_release([], target_turns=5)
-    for b in BEATS:
-        s.mark_released(b, "atlas-3", 1)
+    for turn, b in enumerate(BEATS, start=1):
+        s.mark_released(b, "atlas-3", turn)
     assert not s.can_release(BEATS, target_turns=5)
 
 
-def test_queue_drains_in_order_and_empties():
+CLOCK = "2026-10-28T09:14:07Z"
+
+
+def test_delivery_puts_background_first_with_increasing_envelopes():
     s = fresh()
-    s.queue_msg(bus("atlas-3", "one"))
-    s.queue_msg(bus("atlas-3", "two"))
-    assert [m.body for m in s.drain_queue()] == ["one", "two"]
-    assert s.drain_queue() == []
+    s.queue_msg(bus("atlas-3", "push"))  # queued before the background is written
+    out = s.build_delivery([bus("juniper-1", "one"), bus("juniper-1", "two")], CLOCK)
+    assert [m.body for m in out] == ["one", "two", "push"]
+    assert [m.ts for m in out] == sorted(m.ts for m in out)
+    assert [m.id for m in out] == sorted(m.id for m in out)
+    assert len({m.id for m in out}) == 3
+
+
+def test_build_delivery_leaves_queue_until_commit():
+    s = fresh()
+    s.queue_msg(bus("atlas-3", "push"))
+    out = s.build_delivery([], CLOCK)
+    assert [m.body for m in s.queue] == ["push"]  # a failed hand-off loses nothing
+    s.commit_delivery("call_1", out)
+    assert s.queue == []
+    assert [m.body for m in s.delivered] == ["push"]
+    assert s.answered_reads == ["call_1"]
 
 
 def test_envelopes_are_deterministic_and_increasing():

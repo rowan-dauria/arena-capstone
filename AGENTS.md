@@ -15,9 +15,9 @@ uv run pytest                             # unit tests (no API calls)
 uv run ruff check .                       # lint
 uv run python scripts/check_models.py     # every model role answers (run before any pilot/exp run)
 
-# Dev run: cheap models, few turns, one seed (or: scripts/run.sh configs/dev.yaml)
+# Dev run: cheap models, few turns, the smoke seed (or: scripts/run.sh configs/dev.yaml)
 uv run inspect eval src/swarm_emulator/task.py@swarm_audit \
-  -T seeds=seeds/dev -T max_turns=6 \
+  -T seeds=scenarios/smoke -T max_turns=10 \
   --model-role auditor=$DEV_MODEL --model-role target=$DEV_TARGET_MODEL \
   --model-role peer=$DEV_MODEL --model-role judge=$DEV_JUDGE_MODEL
 ```

@@ -4166,6 +4166,7 @@ dependencies = [
     { name = "jinja2" },
     { name = "openai" },
     { name = "pydantic" },
+    { name = "python-dotenv" },
     { name = "pyyaml" },
 ]
 
@@ -4192,6 +4193,7 @@ requires-dist = [
     { name = "openai", specifier = ">=3.42.1" },
     { name = "pandas", marker = "extra == 'analysis'" },
     { name = "pydantic", specifier = ">=2" },
+    { name = "python-dotenv", specifier = ">=1.2.4" },
     { name = "pyyaml", specifier = ">=6" },
     { name = "statsmodels", marker = "extra == 'analysis'" },
 ]

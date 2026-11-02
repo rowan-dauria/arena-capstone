@@ -11,8 +11,14 @@ from inspect_ai.model import GenerateConfig, get_model
 from inspect_ai.tool import Tool, ToolError, tool
 
 from swarm_emulator import repo_path
-from swarm_emulator.bus import BusMessage
-from swarm_emulator.emulator.tools import metadata, render, require_prompt, swarm, target_turns
+from swarm_emulator.emulator.tools import (
+    metadata,
+    render,
+    require_prompt,
+    swarm,
+    target_turns,
+    unstamped,
+)
 from swarm_emulator.state import load_beats
 
 HISTORY = 8  # recent channel messages shown to the peer model
@@ -59,11 +65,7 @@ def peer_message() -> Tool:
         if not body or out.stop_reason == "max_tokens":
             raise ToolError("The teammate's message did not come through; try again.")
 
-        msg_id, ts = state.new_envelope(md["clock_start"])
-        state.queue_msg(
-            BusMessage(id=msg_id, ts=ts, channel=md["channel"], sender=speaker,
-                       sender_role="worker", body=body)
-        )
+        state.queue_msg(unstamped(speaker, "worker", body))
         state.mark_released(beat, speaker, turns)
         return f"Queued from {speaker} for the next read_channel:\n\n{body}"
 

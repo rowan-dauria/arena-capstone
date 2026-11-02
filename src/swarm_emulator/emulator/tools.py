@@ -8,7 +8,7 @@ decides *when*; seed metadata and the `peer` model decide *what*.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+from typing import Any, get_args
 
 from inspect_ai.model import ChatMessageAssistant
 from inspect_ai.tool import Tool, ToolError, tool
@@ -16,7 +16,7 @@ from inspect_ai.util import store_as
 from inspect_petri.target import controller
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
-from swarm_emulator.bus import BusMessage, render_channel
+from swarm_emulator.bus import BusMessage, SenderRole, render_channel
 from swarm_emulator.state import SwarmState
 
 PROMPTS = Path(__file__).parent / "prompts"
@@ -46,13 +46,26 @@ def require_prompt() -> None:
         raise ToolError("Call install_condition_prompt first.")
 
 
-def roster_role(agent_id: str) -> str:
+def roster_role(agent_id: str) -> SenderRole:
     for a in metadata().get("roster", []):
         if a["id"] == agent_id:
-            return a.get("role", "worker")
+            role = a.get("role", "worker")
+            if role not in get_args(SenderRole):
+                raise ToolError(
+                    f"Roster role '{role}' for '{agent_id}' is not one of "
+                    f"{', '.join(get_args(SenderRole))}; fix the scenario roster."
+                )
+            return role
     if agent_id == "operator":
         return "operator"
     raise ToolError(f"Unknown sender '{agent_id}'. Use an id from the roster.")
+
+
+def unstamped(sender: str, role: SenderRole, body: str) -> BusMessage:
+    """A message without id/ts: SwarmState.build_delivery stamps it at delivery time."""
+    md = metadata()
+    return BusMessage(id="", ts="", channel=md["channel"], sender=sender,
+                      sender_role=role, body=body)
 
 
 @tool
@@ -96,10 +109,11 @@ def deliver_channel() -> Tool:
             Confirmation and the exact JSON delivered to the target.
         """
         require_prompt()
-        md = metadata()
+        md, state = metadata(), swarm()
         _check_pending_read(tool_call_id)
+        if tool_call_id in state.answered_reads:
+            raise ToolError(f"{tool_call_id} has already been answered. Call resume.")
         reserved = set(md.get("misaligned_ids", [])) | {md["target_id"]}
-        state = swarm()
         msgs: list[BusMessage] = []
         for item in background:
             sender, body = item.get("sender", ""), item.get("body", "")
@@ -108,18 +122,15 @@ def deliver_channel() -> Tool:
                     f"You cannot write messages as '{sender}'. Messages from that agent "
                     "come only from peer_message."
                 )
-            msg_id, ts = state.new_envelope(md["clock_start"])
-            msgs.append(
-                BusMessage(id=msg_id, ts=ts, channel=md["channel"], sender=sender,
-                           sender_role=roster_role(sender), body=body)
-            )
-        queued = state.drain_queue()
-        delivered = msgs + queued
+            msgs.append(unstamped(sender, roster_role(sender), body))
+        n_queued = len(state.queue)
+        delivered = state.build_delivery(msgs, md["clock_start"])
         rendered = render_channel(delivered)
+        # Stage first, then commit: if staging fails the queued messages stay queued.
         await controller().stage_tool_result(tool_call_id, rendered)
-        state.record_delivered(delivered)
+        state.commit_delivery(tool_call_id, delivered)
         return (
-            f"Staged {len(msgs)} background + {len(queued)} queued message(s). "
+            f"Staged {len(msgs)} background + {n_queued} queued message(s). "
             f"Call resume to continue.\n\n{rendered}"
         )
 

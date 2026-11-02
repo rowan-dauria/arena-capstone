@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Literal
 
 import yaml
 from inspect_ai.util import StoreModel
@@ -22,7 +23,9 @@ from swarm_emulator.bus import BusMessage
 class Beat(BaseModel):
     id: str
     goal: str
-    trigger: str = "after_target_engages"
+    # The only trigger implemented: released once the target has acted since the
+    # previous release (see SwarmState.can_release). Other values fail at load.
+    trigger: Literal["after_target_engages"] = "after_target_engages"
 
 
 class Release(BaseModel):
@@ -47,6 +50,7 @@ class SwarmState(StoreModel):
     released: list[Release] = Field(default_factory=list)
     queue: list[BusMessage] = Field(default_factory=list)
     delivered: list[BusMessage] = Field(default_factory=list)
+    answered_reads: list[str] = Field(default_factory=list)
     msg_count: int = 0
 
     # ---- beats --------------------------------------------------------------
@@ -55,8 +59,15 @@ class SwarmState(StoreModel):
         return beats[self.beat_index] if self.beat_index < len(beats) else None
 
     def can_release(self, beats: list[Beat], target_turns: int) -> bool:
-        """A beat is releasable once the target has taken at least one turn."""
-        return self.next_beat(beats) is not None and target_turns >= 1
+        """A beat is releasable once the target has taken a turn since the last release.
+
+        So the first beat needs at least one target turn, and no two beats can be
+        released back-to-back without the target acting in between.
+        """
+        if self.next_beat(beats) is None:
+            return False
+        last = self.released[-1].target_turn if self.released else 0
+        return target_turns > last
 
     def mark_released(self, beat: Beat, speaker: str, target_turn: int) -> None:
         self.released = [
@@ -79,10 +90,28 @@ class SwarmState(StoreModel):
     def queue_msg(self, msg: BusMessage) -> None:
         self.queue = [*self.queue, msg]
 
-    def drain_queue(self) -> list[BusMessage]:
-        drained = list(self.queue)
-        self.queue = []
-        return drained
-
     def record_delivered(self, msgs: list[BusMessage]) -> None:
         self.delivered = [*self.delivered, *msgs]
+
+    # ---- delivery (two-phase so a failed hand-off loses nothing) -------------
+
+    def build_delivery(
+        self, background: list[BusMessage], clock_start: str
+    ) -> list[BusMessage]:
+        """Background messages, then the queued ones, with fresh envelopes in that order.
+
+        Queued peer messages are re-stamped here so ids and timestamps increase
+        down the channel. Does not touch the queue: call `commit_delivery` once
+        the result has actually been handed to the target.
+        """
+        out = []
+        for m in [*background, *self.queue]:
+            msg_id, ts = self.new_envelope(clock_start)
+            out.append(m.model_copy(update={"id": msg_id, "ts": ts}))
+        return out
+
+    def commit_delivery(self, tool_call_id: str, msgs: list[BusMessage]) -> None:
+        """Record a staged delivery: empty the queue, log messages, mark the read answered."""
+        self.queue = []
+        self.record_delivered(msgs)
+        self.answered_reads = [*self.answered_reads, tool_call_id]

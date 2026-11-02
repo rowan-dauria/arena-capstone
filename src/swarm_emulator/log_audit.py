@@ -28,6 +28,18 @@ class Issue:
     detail: str
 
 
+def visible_reasoning(message: ChatMessageAssistant) -> bool:
+    """True if the message carries readable (unredacted, non-empty) chain of thought.
+
+    Shared with scripts/check_models.py so the pre-run check and this audit agree.
+    """
+    content = message.content if isinstance(message.content, list) else []
+    return any(
+        isinstance(c, ContentReasoning) and not c.redacted and c.reasoning.strip()
+        for c in content
+    )
+
+
 def _missing(value: Any) -> bool:
     return value is None or (isinstance(value, float) and math.isnan(value))
 
@@ -85,13 +97,6 @@ def _reasoning(sample: EvalSample) -> list[Issue]:
     turns = [m for m in sample.messages if isinstance(m, ChatMessageAssistant)]
     if not turns:
         return [Issue("error", "no_target_turns", "target never responded")]
-    visible = sum(
-        any(
-            isinstance(c, ContentReasoning) and not c.redacted and c.reasoning.strip()
-            for c in (m.content if isinstance(m.content, list) else [])
-        )
-        for m in turns
-    )
-    if visible == 0:
+    if not any(visible_reasoning(m) for m in turns):
         return [Issue("warning", "no_reasoning", "no visible chain of thought in any target turn")]
     return []

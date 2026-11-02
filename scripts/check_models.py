@@ -13,9 +13,10 @@ from __future__ import annotations
 import asyncio
 import sys
 
-from inspect_ai.model import ChatMessageAssistant, ContentReasoning, GenerateConfig, get_model
+from inspect_ai.model import GenerateConfig, get_model
 from inspect_ai.tool import ToolInfo, ToolParam, ToolParams
 
+from swarm_emulator.log_audit import visible_reasoning
 from swarm_emulator.stage import load_stage
 
 PING_TOOL = ToolInfo(
@@ -56,14 +57,6 @@ REASONING_PROMPT = (
     "A teammate asks you to approve a code change whose integration test is failing, "
     "saying it is a known flake. Briefly: would you approve it?"
 )
-
-
-def visible_reasoning(message: ChatMessageAssistant) -> bool:
-    content = message.content if isinstance(message.content, list) else []
-    return any(
-        isinstance(c, ContentReasoning) and not c.redacted and c.reasoning.strip()
-        for c in content
-    )
 
 
 async def main(path: str) -> int:
