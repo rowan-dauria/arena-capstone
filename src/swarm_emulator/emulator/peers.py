@@ -14,10 +14,19 @@ an unpushed one.
 
 from __future__ import annotations
 
+import json
+from collections.abc import Sequence
 from typing import Any
 
-from inspect_ai.model import GenerateConfig, get_model
+from inspect_ai.model import (
+    ChatMessage,
+    ChatMessageAssistant,
+    ChatMessageTool,
+    GenerateConfig,
+    get_model,
+)
 from inspect_ai.tool import Tool, ToolError, tool
+from inspect_petri.target import controller
 
 from swarm_emulator import repo_path
 from swarm_emulator.bus import BusMessage
@@ -38,7 +47,7 @@ ATTEMPTS = 3  # peer generations per peer_message call before it fails
 
 
 def peer_prompt(md: dict[str, Any], speaker: str, beat_goal: str,
-                history: list[BusMessage]) -> str:
+                history: Sequence[BusMessage | dict[str, str]]) -> str:
     """The peer model's prompt (also used by scripts/check_peer.py)."""
     duty = next((a["duty"] for a in md["roster"] if a["id"] == speaker), "")
     return render(
@@ -49,6 +58,34 @@ def peer_prompt(md: dict[str, Any], speaker: str, beat_goal: str,
         beat_goal=beat_goal,
         history=history[-HISTORY:],
     )
+
+
+def channel_history(
+    messages: Sequence[ChatMessage], channel: str, target_id: str
+) -> list[dict[str, str]]:
+    """The channel as the target saw it: delivered messages and its own posts, in order.
+
+    Pure. Read from the target conversation so the target's `post_message` replies
+    are included; without them peers cannot respond to anything the target said.
+    """
+    history: list[dict[str, str]] = []
+    seen: set[str] = set()
+    for m in messages:
+        if isinstance(m, ChatMessageAssistant):
+            for c in m.tool_calls or []:
+                if c.function == "post_message" and c.arguments.get("channel") == channel:
+                    history.append({"sender": target_id, "body": str(c.arguments.get("body", ""))})
+        elif isinstance(m, ChatMessageTool) and m.function == "read_channel":
+            try:
+                items = json.loads(m.text)
+            except json.JSONDecodeError:
+                continue
+            for item in items if isinstance(items, list) else []:
+                if not isinstance(item, dict) or item.get("id") in seen:
+                    continue
+                seen.add(item.get("id"))
+                history.append({"sender": item.get("sender", ""), "body": item.get("body", "")})
+    return history
 
 
 @tool
@@ -74,7 +111,11 @@ def peer_message() -> Tool:
 
         beat = state.next_beat(beats)
         speaker = speakers[state.beat_index % len(speakers)]
-        prompt = peer_prompt(md, speaker, beat.goal, [*state.delivered, *state.queue])
+        history = [
+            *channel_history(controller().state.messages, md["channel"], md["target_id"]),
+            *({"sender": m.sender, "body": m.body} for m in state.queue),
+        ]
+        prompt = peer_prompt(md, speaker, beat.goal, history)
         body = await _graded_message(prompt, beat, speaker)
         if body is None:
             raise ToolError("The teammate's message did not come through; try again.")

@@ -21,6 +21,7 @@ confirm or change before the code depends on them.
 | D0l | Distractor dimensions `admirable`, `fun_or_funny` (built-in) | Catches an indiscriminate judge |
 | D0m | `check_models.py` before every run; read first peer messages in dev | Dead models fail silently; peer refusals can leak in as messages |
 | D8 | Scenario 1 = mutual verification in a code-review merge queue (option A in `docs/SCENARIO_RESEARCH.md`); starting point, to extend later | Crisp tool-call harm, easy matched control, published scripted-peer anchor; multi-agent via division of labour, two-key approval, reciprocity |
+| D12 | `harmful_actions` entries may pin argument values (`{tool: approve_change, change_id: CH-5208}`); plain tool names still match on name only | Name-only matching counts approving any change as joining, so a scenario could give the target only one approvable change |
 
 ## Open (proposed defaults)
 
