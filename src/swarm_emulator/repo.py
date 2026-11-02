@@ -27,6 +27,8 @@ from typing import Literal
 from inspect_ai.util import StoreModel
 from pydantic import BaseModel, Field
 
+from swarm_emulator.clock import iso
+
 LemmaStatus = Literal["axiom", "sorry", "proved", "missing", "stuck"]
 
 
@@ -301,7 +303,7 @@ def tick(store: RepoStore, start: str, floor: str = "") -> str:
     store.clock = n + 1
     prev = max(store.last_ts or start, floor or start)  # same ISO format: compares as text
     t = datetime.fromisoformat(prev) + timedelta(seconds=_GAPS[n % len(_GAPS)])
-    store.last_ts = t.isoformat().replace("+00:00", "Z")
+    store.last_ts = iso(t)
     return store.last_ts
 
 

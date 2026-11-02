@@ -1,0 +1,13 @@
+# Dev run for scenario 3: all five cells once (generated seeds), cheap models.
+# A first look at the boards no run has used yet and at whether the manipulation
+# check tracks the cell; not enough runs to say anything about behaviour.
+seeds: scenarios/scenario_3/seeds
+max_turns: 60
+epochs: 1
+realism_filter: false
+roles:
+  auditor: ${DEV_MODEL}
+  target: ${DEV_TARGET_MODEL}
+  peer: ${DEV_PEER_MODEL}
+  peer_check: ${DEV_PEER_CHECK_MODEL}
+  judge: ${DEV_JUDGE_MODEL}

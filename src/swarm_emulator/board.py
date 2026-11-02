@@ -28,7 +28,6 @@ import json
 import math
 import re
 from collections.abc import Mapping, Sequence
-from datetime import datetime, timedelta
 from functools import cache
 from pathlib import Path
 from typing import Any, Literal
@@ -38,6 +37,7 @@ from inspect_ai.util import StoreModel
 from pydantic import BaseModel, Field
 
 from swarm_emulator.bus import BusMessage
+from swarm_emulator.clock import nth_tick
 from swarm_emulator.tool_names import LIST_SCRATCH, POST_BOARD, READ_BOARD
 
 Kind = Literal["root", "dir", "feed", "file", "status", "root_file", "missing"]
@@ -150,7 +150,7 @@ def resolve(board: Board, cfg: BoardConfig, path: str) -> tuple[str, Kind]:
         return p.rstrip("/"), "file"
     if any(p.rstrip("/") == f.name for f in cfg.root_files):
         return p.rstrip("/"), "root_file"
-    d = p if p.endswith("/") else p + "/"
+    d = as_dir(p)
     if d in board.entries or d in board.meta["totals"] or d == cfg.inbox:
         return d, "feed"
     if d in board.dirs:
@@ -170,8 +170,11 @@ def appendable(board: Board, cfg: BoardConfig, path: str) -> str | None:
     p, kind = resolve(board, cfg, path)
     if kind == "feed":
         return p
-    d = p if p.endswith("/") else p + "/"
-    return d if kind == "missing" and INBOX_PATH.match(d) else None
+    return as_dir(p) if kind == "missing" and INBOX_PATH.match(as_dir(p)) else None
+
+
+def as_dir(path: str) -> str:
+    return path if path.endswith("/") else path + "/"
 
 
 def is_lane(path: str) -> bool:
@@ -193,8 +196,8 @@ def dir_total(board: Board, store: BoardStore, path: str) -> int:
     return listed + unlisted
 
 
-def pages(board: Board, cfg: BoardConfig, store: BoardStore, path: str) -> int:
-    return max(1, math.ceil(feed_total(board, store, path) / cfg.page_size))
+def n_pages(total: int, page_size: int) -> int:
+    return max(1, math.ceil(total / page_size))
 
 
 # ---- listing and reading -----------------------------------------------------
@@ -261,9 +264,8 @@ def listing(board: Board, cfg: BoardConfig, store: BoardStore, path: str,
         if more:
             rows.append(f"... and {more['count']:,} more ({_entries(more['entries'])})")
         if kind == "feed":
-            n_pages = max(1, math.ceil(total(p) / cfg.page_size))
             label = "(this inbox)" if p.startswith("_relay/inbox/") else "(this lane)"
-            rows.append(_row(label, _entries(total(p)) + f", {n_pages} pages: {READ_BOARD} this "
+            rows.append(_row(label, _entries(total(p)) + f", {n_pages(total(p), cfg.page_size)} pages: {READ_BOARD} this "
                              f"path to read it, {POST_BOARD} to add an entry"))
     return f"{shown}\n" + "\n".join(rows)
 
@@ -278,19 +280,31 @@ def render_page(path: str, page: int, n_pages: int, total: int,
     return json.dumps(out, indent=2, ensure_ascii=False)
 
 
+def parse_page(text: str) -> dict[str, Any] | None:
+    """A `read_scratch` page as rendered by `render_page`, or None for any other result
+    (listings, files, errors). Its `entries` keep only envelope dicts."""
+    try:
+        data = json.loads(text)
+    except json.JSONDecodeError:
+        return None
+    if not isinstance(data, dict) or not isinstance(data.get("entries"), list):
+        return None
+    return {**data, "entries": [e for e in data["entries"] if isinstance(e, dict)]}
+
+
 def read_page(board: Board, cfg: BoardConfig, path: str, page: int,
               live: Sequence[BusMessage]) -> str:
     """`read_scratch` result for a feed page, given the feed's live entries (oldest first)."""
     total = board.total(path) + len(live)
-    n_pages = max(1, math.ceil(total / cfg.page_size))
-    if page < 1 or page > n_pages:
-        return f"{READ_BOARD}: {cfg.bucket}/{path}: page {page} out of range (1-{n_pages})"
+    last = n_pages(total, cfg.page_size)
+    if page < 1 or page > last:
+        return f"{READ_BOARD}: {cfg.bucket}/{path}: page {page} out of range (1-{last})"
     newest_first = [*reversed(live), *reversed(board.entries.get(path, []))]
     start = (page - 1) * cfg.page_size
     chunk = newest_first[start:start + cfg.page_size]
     if not chunk:
-        return render_page(path, page, n_pages, total, [], note="older entries archived")
-    return render_page(path, page, n_pages, total, chunk)
+        return render_page(path, page, last, total, [], note="older entries archived")
+    return render_page(path, page, last, total, chunk)
 
 
 def read_other(board: Board, cfg: BoardConfig, store: BoardStore, path: str) -> str | None:
@@ -358,14 +372,9 @@ def stamp(board: Board, cfg: BoardConfig, first: int, msgs: Sequence[BusMessage]
 
     `first` is the number of live entries already stamped (BoardStore.stamped).
     """
-    start = datetime.fromisoformat(cfg.clock_start)
-    out = []
-    for k, m in enumerate(msgs):
-        n = first + k
-        offset = sum(_GAPS[i % len(_GAPS)] for i in range(n + 1))
-        ts = (start + timedelta(seconds=offset)).isoformat().replace("+00:00", "Z")
-        out.append(m.model_copy(update={"id": f"rb_{board.meta['next_id'] + n:07d}", "ts": ts}))
-    return out
+    return [m.model_copy(update={"id": f"rb_{board.meta['next_id'] + first + k:07d}",
+                                 "ts": nth_tick(cfg.clock_start, first + k, _GAPS)})
+            for k, m in enumerate(msgs)]
 
 
 def commit_read(board: Board, store: BoardStore, path: str, tail: Sequence[dict[str, str]],
@@ -402,14 +411,11 @@ def board_history(messages: Sequence[ChatMessage], path: str, target_id: str,
                 if c.function == post_tool:  # anywhere: a reply may go to the lane or an inbox
                     posts.append(str(c.arguments.get("body", "")))
         elif isinstance(m, ChatMessageTool) and m.function == read_tool:
-            try:
-                page = json.loads(m.text)
-            except json.JSONDecodeError:
+            page = parse_page(m.text)
+            if page is None or page.get("path") != path:
                 continue
-            if not isinstance(page, dict) or page.get("path") != path:
-                continue
-            for e in page.get("entries") or []:
-                if isinstance(e, dict) and isinstance(e.get("id"), str):
+            for e in page["entries"]:
+                if isinstance(e.get("id"), str):
                     seen[e["id"]] = e
     entries = sorted(seen.values(), key=lambda e: (str(e.get("ts", "")), e["id"]))
     history = [{"sender": str(e.get("sender", "")), "body": str(e.get("body", ""))} for e in entries]

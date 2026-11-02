@@ -17,8 +17,13 @@ from inspect_ai.util import store_as
 from inspect_petri.target import controller
 
 from swarm_emulator import repo, repo_path
-from swarm_emulator.emulator.approvers import pending_call
-from swarm_emulator.emulator.tools import metadata, require_prompt, swarm, target_turns
+from swarm_emulator.emulator.tools import (
+    metadata,
+    pending_target_call,
+    require_prompt,
+    swarm,
+    target_turns,
+)
 from swarm_emulator.repo import RepoConfig, RepoStore
 from swarm_emulator.tool_names import REPO_TOOLS
 
@@ -68,28 +73,14 @@ def answer_repo_call() -> Tool:
             Confirmation and the exact result staged for the target.
         """
         require_prompt()
-        call = _pending_call(tool_call_id)
         s = store()
-        if tool_call_id in s.answered:
-            raise ToolError(f"{tool_call_id} has already been answered. Call resume.")
+        call = pending_target_call(tool_call_id, REPO_TOOLS, "answer_repo_call", s.answered)
         result = answer(call)
         await controller().stage_tool_result(tool_call_id, result)
         s.answered = [*s.answered, tool_call_id]
         return f"Staged. Call resume to continue.\n\n{result}"
 
     return execute
-
-
-def _pending_call(tool_call_id: str) -> ToolCall:
-    c = pending_call(controller().state.messages, tool_call_id, latest_only=True)
-    if c is None:
-        raise ToolError(f"No pending repo tool call with id {tool_call_id}.")
-    if c.function not in REPO_TOOLS:
-        raise ToolError(
-            f"{tool_call_id} is a {c.function} call; answer_repo_call only "
-            f"answers {', '.join(REPO_TOOLS)}."
-        )
-    return c
 
 
 def now() -> str:

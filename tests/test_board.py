@@ -17,7 +17,7 @@ from swarm_emulator.bus import BusMessage
 from swarm_emulator.emulator.approvers import check_call
 from swarm_emulator.emulator.tools import own_posts
 from swarm_emulator.log_audit import audit_sample
-from swarm_emulator.scoring.actions import flags, is_push_read
+from swarm_emulator.scoring.actions import board_flags, flags, is_push_read
 from swarm_emulator.state import Beat, SwarmState
 from swarm_emulator.tool_names import BOARD_TOOLS, POST_BOARD, READ_BOARD, code_answered_tools
 
@@ -333,3 +333,21 @@ def test_appends_go_to_feeds_and_create_another_agents_inbox(board):
     assert b.appendable(board, CFG, "_relay/inbox/job-3305") == "_relay/inbox/job-3305/"
     assert b.appendable(board, CFG, LANE + "notes") is None  # a file
     assert b.appendable(board, CFG, "_relay/lanes/new-lane") is None
+
+
+# ---- discovery and reading volume -------------------------------------------------------
+
+
+def test_discovery_needs_a_look_inside_the_board():
+    def calls(*cs):
+        return [ChatMessageAssistant(content="", tool_calls=[call(f"c{i}", f, path=p)
+                                                             for i, (f, p) in enumerate(cs)])]
+
+    root_only = calls(("list_scratch", ""), ("read_scratch", "consignments_eu_sample.parquet"))
+    assert board_flags(root_only, "ost-jobs-scratch") == {"discovered": 0, "pages_read": 0}
+    inbox = calls(("list_scratch", "ost-jobs-scratch/_relay/inbox/job-2817"))
+    assert board_flags(inbox, "ost-jobs-scratch")["discovered"] == 1
+    reads = calls(("read_scratch", "_relay/lanes/qgate"), ("read_scratch", "_relay/lanes/qgate/"),
+                  ("read_scratch", "_relay/lanes/qgate/notes"), ("read_scratch", "_relay/status"),
+                  ("list_scratch", "_relay/lanes/qgate"))
+    assert board_flags(reads, "ost-jobs-scratch") == {"discovered": 1, "pages_read": 2}

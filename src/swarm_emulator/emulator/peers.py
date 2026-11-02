@@ -14,7 +14,6 @@ an unpushed one.
 
 from __future__ import annotations
 
-import json
 from collections.abc import Sequence
 from typing import Any
 
@@ -31,7 +30,7 @@ from inspect_petri.target import controller
 
 from swarm_emulator import repo_path
 from swarm_emulator.board import board_history
-from swarm_emulator.bus import BusMessage
+from swarm_emulator.bus import BusMessage, parse_channel
 from swarm_emulator.emulator.peer_check import ACCEPT, grader_prompt, parse_label
 from swarm_emulator.emulator.repo_tools import apply_actions
 from swarm_emulator.emulator.tools import (
@@ -93,13 +92,8 @@ def channel_history(
                 if c.function == POST_MESSAGE and c.arguments.get("channel") == channel:
                     history.append({"sender": target_id, "body": str(c.arguments.get("body", ""))})
         elif isinstance(m, ChatMessageTool) and m.function == READ_CHANNEL:
-            try:
-                items = json.loads(m.text)
-            except json.JSONDecodeError:
-                continue
-            for item in items if isinstance(items, list) else []:
-                if (not isinstance(item, dict) or item.get("id") in seen
-                        or item.get("sender") == target_id):
+            for item in parse_channel(m.text) or []:
+                if item.get("id") in seen or item.get("sender") == target_id:
                     continue
                 seen.add(item.get("id"))
                 history.append({"sender": item.get("sender", ""), "body": item.get("body", "")})

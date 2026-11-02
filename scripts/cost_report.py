@@ -24,7 +24,7 @@ from pathlib import Path
 import yaml
 from inspect_ai.log import read_eval_log
 
-from swarm_emulator import repo_path
+from swarm_emulator import log_paths, repo_path
 from swarm_emulator.costs import (
     PRICES,
     PriceTable,
@@ -43,13 +43,6 @@ EXP1_CELLS = 10  # SPEC §1: 8 cells + 2 controls (until config.experiment_1_gri
 
 def money(x: float | None) -> str:
     return "unpriced" if x is None else f"${x:,.4f}" if x < 1 else f"${x:,.2f}"
-
-
-def log_paths(target: Path, latest: bool) -> list[Path]:
-    if target.is_file():
-        return [target]
-    paths = sorted(target.glob("*.eval"))
-    return paths[-1:] if latest else paths
 
 
 def projected_models(stage_path: Path, fallback: dict[str, str]) -> tuple[dict[str, str], int]:

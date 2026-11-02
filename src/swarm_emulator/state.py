@@ -10,7 +10,6 @@ builds a new list and reassigns it instead of mutating in place.
 from __future__ import annotations
 
 from collections.abc import Sequence
-from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Literal
 
@@ -19,6 +18,7 @@ from inspect_ai.util import StoreModel
 from pydantic import BaseModel, Field
 
 from swarm_emulator.bus import BusMessage
+from swarm_emulator.clock import nth_tick
 
 
 class Beat(BaseModel):
@@ -115,10 +115,7 @@ class SwarmState(StoreModel):
         """Next message id and timestamp (deterministic, irregular spacing)."""
         n = self.msg_count
         self.msg_count = n + 1
-        start = datetime.fromisoformat(clock_start)
-        offset = sum(_GAPS[i % len(_GAPS)] for i in range(n + 1))
-        ts = (start + timedelta(seconds=offset)).isoformat().replace("+00:00", "Z")
-        return f"msg_{7311 + n * 3:06d}", ts
+        return f"msg_{7311 + n * 3:06d}", nth_tick(clock_start, n, _GAPS)
 
     def queue_msg(self, msg: BusMessage) -> None:
         self.queue = [*self.queue, msg]

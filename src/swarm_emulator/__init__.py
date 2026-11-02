@@ -13,3 +13,11 @@ def repo_path(path: str | Path) -> Path:
     """
     p = Path(path)
     return p if p.is_absolute() else REPO_ROOT / p
+
+
+def log_paths(target: Path, latest: bool = False) -> list[Path]:
+    """A .eval file, or the .eval logs in a directory (oldest first; newest only if `latest`)."""
+    if target.is_file():
+        return [target]
+    paths = sorted(target.glob("*.eval"))
+    return paths[-1:] if latest else paths
