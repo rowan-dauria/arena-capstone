@@ -7,7 +7,7 @@ decides *when*; seed metadata and the `peer` model decide *what*.
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import Any, get_args
 
@@ -64,10 +64,12 @@ def roster_role(agent_id: str) -> SenderRole:
     raise ToolError(f"Unknown sender '{agent_id}'. Use an id from the roster.")
 
 
-def unstamped(sender: str, role: SenderRole, body: str) -> BusMessage:
-    """A message without id/ts: SwarmState.build_delivery stamps it at delivery time."""
-    md = metadata()
-    return BusMessage(id="", ts="", channel=md["channel"], sender=sender,
+def unstamped(sender: str, role: SenderRole, body: str, channel: str | None = None) -> BusMessage:
+    """A message without id/ts: SwarmState.build_delivery stamps it at delivery time.
+
+    `channel` defaults to the seed's channel; board messages pass their path.
+    """
+    return BusMessage(id="", ts="", channel=channel or metadata()["channel"], sender=sender,
                       sender_role=role, body=body)
 
 
@@ -83,7 +85,8 @@ def install_condition_prompt() -> Tool:
             The installed system prompt, so you know what the target was told.
         """
         state = swarm()
-        prompt = render("target_system.md.j2", **metadata())
+        md = metadata()
+        prompt = render(md.get("target_template", "target_system.md.j2"), **md)
         if state.prompt_installed:
             return f"Already installed. The target's system prompt is:\n\n{prompt}"
         await controller().stage_system(prompt)
@@ -133,12 +136,14 @@ def deliver_channel() -> Tool:
         posts = own_posts(controller().state.messages, md["channel"], tool_call_id,
                           state.echoed_posts)
         own = [unstamped(target, roster_role(target), body) for _, body in posts]
-        n_queued = len(state.queue)
-        delivered = state.build_delivery(msgs, md["clock_start"], own_posts=own)
+        n_queued = len(state.queued_for(md["channel"]))
+        delivered = state.build_delivery(msgs, md["clock_start"], own_posts=own,
+                                         channel=md["channel"])
         rendered = render_channel(delivered)
         # Stage first, then commit: if staging fails the queued messages stay queued.
         await controller().stage_tool_result(tool_call_id, rendered)
-        state.commit_delivery(tool_call_id, delivered, post_ids=[i for i, _ in posts])
+        state.commit_delivery(tool_call_id, delivered, post_ids=[i for i, _ in posts],
+                              channel=md["channel"])
         return (
             f"Staged {len(own)} own post(s) + {len(msgs)} background + {n_queued} queued "
             "message(s). "
@@ -149,12 +154,21 @@ def deliver_channel() -> Tool:
 
 
 def own_posts(
-    messages: Sequence[ChatMessage], channel: str, read_call_id: str, echoed: Sequence[str]
+    messages: Sequence[ChatMessage],
+    channel: str,
+    read_call_id: str,
+    echoed: Sequence[str],
+    *,
+    post_tool: str = POST_MESSAGE,
+    key: str = "channel",
+    normalise: Callable[[str], str] = str,
 ) -> list[tuple[str, str]]:
     """The target's posts to `channel` not yet shown back to it: (call id, body).
 
     Pure. Covers every post made before the pending read, including earlier calls
     in the same turn; posts listed after the read call in that turn come next time.
+    Board scenarios pass post_tool=POST_BOARD, key="path" and a `normalise` that
+    maps the target's spelling of a path to its canonical form.
     """
     seen = set(echoed)
     posts = []
@@ -164,7 +178,7 @@ def own_posts(
         for c in m.tool_calls or []:
             if c.id == read_call_id:
                 return posts
-            if (c.function == POST_MESSAGE and c.arguments.get("channel") == channel
+            if (c.function == post_tool and normalise(str(c.arguments.get(key, ""))) == channel
                     and c.id not in seen):
                 posts.append((c.id, str(c.arguments.get("body", ""))))
     return posts

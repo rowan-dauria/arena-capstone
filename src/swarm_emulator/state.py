@@ -31,6 +31,9 @@ class Beat(BaseModel):
     # see emulator.repo_tools.apply_actions). Fixed in the scenario files, never
     # written by the auditor.
     actions: list[dict[str, Any]] = []
+    # Where the message is posted (board scenarios: a board path, e.g. the
+    # target's inbox or a lane). None means the seed's one channel.
+    path: str | None = None
 
 
 class Release(BaseModel):
@@ -86,6 +89,16 @@ class SwarmState(StoreModel):
         last = self.released[-1].target_turn if self.released else 0
         return target_turns > last
 
+    def unread(self, beats: list[Beat], default_path: str) -> bool:
+        """True if a message is still queued where the next beat would post.
+
+        Board scenarios hold the next beat back until the target has read the
+        last one: otherwise beats pile up unread and its first read is a wall of
+        pressure. (Channel scenarios deliver on every read, so it never applies.)
+        """
+        beat = self.next_beat(beats)
+        return beat is not None and bool(self.queued_for(beat.path or default_path))
+
     def mark_released(self, beat: Beat, speaker: str, target_turn: int) -> None:
         self.released = [
             *self.released,
@@ -110,6 +123,10 @@ class SwarmState(StoreModel):
     def queue_msg(self, msg: BusMessage) -> None:
         self.queue = [*self.queue, msg]
 
+    def queued_for(self, channel: str | None) -> list[BusMessage]:
+        """Queued messages for `channel` (all of them if None), in queue order."""
+        return [m for m in self.queue if channel is None or m.channel == channel]
+
     def record_delivered(self, msgs: list[BusMessage]) -> None:
         self.delivered = [*self.delivered, *msgs]
 
@@ -120,8 +137,12 @@ class SwarmState(StoreModel):
         background: list[BusMessage],
         clock_start: str,
         own_posts: Sequence[BusMessage] = (),
+        channel: str | None = None,
     ) -> list[BusMessage]:
         """The target's own posts since its last read, then background, then queued.
+
+        Only messages queued for `channel` are included (all if None), so reading
+        one board path never consumes a message queued for another.
 
         Everything is stamped here, in that order, so ids and timestamps increase
         down the channel (the target posted before this read; queued peer messages
@@ -129,17 +150,22 @@ class SwarmState(StoreModel):
         `commit_delivery` once the result has actually been handed to the target.
         """
         out = []
-        for m in [*own_posts, *background, *self.queue]:
+        for m in [*own_posts, *background, *self.queued_for(channel)]:
             msg_id, ts = self.new_envelope(clock_start)
             out.append(m.model_copy(update={"id": msg_id, "ts": ts}))
         return out
 
     def commit_delivery(
-        self, tool_call_id: str, msgs: list[BusMessage], post_ids: Sequence[str] = ()
+        self,
+        tool_call_id: str,
+        msgs: list[BusMessage],
+        post_ids: Sequence[str] = (),
+        channel: str | None = None,
     ) -> None:
-        """Record a staged delivery: empty the queue, log messages, mark the read
-        answered, and remember which target posts have been shown back."""
-        self.queue = []
+        """Record a staged delivery: drop the delivered queued messages (those for
+        `channel`, or all if None), log messages, mark the read answered, and
+        remember which target posts have been shown back."""
+        self.queue = [m for m in self.queue if channel is not None and m.channel != channel]
         self.record_delivered(msgs)
         self.answered_reads = [*self.answered_reads, tool_call_id]
         self.echoed_posts = [*self.echoed_posts, *post_ids]

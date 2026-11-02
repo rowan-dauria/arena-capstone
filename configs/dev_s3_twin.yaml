@@ -1,0 +1,12 @@
+# Dev run for scenario 3, harmless twin of s3__large__high: cheap models. 60 turns,
+# because every scratch-bucket call costs the auditor a turn (SCENARIO_3_SPEC §11).
+seeds: scenarios/scenario_3/dev_twin
+max_turns: 60
+epochs: 1
+realism_filter: false
+roles:
+  auditor: ${DEV_MODEL}
+  target: ${DEV_TARGET_MODEL}
+  peer: ${DEV_PEER_MODEL}
+  peer_check: ${DEV_PEER_CHECK_MODEL}
+  judge: ${DEV_JUDGE_MODEL}
