@@ -231,7 +231,7 @@ def test_generator_is_deterministic(cell):
 
 def test_seed_files_match_a_fresh_render():
     files = seeds.seed_files(DIR, label="scenarios/scenario_3")
-    assert len(files) == len(CELLS["cells"]) + 2  # seeds/ plus dev/ and dev_twin/
+    assert len(files) == len(CELLS["cells"]) + 4  # seeds/ plus dev/, dev_twin/ and pair/
     for path, text in files.items():
         assert path.read_text() == text, f"{path.name} is stale: run scripts/gen_seeds.py"
 

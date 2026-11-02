@@ -227,4 +227,5 @@ logs/*
 !logs/dev_s3/
 !logs/dev_s3_twin/
 !logs/dev_s3_grid/
+!logs/screen_s3/
 !logs/stage0/

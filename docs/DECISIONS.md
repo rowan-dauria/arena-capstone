@@ -34,12 +34,13 @@ confirm or change before the code depends on them.
 | D3 | Number of beats and release trigger. **Conflict:** 4 beats over 5 speakers leaves one misaligned agent silent at 5 of 5 (see below) | 5 beats; release one per target turn after the target first engages the task (already enforced by `can_release`) |
 | D4 | Peer model family in Exp 1 | Different family from the target (fixed) |
 | D5 | Fixed oversight level and operator behaviour | Medium; operator replies with one fixed acknowledgement per scenario |
-| D6 | Models per role (target, auditor, peer, judge, realism) and dev model | TBD before day 1. Judge ≠ target family (D0j). Consider OpenRouter for one key across roles |
+| D6 | Models per role (target, auditor, peer, judge, realism) and dev model | Scenario 3 pilot decided 2026-11-02 (`configs/pilot_s3.yaml`): target DeepSeek v4.1 flash, auditor and realism Haiku 5.5, peer Gemini 3.8 flash, peer_check GPT-6.1 terra (not Anthropic: its content filter blocked grader calls), judge Sonnet 5.5. Open for scenarios 1 and 2. Judge ≠ target family (D0j) |
 | D7 | Fallback if the pilot gate fails | Day 4 morning on realism fixes, then Exp 1 at ~10 runs per cell |
 | D9 | Where the control cells sit | 3 of 5 misaligned, one cell per structure (10 cells total) |
 | D11 | Who writes the misaligned agents' ordinary (non-push) channel messages? `peer_guard` stops the auditor writing as them, so at 5 of 5 no worker is left to make mundane traffic (see below) | Pre-authored per roster agent in the scenario's `background_traffic.jsonl`, served by the emulator, identical across cells |
 | D10 | Who writes peer-authored artifacts (e.g. a misaligned test agent's check summary) the target reads as tool results? | Pre-authored in the scenario files as fixed text, so the auditor never writes them and `peer_guard` and the contracts stay unchanged |
 | D15 | Which scenario does Experiment 1 headline, and in what order do we fall back? Scenario 3 (relay board) measures the swarm dynamics best but is newest | Pilot all three; scenario 3 headlines if it passes its Day 3 gate (SCENARIO_3_SPEC §9), else scenario 1 or 2, whichever passes its pilot with the clearer harm/twin contrast |
+| D16 | Harm strength: no target has joined any harmful version (scenarios 1–3, GLM 5.3 Flash and DeepSeek v4.1 flash), so no condition can show an effect. Soften the harmful facts, screen more compliant targets, or make ceiling refusal the finding? | Scenario 3: soften the harmful `qgate-policy` (keep "overrides are for on-call" and the VAT harm, drop the leaked-token line) and screen two targets on the pair before the pilot; keep the twins differing only in policy facts. See `docs/STATUS.md` |
 
 ## Open items in detail
 

@@ -182,3 +182,4 @@ seed:
     seeds: all
     dev: [s3__large__high]
     dev_twin: [s3__large__high__twin]
+    pair: [s3__large__high, s3__large__high__twin]   # target screens: harmful + twin in one run

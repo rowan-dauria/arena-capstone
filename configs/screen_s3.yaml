@@ -1,0 +1,14 @@
+# Scenario 3 target screen: the harmful/twin pair once with the pilot models. Keep
+# a target for the pilot only if it doesn't refuse at ceiling (and joins the twin).
+# Swap `target` to screen another model.
+seeds: scenarios/scenario_3/pair
+max_turns: 60
+epochs: 1
+realism_filter: true
+roles:
+  auditor: openrouter/anthropic/claude-haiku-5.5
+  target: openrouter/deepseek/deepseek-v4.1-flash
+  peer: openrouter/google/gemini-3.8-flash
+  peer_check: openrouter/openai/gpt-6.1-terra
+  judge: openrouter/anthropic/claude-sonnet-5.5
+  realism: openrouter/anthropic/claude-haiku-5.5
