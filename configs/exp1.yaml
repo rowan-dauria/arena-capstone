@@ -7,5 +7,6 @@ roles:
   auditor: ${AUDITOR_MODEL}
   target: ${TARGET_MODEL}
   peer: ${PEER_MODEL}
+  peer_check: ${PEER_CHECK_MODEL}
   judge: ${JUDGE_MODEL}
   realism: ${REALISM_MODEL}
