@@ -36,20 +36,6 @@ def handles(rng: random.Random, n: int) -> list[str]:
     return rng.sample(pool, n)
 
 
-def run_id(handle: str, rng: random.Random) -> str:
-    return f"r-{handle[4:]}-{rng.choice('aaaabbc')}"
-
-
-def fill(template: str, author: str, others: list[str], rng: random.Random, clock: datetime) -> str:
-    ahead = clock + timedelta(minutes=rng.randint(12, 95))
-    return template.format(
-        run=run_id(author, rng),
-        other=rng.choice([o for o in others if o != author] or others),
-        time=ahead.strftime("%H:%M"),
-        n=rng.randint(1, 9),
-    )
-
-
 def timestamps(rng: random.Random, end: datetime, n: int, per_day: int) -> list[datetime]:
     """n times before `end`, oldest first, at the cell's density (entries per 24h)."""
     mean_gap = 86400 / max(per_day, 1)
@@ -60,49 +46,83 @@ def timestamps(rng: random.Random, end: datetime, n: int, per_day: int) -> list[
     return list(reversed(out))
 
 
+class Writer:
+    """Fills pool templates: each author's runs go a, b, c...; no template twice in a row."""
+
+    def __init__(self, rng: random.Random, authors: list[str], clock: datetime):
+        self.rng, self.authors, self.clock = rng, authors, clock
+        self.runs: dict[str, int] = {}
+        self.last: dict[str, str] = {}
+
+    def run_id(self, author: str, advance: bool) -> str:
+        """The author's current run; an ACK closes it, so the next one moves on a letter."""
+        n = self.runs.get(author, 0)
+        if advance:
+            self.runs[author] = n + 1
+        return f"r-{author[4:]}-{'abcdefghjk'[n % 10]}"
+
+    def text(self, key: str, templates: list[str], author: str, advance: bool = True) -> str:
+        choices = [t for t in templates if t != self.last.get(key)] or templates
+        t = self.rng.choice(choices)
+        self.last[key] = t
+        ahead = self.clock + timedelta(minutes=self.rng.randint(12, 95))
+        others = [o for o in self.authors if o != author] or self.authors
+        return t.format(run=self.run_id(author, advance) if "{run}" in t else "",
+                        other=self.rng.choice(others), time=ahead.strftime("%H:%M"),
+                        n=self.rng.randint(1, 9))
+
+
 def build(cell_id: str, seed: int = 0) -> list[dict[str, Any]]:
     cells = yaml.safe_load((DIR / "cells.yaml").read_text())
     pool = yaml.safe_load((DIR / "board" / "pool.yaml").read_text())
     scenario = yaml.safe_load((DIR / "scenario.yaml").read_text())
     cell = cells["cells"][cell_id]
-    if "board_of" in cell:
-        cell = {**cells["cells"][cell["board_of"]], "board_of": cell["board_of"]}
+    board_cell = cell.get("board_of", cell_id)
+    cell = cells["cells"][board_cell]
     scale = cells["scales"][cell["swarm_scale"]]
     opts = cells["board"]
-    rng = random.Random(f"{cell.get('board_of', cell_id)}:{seed}")
+    rng = random.Random(f"{board_cell}:{seed}")
     clock = datetime.fromisoformat(scenario["clock_start"])
-    ack_share = cell["lane_acked"] / cell["agents_seen"]
     depth = opts["depth_pages"] * opts["page_size"]
 
-    authors = handles(rng, scale["authors"])
-    # Large boards show a different author on nearly every entry; small ones reuse a few.
-    def author() -> str:
-        return rng.choice(authors)
+    # Who is on the board: authors of the history, split by whether they have ACKed.
+    authors = handles(rng, cell["agents_seen"] - 2)
+    n_acked = cell["lane_acked"] - cells["personas_acked"]
+    acked, holding = authors[:n_acked], authors[n_acked:]
+    share = len(acked) / len(authors)
+    w = Writer(rng, authors, clock)
+    qgate = pool["lanes"][QGATE]
+
+    def qgate_entry(tail: bool = False) -> tuple[str, str, str]:
+        """(author, body, tag). Tail ACKs come from agents joining now (holding -> acked)."""
+        if not tail and rng.random() < opts["other_share"]:
+            who = rng.choice(authors)
+            return who, w.text("qgate:other", qgate["other"], who), "other"
+        joining = holding if tail else acked
+        if joining and rng.random() < share:
+            who = rng.choice(joining)
+            if tail:
+                holding.remove(who)
+                acked.append(who)
+            return who, w.text("qgate:ack", qgate["ack"], who), "ack"
+        if not holding:  # everyone has joined: nobody left to hold
+            who = rng.choice(authors)
+            return who, w.text("qgate:other", qgate["other"], who), "other"
+        who = rng.choice(holding)
+        return who, w.text("qgate:holding", qgate["holding"], who, advance=False), "holding"
+
+    def lane_entry(lane: str, tail: bool = False) -> tuple[str, str, str]:
+        if lane == QGATE:
+            return qgate_entry(tail)
+        who = rng.choice(authors)
+        return who, w.text(lane, pool["lanes"][lane]["mundane"], who), "holding"
 
     entries: list[BusMessage] = []
-
-    def lane_entries(lane: str, n: int) -> list[tuple[str, str]]:
-        spec = pool["lanes"][lane]
-        out = []
-        for _ in range(n):
-            who = author()
-            if lane == QGATE:
-                r = rng.random()
-                if r < opts["other_share"]:
-                    kind = "other"
-                else:
-                    kind = "ack" if rng.random() < ack_share else "holding"
-                text = rng.choice(spec[kind])
-            else:
-                text = rng.choice(spec["mundane"])
-            out.append((who, fill(text, who, authors, rng, clock)))
-        return out
-
     for lane in LANES:
         name = lane.split("/")[2]
         n = min(depth, scale["total"][name])
-        for (who, body), ts in zip(lane_entries(lane, n),
-                                   timestamps(rng, clock, n, scale["day"][name]), strict=True):
+        for ts in timestamps(rng, clock, n, scale["day"][name]):
+            who, body, _ = lane_entry(lane)
             entries.append(BusMessage(id="", ts=_iso(ts), channel=lane, sender=who,
                                       sender_role="worker", body=body))
 
@@ -113,22 +133,21 @@ def build(cell_id: str, seed: int = 0) -> list[dict[str, Any]]:
         n = rng.randint(1, 4)
         inbox_totals[path] = n
         for ts in timestamps(rng, clock, n, 6):
-            who = author()
+            who = rng.choice([a for a in authors if a != owner])
             entries.append(BusMessage(id="", ts=_iso(ts), channel=path, sender=who,
                                       sender_role="worker",
-                                      body=fill(rng.choice(pool["inbox"]), who, authors, rng, clock)))
+                                      body=w.text("inbox", pool["inbox"], who)))
 
     # Ids follow time across the whole board; the next live entry continues from them.
     entries.sort(key=lambda m: m.ts)
-    total_claimed = sum(scale["total"].values())
-    next_id = 3_100_000 + total_claimed
+    next_id = 3_100_000 + sum(scale["total"].values())
     entries = [m.model_copy(update={"id": f"rb_{next_id - len(entries) + i:07d}"})
                for i, m in enumerate(entries)]
 
     tail: list[dict[str, Any]] = []
     for lane in LANES:
-        for who, body in lane_entries(lane, opts["tail_entries"]):
-            tag = "ack" if body.startswith("ACK") else "holding"
+        for _ in range(opts["tail_entries"]):
+            who, body, tag = lane_entry(lane, tail=True)
             tail.append({"kind": "tail", "path": lane, "tag": tag, "sender": who, "body": body})
 
     unlisted = cell["agents_seen"] - 2 - len(inbox_owners)
@@ -137,7 +156,7 @@ def build(cell_id: str, seed: int = 0) -> list[dict[str, Any]]:
         more["_relay/inbox/"] = {"count": unlisted, "entries": unlisted * 3}
     meta = {
         "kind": "meta",
-        "cell": cell.get("board_of", cell_id),
+        "cell": board_cell,
         "seed": seed,
         "next_id": next_id,
         "ack_lane": QGATE,
@@ -161,6 +180,8 @@ def build(cell_id: str, seed: int = 0) -> list[dict[str, Any]]:
             "dedupe_24h": scale["day"]["dedupe-backfill"],
             "dedupe_acks": scale["dedupe_acks"],
         },
+        # For tests: who the history says has ACKed (never shown to the target).
+        "acked_authors": sorted(authors[:n_acked]),
     }
     files = [{"kind": "file", "path": p, "text": t} for p, t in pool["files"].items()]
     return [meta, *({"kind": "entry", "msg": m.model_dump()} for m in entries), *files, *tail]
