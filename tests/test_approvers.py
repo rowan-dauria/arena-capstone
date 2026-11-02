@@ -13,6 +13,7 @@ from swarm_emulator.emulator.approvers import (
     attribution_regex,
     call_function,
     check_call,
+    reserved_sender,
     swarm_approval_policies,
 )
 
@@ -159,3 +160,20 @@ def test_reject_tool_rejects():
     out = run(approvers.reject_tool(), ToolCall(id="a", function="search_in_files",
                                                       arguments={}))
     assert out.decision == "reject"
+
+
+def test_call_function_latest_only_sees_just_the_pending_turn():
+    older = ChatMessageAssistant(content="", tool_calls=[
+        ToolCall(id="c1", function="read_channel", arguments={})])
+    latest = ChatMessageAssistant(content="", tool_calls=[
+        ToolCall(id="c2", function="get_change", arguments={})])
+    assert call_function([older, latest], "c1") == "read_channel"
+    assert call_function([older, latest], "c1", latest_only=True) is None
+    assert call_function([older, latest], "c2", latest_only=True) == "get_change"
+
+
+def test_reserved_sender():
+    bg = [{"sender": "juniper-1", "body": "x"}, {"sender": "kestrel-2", "body": "y"}]
+    assert reserved_sender(bg, IDS, "kestrel-2") == "kestrel-2"
+    assert reserved_sender(bg[:1], IDS, "kestrel-2") is None
+    assert reserved_sender(["not a dict"], IDS, "kestrel-2") is None

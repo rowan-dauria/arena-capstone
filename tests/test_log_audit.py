@@ -72,16 +72,15 @@ def test_missing_scorers_are_errors():
         "judge_missing", "actions_missing", "scanner_missing"}
 
 
+def test_every_scanner_is_checked():
+    from swarm_emulator.log_audit import SCANNER_SCORERS
+    assert set(SCANNER_SCORERS) == {"refused_openly", "concealed", "manipulation_check"}
+
+
 def test_scanner_refusal_nan_is_an_error():
     scores = {**GOOD_SCORES, "concealed": Score(value=math.nan)}
     issues = audit_sample(sample([SYS, turn()], scores))
     assert [(i.level, i.code) for i in issues] == [("error", "scanner_missing")]
-
-
-def test_log_audit_checks_every_scanner():
-    from swarm_emulator.log_audit import SCANNER_SCORERS
-    from swarm_emulator.scoring.scanners import SCANNERS
-    assert SCANNER_SCORERS == tuple(s.__name__ for s in SCANNERS)
 
 
 def test_unanswered_call_mid_conversation_is_an_error():

@@ -17,7 +17,9 @@ from inspect_petri.target import controller
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
 from swarm_emulator.bus import BusMessage, SenderRole, render_channel
+from swarm_emulator.emulator.approvers import call_function, reserved_sender
 from swarm_emulator.state import SwarmState
+from swarm_emulator.tool_names import READ_CHANNEL
 
 PROMPTS = Path(__file__).parent / "prompts"
 _env = Environment(
@@ -113,16 +115,16 @@ def deliver_channel() -> Tool:
         _check_pending_read(tool_call_id)
         if tool_call_id in state.answered_reads:
             raise ToolError(f"{tool_call_id} has already been answered. Call resume.")
-        reserved = set(md.get("misaligned_ids", [])) | {md["target_id"]}
-        msgs: list[BusMessage] = []
+        reserved = reserved_sender(background, md.get("misaligned_ids") or [], md["target_id"])
+        if reserved:
+            raise ToolError(
+                f"You cannot write messages as '{reserved}'. Messages from that agent "
+                "come only from peer_message."
+            )
+        msgs = []
         for item in background:
-            sender, body = item.get("sender", ""), item.get("body", "")
-            if sender in reserved:
-                raise ToolError(
-                    f"You cannot write messages as '{sender}'. Messages from that agent "
-                    "come only from peer_message."
-                )
-            msgs.append(unstamped(sender, roster_role(sender), body))
+            sender = item.get("sender", "")
+            msgs.append(unstamped(sender, roster_role(sender), item.get("body", "")))
         n_queued = len(state.queue)
         delivered = state.build_delivery(msgs, md["clock_start"])
         rendered = render_channel(delivered)
@@ -138,18 +140,14 @@ def deliver_channel() -> Tool:
 
 
 def _check_pending_read(tool_call_id: str) -> None:
-    for m in reversed(controller().state.messages):
-        if isinstance(m, ChatMessageAssistant):
-            for call in m.tool_calls or []:
-                if call.id == tool_call_id:
-                    if call.function != "read_channel":
-                        raise ToolError(
-                            f"{tool_call_id} is a {call.function} call. deliver_channel only "
-                            "answers read_channel; use send_tool_call_result for other tools."
-                        )
-                    return
-            break
-    raise ToolError(f"No pending read_channel call with id {tool_call_id}.")
+    function = call_function(controller().state.messages, tool_call_id, latest_only=True)
+    if function is None:
+        raise ToolError(f"No pending {READ_CHANNEL} call with id {tool_call_id}.")
+    if function != READ_CHANNEL:
+        raise ToolError(
+            f"{tool_call_id} is a {function} call. deliver_channel only answers "
+            f"{READ_CHANNEL}; use send_tool_call_result for other tools."
+        )
 
 
 @tool

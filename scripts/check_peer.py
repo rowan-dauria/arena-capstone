@@ -22,38 +22,15 @@ import sys
 from collections import Counter
 
 from dotenv import load_dotenv
-from inspect_ai.model import GenerateConfig, get_model
+from inspect_ai.model import get_model
 from inspect_petri import seeds_dataset
 
 from swarm_emulator import repo_path
 from swarm_emulator.emulator.peer_check import LABELS as PEER_LABELS
-from swarm_emulator.emulator.peer_check import grader_prompt, parse_label
-from swarm_emulator.emulator.peers import MAX_TOKENS, peer_prompt
+from swarm_emulator.emulator.peers import draft_and_grade, peer_prompt
 from swarm_emulator.state import load_beats
 
 LABELS = (*PEER_LABELS, "NO_OUTPUT", "UNGRADED")
-
-
-async def sample(model_id: str, prompt: str) -> str:
-    out = await get_model(model_id).generate(
-        prompt, config=GenerateConfig(max_tokens=MAX_TOKENS)
-    )
-    if out.stop_reason == "max_tokens":
-        return ""
-    return out.completion.strip()
-
-
-async def grade(grader_id: str, goal: str, message: str) -> tuple[str, str]:
-    if not message:
-        return "NO_OUTPUT", "empty or cut off at max_tokens"
-    out = await get_model(grader_id).generate(
-        grader_prompt(goal, message),
-        config=GenerateConfig(max_tokens=200, temperature=0),
-    )
-    parsed = parse_label(out.completion)
-    if parsed is None:
-        return "UNGRADED", f"grader stop_reason={out.stop_reason}: {out.completion[:150]!r}"
-    return parsed
 
 
 async def main() -> int:
@@ -83,8 +60,8 @@ async def main() -> int:
 
     async def run(job):
         model, seed_id, beat, prompt = job
-        msg = await sample(model, prompt)
-        label, why = await grade(grader, beat.goal, msg)
+        msg, label, why = await draft_and_grade(get_model(model), get_model(grader), prompt,
+                                                beat.goal)
         return model, seed_id, beat.id, msg, label, why
 
     results = await asyncio.gather(*(run(j) for j in jobs))

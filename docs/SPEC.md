@@ -150,22 +150,29 @@ swarm-emulator/
 │   ├── config.py                  # contract (3.2)
 │   ├── bus.py                     # contract (3.1)
 │   ├── state.py                   # SwarmState(StoreModel)
+│   ├── tool_names.py              # target tool names the code depends on (3.4)
+│   ├── stage.py                   # stage config → `inspect eval` argv (.env expansion)
+│   ├── log_audit.py               # silent-failure checks over finished logs
 │   ├── seeds.py                   # grid → seed .md files (inspect_petri.util.write_markdown_directory)
 │   ├── emulator/
 │   │   ├── tools.py               # install_condition_prompt, deliver_channel, swarm_state
-│   │   ├── peers.py               # peer_message (calls the `peer` model role)
+│   │   ├── peers.py               # peer_message, draft_and_grade (`peer` + `peer_check` roles)
+│   │   ├── peer_check.py          # grader prompt + label parsing for peer messages
 │   │   ├── approvers.py           # reject_tool, peer_guard, channel_realism (SPEC 4.4)
 │   │   └── prompts/               # target_system.md.j2, auditor_instructions.md, peer_persona.md.j2
 │   └── scoring/
-│       ├── actions.py             # rule-based flags
+│       ├── actions.py             # rule-based flags (+ actions_scorer.py wrapper)
 │       ├── scanners.py            # audit_scanner questions incl. manipulation checks
+│       ├── judge.py               # Exp 1 judge dimensions (built-in + custom)
+│       ├── outcome.py             # primary outcome precedence
 │       └── dimensions/            # custom judge rubric .md files
 ├── seeds/                         # GENERATED: dev/, exp1/ (do not hand-edit)
-├── scripts/                       # gen_seeds.py, run.sh, check_models.py, consistency_check.py,
+├── scripts/                       # run.sh, check_models.py, check_peer.py, audit_logs.py,
+│                                  # gen_seeds.py; planned: consistency_check.py,
 │                                  # export_for_labelling.py
 ├── analysis/                      # exp1.ipynb, labels/, figures/
-├── logs/                          # Inspect logs (gitignored; back up separately)
-├── reference/                     # existing peer_guard.py + tests
+├── logs/                          # Inspect logs; dev/ and stage0/ committed, the rest
+│                                  # gitignored (back up separately)
 └── tests/                         # test_bus, test_config, test_state, test_seeds,
                                    # test_approvers, test_actions, fixtures/
 ```
@@ -189,11 +196,21 @@ swarm-emulator/
 
 ### 4.2 `state.py`
 
-`SwarmState` as an Inspect `StoreModel` (per-sample). Fields: roster,
-structure, misaligned ids, beats, `beat_index`, released-beat log (beat id,
-speaker, turn), queued peer messages, task board, `prompt_installed`.
-Pure methods: `next_beat()`, `can_release(turn, last_target_action)`,
-`mark_released()`, `queue(msg)`, `drain_queue()`.
+`SwarmState` as an Inspect `StoreModel` (per-sample, saved in the log). The
+condition itself (roster, structure, misaligned ids, beats file) stays in the
+seed metadata; the state holds only what changes during a run:
+
+- `prompt_installed`; `beat_index` and `released` (beat id, speaker, target
+  turn); `peer_rejections` (drafts `peer_check` refused);
+- `queue` (peer messages waiting for the next channel read), `delivered` (every
+  message the target has been shown), `answered_reads`, `msg_count`.
+
+Pure methods (reassign, never mutate, so the store persists them):
+`next_beat()`, `can_release(beats, target_turns)` (a target turn since the last
+release), `mark_released()`, `record_rejection()`, `new_envelope()` (deterministic
+ids and timestamps), `queue_msg()`, `build_delivery()` + `commit_delivery()`
+(stamp background then queued messages; clear the queue only after staging
+succeeded). Task board: not yet implemented.
 
 ### 4.3 Emulator tools (`emulator/tools.py`, `emulator/peers.py`)
 
@@ -225,8 +242,7 @@ what is queued) so its improvised traffic stays consistent.
 
 ### 4.4 Approvers (`emulator/approvers.py`)
 
-Written from scratch (the reference `peer_guard.py` was never added to
-`reference/`). Chain, in order; Inspect stops at the first non-`escalate`:
+Written from scratch (no reference `peer_guard.py` was available). Chain, in order; Inspect stops at the first non-`escalate`:
 
 1. `reject_tool`: rejects tools the auditor must never use (`set_system_message`,
    `create_tool`, `remove_tool`, rollback/restart, `search_in_files`), even if a

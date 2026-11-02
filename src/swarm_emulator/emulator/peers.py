@@ -23,6 +23,7 @@ from inspect_ai.model import (
     ChatMessageAssistant,
     ChatMessageTool,
     GenerateConfig,
+    Model,
     get_model,
 )
 from inspect_ai.tool import Tool, ToolError, tool
@@ -40,6 +41,7 @@ from swarm_emulator.emulator.tools import (
     unstamped,
 )
 from swarm_emulator.state import Beat, PeerRejection, load_beats
+from swarm_emulator.tool_names import POST_MESSAGE, READ_CHANNEL
 
 HISTORY = 8  # recent channel messages shown to the peer model
 MAX_TOKENS = 2000  # includes reasoning tokens on reasoning models
@@ -73,9 +75,9 @@ def channel_history(
     for m in messages:
         if isinstance(m, ChatMessageAssistant):
             for c in m.tool_calls or []:
-                if c.function == "post_message" and c.arguments.get("channel") == channel:
+                if c.function == POST_MESSAGE and c.arguments.get("channel") == channel:
                     history.append({"sender": target_id, "body": str(c.arguments.get("body", ""))})
-        elif isinstance(m, ChatMessageTool) and m.function == "read_channel":
+        elif isinstance(m, ChatMessageTool) and m.function == READ_CHANNEL:
             try:
                 items = json.loads(m.text)
             except json.JSONDecodeError:
@@ -127,6 +129,29 @@ def peer_message() -> Tool:
     return execute
 
 
+async def draft_and_grade(peer: Model, checker: Model, prompt: str, goal: str
+                          ) -> tuple[str, str, str]:
+    """One peer draft and its grade: (body, label, reason).
+
+    label is a peer_check label, or NO_OUTPUT (empty or cut off at MAX_TOKENS) or
+    UNGRADED (the grader gave no label). Shared with scripts/check_peer.py so the
+    pre-run screen and the in-run check treat every draft the same way.
+    """
+    out = await peer.generate(prompt, config=GenerateConfig(max_tokens=MAX_TOKENS))
+    body = out.completion.strip()
+    if not body or out.stop_reason == "max_tokens":
+        return body, "NO_OUTPUT", f"empty or cut off (stop_reason={out.stop_reason})"
+    graded = await checker.generate(
+        grader_prompt(goal, body), config=GenerateConfig(max_tokens=200, temperature=0)
+    )
+    parsed = parse_label(graded.completion)
+    if parsed is None:
+        return body, "UNGRADED", (
+            f"grader stop_reason={graded.stop_reason}: {graded.completion.strip()[:200]!r}"
+        )
+    return body, *parsed
+
+
 async def _graded_message(prompt: str, beat: Beat, speaker: str) -> str | None:
     """A peer message the grader labels PUSH, or None after ATTEMPTS tries.
 
@@ -136,19 +161,9 @@ async def _graded_message(prompt: str, beat: Beat, speaker: str) -> str | None:
     peer = get_model(role="peer", required=True)
     checker = get_model(role="peer_check", required=True)
     for _ in range(ATTEMPTS):
-        out = await peer.generate(prompt, config=GenerateConfig(max_tokens=MAX_TOKENS))
-        body = out.completion.strip()
-        if not body or out.stop_reason == "max_tokens":
-            label, reason = "NO_OUTPUT", f"empty or cut off (stop_reason={out.stop_reason})"
-        else:
-            graded = await checker.generate(
-                grader_prompt(beat.goal, body),
-                config=GenerateConfig(max_tokens=200, temperature=0),
-            )
-            parsed = parse_label(graded.completion)
-            label, reason = parsed or ("UNGRADED", graded.completion.strip()[:200])
-            if label == ACCEPT:
-                return body
+        body, label, reason = await draft_and_grade(peer, checker, prompt, beat.goal)
+        if label == ACCEPT:
+            return body
         state.record_rejection(
             PeerRejection(beat_id=beat.id, speaker=speaker, label=label,
                           reason=reason, body=body)

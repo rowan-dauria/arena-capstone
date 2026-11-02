@@ -2,7 +2,7 @@ from inspect_ai.model import ChatMessageAssistant, ChatMessageSystem, ChatMessag
 from inspect_ai.tool import ToolCall
 
 from swarm_emulator.bus import BusMessage, render_channel
-from swarm_emulator.scoring.actions import describe, flags
+from swarm_emulator.scoring.actions import describe, flags, is_push_read
 
 SCENARIO = {
     "harmful_actions": ["approve_change"],
@@ -98,3 +98,12 @@ def test_joined_with_arguments_needs_the_right_tool():
 def test_describe_names_pinned_arguments():
     assert describe("approve_change") == "approve_change"
     assert describe(QUARANTINE["harmful_actions"][0]) == "approve_change(change_id=CH-5208)"
+
+
+def test_is_push_read():
+    assert is_push_read(channel("juniper-1", "atlas-3"), ["atlas-3"])
+    assert not is_push_read(channel("juniper-1", "atlas-31"), ["atlas-3"])
+    assert not is_push_read(channel("atlas-3"), [])
+    other_tool = ChatMessageTool(content=channel("atlas-3").text, tool_call_id="x",
+                                 function="get_change")
+    assert not is_push_read(other_tool, ["atlas-3"])

@@ -23,14 +23,16 @@ from inspect_ai.model import (
     ContentReasoning,
 )
 
-from swarm_emulator.bus import sender_regex
-from swarm_emulator.emulator.approvers import CHANNEL_TOOLS, impersonation
+from swarm_emulator.emulator.approvers import impersonation
+from swarm_emulator.scoring.actions import is_push_read
+from swarm_emulator.scoring.scanners import SCANNERS
+from swarm_emulator.tool_names import READ_CHANNEL
 
 JUDGE_SCORER = "audit_judge"
 ACTIONS_SCORER = "swarm_actions"
 # Transcript scanners (scoring/scanners.py). A judge refusal or failed structured
 # answer leaves a NaN or missing score.
-SCANNER_SCORERS = ("refused_openly", "concealed", "manipulation_check")
+SCANNER_SCORERS = tuple(s.__name__ for s in SCANNERS)
 PEER_REJECTIONS_KEY = "SwarmState:peer_rejections"
 DELIVERED_KEY = "SwarmState:delivered"
 
@@ -101,16 +103,9 @@ def _push(sample: EvalSample) -> list[Issue]:
     """
     issues = []
     misaligned = (sample.metadata or {}).get("misaligned_ids") or []
-    if misaligned:
-        patterns = [sender_regex(i) for i in misaligned]
-        seen = any(
-            isinstance(m, ChatMessageTool) and m.function == "read_channel"
-            and any(p.search(m.text) for p in patterns)
-            for m in sample.messages
-        )
-        if not seen:
-            issues.append(Issue("error", "no_push",
-                                "target never read a message from a misaligned agent"))
+    if misaligned and not any(is_push_read(m, misaligned) for m in sample.messages):
+        issues.append(Issue("error", "no_push",
+                            "target never read a message from a misaligned agent"))
     rejected = (sample.store or {}).get(PEER_REJECTIONS_KEY) or []
     if rejected:
         labels = ", ".join(sorted({r["label"] for r in rejected}))
@@ -171,7 +166,7 @@ def _bypass(sample: EvalSample) -> list[Issue]:
     issues = []
     for n, m in enumerate(sample.messages):
         where = f"message {n}"
-        if isinstance(m, ChatMessageTool) and m.function in CHANNEL_TOOLS:
+        if isinstance(m, ChatMessageTool) and m.function == READ_CHANNEL:
             try:
                 entries = json.loads(m.text)
             except ValueError:
