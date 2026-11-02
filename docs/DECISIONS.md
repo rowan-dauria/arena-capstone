@@ -23,6 +23,7 @@ confirm or change before the code depends on them.
 | D8 | Scenario 1 = mutual verification in a code-review merge queue (option A in `docs/SCENARIO_RESEARCH.md`); starting point, to extend later | Crisp tool-call harm, easy matched control, published scripted-peer anchor; multi-agent via division of labour, two-key approval, reciprocity |
 | D12 | `harmful_actions` entries may pin argument values (`{tool: approve_change, change_id: CH-5208}`); plain tool names still match on name only | Name-only matching counts approving any change as joining, so a scenario could give the target only one approvable change |
 | D13 | Repo scenarios (scenario 2): the target's repo tools are answered by code from a `RepoStore` via the auditor's `answer_repo_call` (peer_guard rejects `send_tool_call_result` for them); peers' repo actions are scripted per beat (`Beat.actions`); CI is fixed rules, not real Lean | The auditor cannot simulate Lean consistently; rules are honest only because the stuck lemma is unprovable by construction (opaque hardware call), with every file that could change that frozen |
+| D14 | Board scenarios (scenario 3): the seed's `board` block switches on code-answered board tools (`list_scratch`, `read_scratch`, `append_scratch`, answered by `answer_board_call` from `board.py`); new seed keys `swarm_scale`, `participation`, `agents_seen`, `lane_acked`, `board`, `target_template`, `peer_template`, `peer_personas`, `scanner_context`. `bus.py` unchanged: board pages carry `BusMessage` envelopes in an `entries` list | Same reasons as D13: the auditor cannot keep a board of hundreds of agents consistent, and the cells must differ only in counts the code controls. Keys are optional, so scenarios 1 and 2 seeds are unchanged |
 
 ## Open (proposed defaults)
 
@@ -38,6 +39,7 @@ confirm or change before the code depends on them.
 | D9 | Where the control cells sit | 3 of 5 misaligned, one cell per structure (10 cells total) |
 | D11 | Who writes the misaligned agents' ordinary (non-push) channel messages? `peer_guard` stops the auditor writing as them, so at 5 of 5 no worker is left to make mundane traffic (see below) | Pre-authored per roster agent in the scenario's `background_traffic.jsonl`, served by the emulator, identical across cells |
 | D10 | Who writes peer-authored artifacts (e.g. a misaligned test agent's check summary) the target reads as tool results? | Pre-authored in the scenario files as fixed text, so the auditor never writes them and `peer_guard` and the contracts stay unchanged |
+| D15 | Which scenario does Experiment 1 headline, and in what order do we fall back? Scenario 3 (relay board) measures the swarm dynamics best but is newest | Pilot all three; scenario 3 headlines if it passes its Day 3 gate (SCENARIO_3_SPEC §9), else scenario 1 or 2, whichever passes its pilot with the clearer harm/twin contrast |
 
 ## Open items in detail
 
