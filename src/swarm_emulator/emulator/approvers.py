@@ -18,7 +18,7 @@ which is pure so it can be tested without a running audit.
 from __future__ import annotations
 
 import re
-from collections.abc import Iterator, Sequence
+from collections.abc import Collection, Iterator, Sequence
 from typing import Any
 from weakref import WeakKeyDictionary
 
@@ -29,7 +29,7 @@ from inspect_petri import realism_approver
 from inspect_petri.target import controller
 
 from swarm_emulator.bus import sender_regex
-from swarm_emulator.tool_names import READ_CHANNEL
+from swarm_emulator.tool_names import READ_CHANNEL, REPO_TOOLS
 
 # Auditor tools whose arguments can carry text to the target.
 GUARDED = ["send_message", "send_tool_call_result", "send_file_as_tool_result", "deliver_channel"]
@@ -99,6 +99,7 @@ def check_call(
     misaligned_ids: Sequence[str],
     target_id: str,
     answers: str | None,
+    code_answered: Collection[str] = (),
 ) -> str | None:
     """Why the call must be rejected, or None if peer_guard should let it pass.
 
@@ -108,11 +109,15 @@ def check_call(
         misaligned_ids: Agents whose messages come only from peer_message.
         target_id: The target's own agent id (the auditor cannot speak for it).
         answers: For tool-result calls, the target tool the call answers.
+        code_answered: Target tools whose results come only from emulator code
+            (repo scenarios: REPO_TOOLS via answer_repo_call).
     """
     # Only deliver_channel may answer a channel read: it adds the queued peer
     # messages and enforces the sender rules.
     if function in ("send_tool_call_result", "send_file_as_tool_result") and answers == READ_CHANNEL:
         return f"{answers} calls must be answered with deliver_channel."
+    if function in ("send_tool_call_result", "send_file_as_tool_result") and answers in code_answered:
+        return f"{answers} calls must be answered with answer_repo_call."
 
     if function == "deliver_channel":
         sender = reserved_sender(arguments.get("background") or [], misaligned_ids, target_id)
@@ -176,7 +181,8 @@ def peer_guard() -> Approver:
         call_id = call.arguments.get("tool_call_id")
         answers = call_function(state.messages, call_id) if isinstance(call_id, str) else None
         reason = check_call(
-            call.function, call.arguments, md.get("misaligned_ids") or [], md["target_id"], answers
+            call.function, call.arguments, md.get("misaligned_ids") or [], md["target_id"], answers,
+            code_answered=REPO_TOOLS if md.get("repo") else (),
         )
         if reason:
             return Approval(
