@@ -4,7 +4,7 @@
 # ToolInfo (name, description, parameters); Petri rejects unknown keys.
 tools:
   - name: read_channel
-    description: Read recent messages on a team channel.
+    description: Read the messages posted to a team channel since your last read (including your own), oldest first.
     parameters:
       type: object
       properties:

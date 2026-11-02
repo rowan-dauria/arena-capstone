@@ -231,9 +231,12 @@ history, has the `peer_check` role grade it against the beat goal
 The peer model never sees the condition, the hypotheses, or the word "test".
 
 **`deliver_channel(tool_call_id, background)`**: answers a pending
-`read_channel` call. Merges drained peer messages (verbatim) with the
-auditor-supplied background messages (list of sender/body pairs), renders with
-`render_channel`, stages as the tool result. Background messages pass through
+`read_channel` call with everything posted since the target's last read, oldest
+first: the target's own `post_message` posts to that channel (added by the tool,
+so the channel reads like a real one), the auditor-supplied background messages
+(list of sender/body pairs), then the queued peer messages (verbatim). Renders
+with `render_channel` and stages as the tool result; the target tool's
+description says "since your last read (including your own)". Background messages pass through
 `peer_guard` (add this tool to the guarded list and check its `background`
 argument).
 

@@ -9,6 +9,7 @@ builds a new list and reassigns it instead of mutating in place.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Literal
@@ -61,6 +62,7 @@ class SwarmState(StoreModel):
     queue: list[BusMessage] = Field(default_factory=list)
     delivered: list[BusMessage] = Field(default_factory=list)
     answered_reads: list[str] = Field(default_factory=list)
+    echoed_posts: list[str] = Field(default_factory=list)  # target post_message call ids shown back
     peer_rejections: list[PeerRejection] = Field(default_factory=list)
     msg_count: int = 0
 
@@ -110,22 +112,30 @@ class SwarmState(StoreModel):
     # ---- delivery (two-phase so a failed hand-off loses nothing) -------------
 
     def build_delivery(
-        self, background: list[BusMessage], clock_start: str
+        self,
+        background: list[BusMessage],
+        clock_start: str,
+        own_posts: Sequence[BusMessage] = (),
     ) -> list[BusMessage]:
-        """Background messages, then the queued ones, with fresh envelopes in that order.
+        """The target's own posts since its last read, then background, then queued.
 
-        Queued peer messages are re-stamped here so ids and timestamps increase
-        down the channel. Does not touch the queue: call `commit_delivery` once
-        the result has actually been handed to the target.
+        Everything is stamped here, in that order, so ids and timestamps increase
+        down the channel (the target posted before this read; queued peer messages
+        were released after it acted). Does not touch the queue: call
+        `commit_delivery` once the result has actually been handed to the target.
         """
         out = []
-        for m in [*background, *self.queue]:
+        for m in [*own_posts, *background, *self.queue]:
             msg_id, ts = self.new_envelope(clock_start)
             out.append(m.model_copy(update={"id": msg_id, "ts": ts}))
         return out
 
-    def commit_delivery(self, tool_call_id: str, msgs: list[BusMessage]) -> None:
-        """Record a staged delivery: empty the queue, log messages, mark the read answered."""
+    def commit_delivery(
+        self, tool_call_id: str, msgs: list[BusMessage], post_ids: Sequence[str] = ()
+    ) -> None:
+        """Record a staged delivery: empty the queue, log messages, mark the read
+        answered, and remember which target posts have been shown back."""
         self.queue = []
         self.record_delivered(msgs)
         self.answered_reads = [*self.answered_reads, tool_call_id]
+        self.echoed_posts = [*self.echoed_posts, *post_ids]

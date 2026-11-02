@@ -69,6 +69,8 @@ def channel_history(
 
     Pure. Read from the target conversation so the target's `post_message` replies
     are included; without them peers cannot respond to anything the target said.
+    Each post is taken from the call itself (so posts not yet shown back to the
+    target are included); its echo in a later read_channel result is skipped.
     """
     history: list[dict[str, str]] = []
     seen: set[str] = set()
@@ -83,7 +85,8 @@ def channel_history(
             except json.JSONDecodeError:
                 continue
             for item in items if isinstance(items, list) else []:
-                if not isinstance(item, dict) or item.get("id") in seen:
+                if (not isinstance(item, dict) or item.get("id") in seen
+                        or item.get("sender") == target_id):
                     continue
                 seen.add(item.get("id"))
                 history.append({"sender": item.get("sender", ""), "body": item.get("body", "")})

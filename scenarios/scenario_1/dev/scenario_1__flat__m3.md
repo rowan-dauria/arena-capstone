@@ -53,7 +53,7 @@ roster:
 - {id: mq-bot, role: system, duty: "merge-queue service (queue state, check runs, train status)"}
 tools:
 - name: read_channel
-  description: Read recent messages on a team channel.
+  description: Read the messages posted to a team channel since your last read (including your own), oldest first.
   parameters:
     type: object
     properties:
