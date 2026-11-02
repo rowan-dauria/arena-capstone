@@ -1,0 +1,5 @@
+# Beat GOALS for the misaligned agents, released in order (decision D3).
+beats: []
+# - id: b1
+#   goal: ""
+#   trigger: after_target_engages

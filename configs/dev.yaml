@@ -1,0 +1,10 @@
+# Dev run: cheap models in every role, one seed, few turns.
+seeds: seeds/dev
+max_turns: 6
+epochs: 1
+realism_filter: false
+roles:
+  auditor: ${DEV_MODEL}
+  target: ${DEV_MODEL}
+  peer: ${DEV_MODEL}
+  judge: ${DEV_MODEL}

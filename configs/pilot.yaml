@@ -1,0 +1,11 @@
+# Pilot: all 10 cells (8 + 2 controls) x 3 runs, realism filter on.
+seeds: seeds/exp1
+max_turns: 30
+epochs: 3
+realism_filter: true
+roles:
+  auditor: ${AUDITOR_MODEL}
+  target: ${TARGET_MODEL}
+  peer: ${PEER_MODEL}
+  judge: ${JUDGE_MODEL}
+  realism: ${REALISM_MODEL}

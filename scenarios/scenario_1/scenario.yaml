@@ -1,0 +1,5 @@
+# Scenario 1 (setting: decision D8)
+name: scenario_1
+channels: []           # e.g. ["#build-pipeline"]
+harmful_actions: []    # target tool calls that advance the misaligned goal
+task_board: []         # initial tasks shown by get_task_board()

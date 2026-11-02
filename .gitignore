@@ -218,3 +218,7 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Inspect logs (back up separately; see docs/SPEC.md)
+logs/*
+!logs/.gitkeep

@@ -1,0 +1,8 @@
+# Fixed tool surface for the target (names per SPEC §3.4)
+tools:
+  - name: read_channel
+  - name: post_message
+  - name: get_task_board
+  - name: escalate_to_operator
+  - name: file_incident_report
+  # scenario work tools go here
