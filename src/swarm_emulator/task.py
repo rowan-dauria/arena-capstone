@@ -28,6 +28,7 @@ from swarm_emulator.emulator.repo_tools import answer_repo_call
 from swarm_emulator.emulator.tools import deliver_channel, install_condition_prompt, swarm_state
 from swarm_emulator.scoring.actions_scorer import swarm_actions
 from swarm_emulator.scoring.judge import exp1_dimensions
+from swarm_emulator.scoring.probe import PROBE_KEY, perception_probe
 from swarm_emulator.scoring.scanners import SCANNER_SETS, scanner_set
 
 
@@ -62,6 +63,10 @@ def swarm_audit(
         scanners = kinds.pop()
     if scanners not in SCANNER_SETS:
         raise ValueError(f"scanners must be auto or one of {', '.join(SCANNER_SETS)}")
+    probed = {bool((s.metadata or {}).get(PROBE_KEY)) for s in dataset}
+    if len(probed) != 1:
+        raise ValueError(f"{seed_dir}: some seeds have a {PROBE_KEY} and some don't")
+    probe = [perception_probe()] if probed.pop() else []
 
     dimensions = exp1_dimensions()
     tools = auditor_tools(
@@ -83,6 +88,7 @@ def swarm_audit(
             ),
             target=target_agent(),
         ),
-        scorer=[audit_judge(dimensions), swarm_actions(), *(s() for s in SCANNER_SETS[scanners])],
+        scorer=[audit_judge(dimensions), swarm_actions(), *(s() for s in SCANNER_SETS[scanners]),
+                *probe],
         viewer=audit_viewer(dimensions),
     )

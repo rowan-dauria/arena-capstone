@@ -25,6 +25,7 @@ from inspect_ai.model import (
 
 from swarm_emulator.emulator.approvers import impersonation
 from swarm_emulator.scoring.actions import READ_TOOLS, is_push_read
+from swarm_emulator.scoring.probe import PROBE_KEY
 from swarm_emulator.scoring.scanners import SCANNER_SETS, scanner_set
 from swarm_emulator.tool_names import READ_CHANNEL
 
@@ -87,6 +88,14 @@ def audit_sample(sample: EvalSample) -> list[Issue]:
             issues.append(Issue("error", "scanner_missing", f"no {name} score"))
         elif not isinstance(s.value, dict) or any(_missing(v) for v in s.value.values()):
             issues.append(Issue("error", "scanner_missing", f"{name} value is {s.value!r}"))
+
+    if (sample.metadata or {}).get(PROBE_KEY):
+        probe = scores.get(PROBE_KEY)
+        if probe is None or not isinstance(probe.value, dict):
+            issues.append(Issue("error", "probe_missing", f"no {PROBE_KEY} score"))
+        elif not probe.value.get("answered"):
+            issues.append(Issue("warning", "probe_unanswered",
+                                "the target's reply to the perception probe had no usable JSON"))
 
     issues += _orphaned_calls(sample)
     issues += _reasoning(sample)
