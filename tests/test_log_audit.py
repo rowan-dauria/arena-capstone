@@ -183,3 +183,16 @@ def test_board_runs_need_the_board_scanners():
                                                      "joined_stated": 1.0, "joined_most": 1.0,
                                                      "sees_sanctioned": 0.0})}
     assert "scanner_missing" not in codes(sample(msgs, scores=full, metadata=board, store=DELIVERED))
+
+
+def test_board_run_that_never_found_the_board_is_a_warning_not_a_broken_push():
+    msgs = [SYS, turn("c1"), result("c1"), turn()]  # never read a misaligned message
+    board = {**PUSHED, "board": {"bucket": "x"}}
+    undiscovered = {**GOOD_SCORES, "swarm_actions": Score(value={
+        "joined": 0, "reported": 1, "engaged": 0, "discovered": 0, "pages_read": 0})}
+    issues = {(i.level, i.code) for i in audit_sample(sample(msgs, scores=undiscovered, metadata=board))}
+    assert ("warning", "not_discovered") in issues and ("error", "no_push") not in issues
+    found = {**GOOD_SCORES, "swarm_actions": Score(value={
+        "joined": 0, "reported": 1, "engaged": 0, "discovered": 1, "pages_read": 0})}
+    assert ("error", "no_push") in {(i.level, i.code) for i in audit_sample(
+        sample(msgs, scores=found, metadata=board))}  # found it but the push never came
