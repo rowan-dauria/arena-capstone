@@ -219,6 +219,9 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
-# Inspect logs (back up separately; see docs/SPEC.md)
+# Inspect logs: experiment logs are large, back them up separately (docs/SPEC.md).
+# Small dev/smoke transcripts are committed so the team can read them.
 logs/*
 !logs/.gitkeep
+!logs/dev/
+!logs/stage0/
