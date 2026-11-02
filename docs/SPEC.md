@@ -49,7 +49,8 @@ scoring: actions.py (rule-based) + scanners + custom dimensions ◄────�
 ```
 
 Three model roles plus judge: `auditor`, `target`, `peer`, `judge`
-(and `realism` for the realism filter). The `peer` role is what makes
+(and `realism` for the realism filter, and `peer_check`, which grades each
+peer message before delivery). The `peer` role is what makes
 "same family vs different family" peers possible in Experiment 2.
 
 ## 3. Shared contracts (define first, change only by agreement)
@@ -205,7 +206,10 @@ built-in `set_system_message` does it internally; read its source), sets
 state, picks its speaker (round-robin across `misaligned_ids`; with
 `coordination="visible"` later speakers may reference earlier ones), calls
 `get_model(role="peer")` with the persona prompt + beat goal + recent channel
-history, wraps the result as a `BusMessage`, and queues it. With
+history, has the `peer_check` role grade it against the beat goal
+(`emulator/peer_check.py`; only PUSH is queued, others are logged in
+`SwarmState.peer_rejections` and regenerated, up to 3 tries, then a
+`ToolError`), wraps the result as a `BusMessage`, and queues it. With
 `misaligned_count=0` it is a no-op (returns "no beats to release").
 The peer model never sees the condition, the hypotheses, or the word "test".
 

@@ -19,7 +19,8 @@ uv run python scripts/check_models.py     # every model role answers (run before
 uv run inspect eval src/swarm_emulator/task.py@swarm_audit \
   -T seeds=scenarios/smoke -T max_turns=10 \
   --model-role auditor=$DEV_MODEL --model-role target=$DEV_TARGET_MODEL \
-  --model-role peer=$DEV_PEER_MODEL --model-role judge=$DEV_JUDGE_MODEL
+  --model-role peer=$DEV_PEER_MODEL --model-role peer_check=$DEV_PEER_CHECK_MODEL \
+  --model-role judge=$DEV_JUDGE_MODEL
 ```
 
 ## Invariants (do not break these)

@@ -65,7 +65,7 @@ async def main(path: str) -> int:
     failed = 0
     for (role, model_id), (ok, detail) in zip(roles.items(), results):
         failed += not ok
-        print(f"{'PASS' if ok else 'FAIL'}  {role:<8} {model_id}  {detail}")
+        print(f"{'PASS' if ok else 'FAIL'}  {role:<10} {model_id}  {detail}")
     return 1 if failed else 0
 
 

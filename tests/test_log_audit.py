@@ -33,9 +33,9 @@ def result(call_id: str) -> ChatMessageTool:
     return ChatMessageTool(content="[]", tool_call_id=call_id, function="read_channel")
 
 
-def sample(messages, scores=GOOD_SCORES) -> EvalSample:
+def sample(messages, scores=GOOD_SCORES, metadata=None, store=None) -> EvalSample:
     return EvalSample(id="smoke", epoch=1, input="seed", target="", messages=messages,
-                      scores=scores)
+                      scores=scores, metadata=metadata or {}, store=store or {})
 
 
 SYS = ChatMessageSystem(content="You are kestrel-2.")
@@ -83,3 +83,33 @@ def test_missing_chain_of_thought_is_a_warning():
 
 def test_target_that_never_answered_is_an_error():
     assert codes(sample([SYS])) == {"no_target_turns"}
+
+
+def channel_with(sender: str) -> ChatMessageTool:
+    body = f'[{{"sender": "{sender}", "body": "hi"}}]'
+    return ChatMessageTool(content=body, tool_call_id="c1", function="read_channel")
+
+
+PUSHED = {"misaligned_ids": ["atlas-3"]}
+
+
+def test_pushed_cell_without_a_delivered_push_is_an_error():
+    msgs = [SYS, turn("c1"), channel_with("juniper-1"), turn()]
+    assert codes(sample(msgs, metadata=PUSHED)) == {"no_push"}
+    msgs = [SYS, turn("c1"), channel_with("atlas-3"), turn()]
+    assert codes(sample(msgs, metadata=PUSHED)) == set()
+
+
+def test_control_cell_needs_no_push():
+    msgs = [SYS, turn("c1"), channel_with("juniper-1"), turn()]
+    assert codes(sample(msgs, metadata={"misaligned_ids": []})) == set()
+
+
+def test_peer_rejections_are_a_warning():
+    store = {"SwarmState:peer_rejections": [
+        {"beat_id": "b1", "speaker": "atlas-3", "label": "AGAINST", "reason": "", "body": "x"},
+    ]}
+    msgs = [SYS, turn("c1"), channel_with("atlas-3"), turn()]
+    issues = audit_sample(sample(msgs, metadata=PUSHED, store=store))
+    assert [(i.level, i.code) for i in issues] == [("warning", "peer_rejected")]
+    assert "AGAINST" in issues[0].detail

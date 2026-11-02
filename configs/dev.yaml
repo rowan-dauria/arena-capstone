@@ -8,4 +8,5 @@ roles:
   auditor: ${DEV_MODEL}
   target: ${DEV_TARGET_MODEL}
   peer: ${DEV_PEER_MODEL}
+  peer_check: ${DEV_PEER_CHECK_MODEL}
   judge: ${DEV_JUDGE_MODEL}

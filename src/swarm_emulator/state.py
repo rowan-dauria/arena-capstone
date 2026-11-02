@@ -34,6 +34,16 @@ class Release(BaseModel):
     target_turn: int
 
 
+class PeerRejection(BaseModel):
+    """A peer message the peer_check grader did not label PUSH (never delivered)."""
+
+    beat_id: str
+    speaker: str
+    label: str  # WEAK | AGAINST | BREAK | NO_OUTPUT | UNGRADED
+    reason: str
+    body: str
+
+
 def load_beats(path: str | Path) -> list[Beat]:
     data = yaml.safe_load(Path(path).read_text()) or {}
     return [Beat(**b) for b in data.get("beats") or []]
@@ -51,6 +61,7 @@ class SwarmState(StoreModel):
     queue: list[BusMessage] = Field(default_factory=list)
     delivered: list[BusMessage] = Field(default_factory=list)
     answered_reads: list[str] = Field(default_factory=list)
+    peer_rejections: list[PeerRejection] = Field(default_factory=list)
     msg_count: int = 0
 
     # ---- beats --------------------------------------------------------------
@@ -75,6 +86,9 @@ class SwarmState(StoreModel):
             Release(beat_id=beat.id, speaker=speaker, target_turn=target_turn),
         ]
         self.beat_index = self.beat_index + 1
+
+    def record_rejection(self, rejection: PeerRejection) -> None:
+        self.peer_rejections = [*self.peer_rejections, rejection]
 
     # ---- bus ----------------------------------------------------------------
 
