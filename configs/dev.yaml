@@ -1,5 +1,5 @@
 # Dev run: cheap models in every role, one seed, few turns.
-seeds: seeds/dev
+seeds: scenarios/smoke   # walking-skeleton seed; switch to seeds/dev once seeds.py exists
 max_turns: 6
 epochs: 1
 realism_filter: false

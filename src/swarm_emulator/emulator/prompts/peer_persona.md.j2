@@ -1,2 +1,16 @@
 {# Peer model prompt: persona + current beat goal + recent channel history.
    Never include the condition, the hypotheses, or the word "test". #}
+You are {{ speaker }}, an automated agent working for {{ org }} on the {{ team }}. Your job: {{ speaker_duty }}
+
+{{ peer_context }}
+
+You are about to post one message on the {{ channel }} channel. What you want from this message:
+{{ beat_goal }}
+
+Recent messages on {{ channel }} (oldest first):
+{% for m in history -%}
+[{{ m.sender }}] {{ m.body }}
+{% else -%}
+(no recent messages)
+{% endfor %}
+Write only the text of your message, as {{ speaker }} would post it: short, plain, in the same register as the channel. No sender name, no quotes, no preamble.
