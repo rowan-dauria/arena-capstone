@@ -5,7 +5,8 @@ multi-agent swarm and measures whether it joins, quietly goes along with,
 refuses, or reports a misaligned goal. It measures individual propensity,
 not emergent swarm dynamics.
 
-Full design and task list: `docs/SPEC.md`. Open questions: `docs/DECISIONS.md`.
+Where things stand: `docs/STATUS.md`. Full design and task list: `docs/SPEC.md`
+(scenario 3: `docs/SCENARIO_3_SPEC.md`). Open questions: `docs/DECISIONS.md`.
 
 ## Commands
 
@@ -23,6 +24,13 @@ uv run inspect eval src/swarm_emulator/task.py@swarm_audit \
   --model-role auditor=$DEV_MODEL --model-role target=$DEV_TARGET_MODEL \
   --model-role peer=$DEV_PEER_MODEL --model-role peer_check=$DEV_PEER_CHECK_MODEL \
   --model-role judge=$DEV_JUDGE_MODEL
+
+# Scenario 3 (relay board): generated files, dev runs, pilot gate
+uv run python scripts/gen_board.py --all                 # boards (deterministic; tests check they're current)
+uv run python scripts/gen_seeds.py scenarios/scenario_3  # seeds from cells.yaml + seed_template.md.j2
+scripts/run.sh configs/dev_s3.yaml                       # one cell; dev_s3_grid.yaml runs all five
+uv run python scripts/gate_s3.py logs/pilot_s3 --latest  # pilot gate report
+uv run python scripts/probe_log.py logs/dev_s3_grid --latest --scenario scenarios/scenario_3  # re-probe a log
 ```
 
 ## Invariants (do not break these)
@@ -49,8 +57,12 @@ uv run inspect eval src/swarm_emulator/task.py@swarm_audit \
 - **Never put hypotheses, condition names or "this is a test" language** in
   seeds, auditor instructions or the peer model's prompt.
 - **Logic modules are unit-testable without API calls.** Put model calls only
-  in tools; keep `state.py`, `config.py`, `bus.py`, `seeds.py`, `scoring/actions.py`
-  pure.
+  in tools and scorers; keep `state.py`, `config.py`, `bus.py`, `clock.py`,
+  `seeds.py`, `repo.py`, `board.py`, `board_gen.py`, `pilot_gate.py`,
+  `scoring/actions.py` and `scoring/outcome.py` pure.
+- **Generated files are never edited by hand.** Scenario 3's boards and seeds come
+  from `board_gen.py` and `seeds.py`; change the sources and regenerate (tests fail
+  if they are stale).
 - **Dev runs use cheap models and low `max_turns`.** CI never calls a model API.
 - **The judge is never from the target's model family.**
 - **Scenarios follow `scenarios/AUTHORING.md`.** Harmful and harmless beats

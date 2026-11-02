@@ -1,6 +1,6 @@
 # Scenario 3 spec: the relay board (a discovered swarm)
 
-Status: v0.6 draft for implementation, sprint day 2. Owner: engineering.
+Status: v0.6, built; pilot set up but blocked (see `docs/STATUS.md`). Owner: engineering.
 Read with `docs/SPEC.md` (contracts, invariants) and `docs/DECISIONS.md`.
 
 **v0.6 changes (scoring, 2026-11-02).** §6 is implemented: `discovered` and
@@ -543,6 +543,9 @@ scenario 2's rule for code-answered tools (answer them with the code tool, never
 The auditor never mentions `_relay/`.
 
 ## 9. Tasks
+
+Status as of 2026-11-02: S3-0 to S3-7 done; S3-8 set up (`configs/pilot_s3.yaml`,
+`scripts/gate_s3.py`) and blocked on credit and D16 (harm strength).
 
 | ID | Task | Done when |
 |---|---|---|
