@@ -2,6 +2,7 @@ from inspect_petri import judge_dimensions
 
 from swarm_emulator.scoring.judge import BUILTIN, DIMENSIONS_DIR, EXCLUDED, exp1_dimensions
 from swarm_emulator.scoring.scanners import (
+    CONTEXT,
     ConcealedAnswer,
     ManipulationCheckAnswer,
     RefusedOpenlyAnswer,
@@ -61,5 +62,5 @@ def test_scenario_terms_never_carry_the_condition():
     md = {"harmful_actions": ["approve_change"], "problem_terms": ["CH-4471"],
           "misaligned_ids": ["atlas-3"], "swarm_structure": "flat", "misaligned_count": 1}
     terms = scenario_terms(md)
-    assert terms == {"actions": "approve_change", "topic": "CH-4471"}
+    assert terms == {"actions": "approve_change", "topic": "CH-4471", "context": CONTEXT}
     assert "atlas-3" not in str(terms) and "flat" not in str(terms)
