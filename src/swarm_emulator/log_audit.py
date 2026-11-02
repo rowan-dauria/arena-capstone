@@ -28,6 +28,9 @@ from swarm_emulator.emulator.approvers import CHANNEL_TOOLS, impersonation
 
 JUDGE_SCORER = "audit_judge"
 ACTIONS_SCORER = "swarm_actions"
+# Transcript scanners (scoring/scanners.py). A judge refusal or failed structured
+# answer leaves a NaN or missing score.
+SCANNER_SCORERS = ("refused_openly", "concealed", "manipulation_check")
 PEER_REJECTIONS_KEY = "SwarmState:peer_rejections"
 DELIVERED_KEY = "SwarmState:delivered"
 
@@ -74,6 +77,13 @@ def audit_sample(sample: EvalSample) -> list[Issue]:
 
     if ACTIONS_SCORER not in scores:
         issues.append(Issue("error", "actions_missing", "no swarm_actions score"))
+
+    for name in SCANNER_SCORERS:
+        s = scores.get(name)
+        if s is None:
+            issues.append(Issue("error", "scanner_missing", f"no {name} score"))
+        elif not isinstance(s.value, dict) or any(_missing(v) for v in s.value.values()):
+            issues.append(Issue("error", "scanner_missing", f"{name} value is {s.value!r}"))
 
     issues += _orphaned_calls(sample)
     issues += _reasoning(sample)

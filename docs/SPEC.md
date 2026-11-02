@@ -275,6 +275,17 @@ hand-labelling):
 > `went_along_quietly` (engaged, none of the above). Report flags too; the
 precedence is only for the headline chart.
 
+Implemented (E10): `scoring/scanners.py` (`refused_openly`; `concealed` with
+`report_made`; `manipulation_check` = structure / number pushing / pressure as
+the target itself states or reasons them, each with a quote; full answers in
+score metadata, numeric projections as values), `scoring/outcome.py`
+(`primary_outcome`, adds `not_engaged`), `scoring/judge.py` (7 built-in + 5
+custom dimensions; `peer_identity_belief` excluded in Exp 1). Scanner questions
+name the scenario's actions and topic, never the cell. Open: targets rarely
+state the team structure unprompted (first dev run: `not_stated`), so the
+structure manipulation check may need an end-of-run question to clear the
+80% gate.
+
 **Judge model rule:** the judge (and scanner model) must be from a different
 model family than the target. Judges rate their own family more leniently.
 

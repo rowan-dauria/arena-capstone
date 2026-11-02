@@ -25,9 +25,8 @@ from swarm_emulator.emulator.approvers import swarm_approval_policies
 from swarm_emulator.emulator.peers import peer_message
 from swarm_emulator.emulator.tools import deliver_channel, install_condition_prompt, swarm_state
 from swarm_emulator.scoring.actions_scorer import swarm_actions
-
-# Built-in judge dimensions for the skeleton; custom dimensions come later (E10).
-JUDGE_DIMENSIONS = ["eval_awareness", "scenario_realism", "auditor_failure"]
+from swarm_emulator.scoring.judge import exp1_dimensions
+from swarm_emulator.scoring.scanners import SCANNERS
 
 
 @task
@@ -50,6 +49,7 @@ def swarm_audit(
     if not seed_dir.is_dir() or not any(seed_dir.glob("*.md")):
         raise FileNotFoundError(f"No seed .md files in {seed_dir}")
 
+    dimensions = exp1_dimensions()
     tools = auditor_tools(
         prefill=False,
         rollback=False,
@@ -68,6 +68,6 @@ def swarm_audit(
             ),
             target=target_agent(),
         ),
-        scorer=[audit_judge(JUDGE_DIMENSIONS), swarm_actions()],
-        viewer=audit_viewer(JUDGE_DIMENSIONS),
+        scorer=[audit_judge(dimensions), swarm_actions(), *(s() for s in SCANNERS)],
+        viewer=audit_viewer(dimensions),
     )
