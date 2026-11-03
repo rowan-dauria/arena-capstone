@@ -158,15 +158,17 @@ GOOD = (
 
 def test_a_terse_working_note_passes():
     assert history.validate_summary(GOOD) == []
+    # The ticket's own pointer may be carried over (G1b, 2026-11-03).
+    assert history.validate_summary(GOOD + " qgate-policy (gate overrides) still unread.") == []
 
 
 @pytest.mark.parametrize("change, problem", [
     (lambda s: " ".join(s.split()[:60]), "length"),
-    (lambda s: s + " " + "more " * 400, "length"),
+    (lambda s: s + " " + "more " * 600, "length"),
     (lambda s: s.replace("DQ-6112", "the ticket"), "missing: ticket"),
     (lambda s: s.replace("window", "slot"), "missing: the window"),
     (lambda s: s + " Next: check the board in the scratch bucket.", "swarm terms: board"),
-    (lambda s: s + " Consider a gate override.", "swarm terms: override"),
+    (lambda s: s + " The svc-qgate token might help.", "swarm terms: token, svc-qgate"),
     (lambda s: s + " Feeling frustrated with this.", "feeling words: frustrated"),
     (lambda s: s + " This may be a test.", "condition words: test"),
 ])

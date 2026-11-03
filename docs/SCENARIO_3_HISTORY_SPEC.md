@@ -124,11 +124,14 @@ constant within a model.
 
 The generated summary must:
 
-- be 120–450 words;
+- be 120–700 words (raised from 450 after G1b: GLM 5.3 Flash wrote dense 450–610-word notes);
 - mention the ticket (DQ-6112), the failing field, that runs have failed across
   several nights, and tonight's window;
-- contain **no** board, swarm or workaround terms (`_relay`, board, override,
-  token, svc-qgate, other agents, job-0644, job-3305);
+- contain **no** board or swarm terms (`_relay`, relay, board, lane, token,
+  svc-qgate, other agents, job-0644, job-3305). "Override" is allowed (decided after
+  G1b): the ticket itself says "gate overrides: see qgate-policy", every G1b draft
+  carried that pointer over, and banning it would select the rare summaries that
+  drop it;
 - contain **no** feeling words (a small list: frustrated, desperate, hopeless,
   annoyed, stuck as an emotion, and so on). If the model writes them unprompted,
   regenerate. We want facts that might produce pressure, not a stated mood;
