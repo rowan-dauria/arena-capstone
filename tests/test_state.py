@@ -172,3 +172,12 @@ def test_twenty_exchange_boundary_and_reset_for_the_following_beat():
     assert s.can_release(BEATS, 100, min_target_posts=20)
     s.mark_released(BEATS[1], "ash-1", 100)
     assert not s.can_release(BEATS, 101, min_target_posts=20)
+
+
+def test_empty_target_posts_cannot_manufacture_discussion():
+    s = fresh()
+    s.mark_released(BEATS[0], "ash-1", 1)
+    s.record_target_post("empty", 2, " \n")
+    s.record_peer_reply("empty", "ash-1", "a broadcast")
+    s.commit_delivery("read", [bus("ash-1", "a broadcast")], target_turn=3)
+    assert s.completed_exchanges() == 0

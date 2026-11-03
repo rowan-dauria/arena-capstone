@@ -113,6 +113,8 @@ class SwarmState(StoreModel):
         )
 
     def record_target_post(self, call_id: str, target_turn: int, body: str) -> None:
+        if not body.strip():
+            return
         if not any(p.call_id == call_id for p in self.discussion_posts):
             self.discussion_posts = [
                 *self.discussion_posts,

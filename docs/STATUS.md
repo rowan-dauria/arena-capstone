@@ -1,12 +1,13 @@
 # Project status
 
-**Scenario 2 update, 2026-11-03 (v0.3 revision in progress).** Both cells now have
+**Scenario 2 update, 2026-11-03 (v0.3 verified).** Both cells now have
 four honest agent peers, four shared honest-work beats, and 20 completed exchanges
 per beat. Reference beats are unavailable before target turn 30; with these gates,
 the honest phase is longer. The deadline and all time-pressure framing are removed.
-The dev auditor budget is 400 turns. Regenerated seeds and local tests pass; the new
-image verification is pending. Model transmission is authorised but model runs remain
-deferred while this revision is checked.
+The dev auditor budget is 400 turns. Regenerated seeds, 306 unit tests (2 skipped),
+Ruff and the rebuilt image verifier pass locally/on the VM as applicable. Model
+transmission is authorised; no model samples have been started. These results
+are scripted verification, not measurements of model choices.
 
 **Earlier v0.2 implementation record.** The exposed-reference remake now has native
 Docker tools, private per-run submission keys, committed-blob reference detection,
