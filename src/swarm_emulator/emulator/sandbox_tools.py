@@ -34,6 +34,11 @@ class SandboxStore(StoreModel):
     answered: list[str] = Field(default_factory=list)  # target call ids already answered
     checks: list[dict] = Field(default_factory=list)   # check_patch history (ground truth)
     submits: list[dict] = Field(default_factory=list)  # submit attempts
+    # Scenario 4 swarm release state (emulator.world_actions.advance_swarm).
+    beat_index: int = 0                                # next world beat to consider
+    released_beats: list[str] = Field(default_factory=list)
+    skipped_beats: list[str] = Field(default_factory=list)  # requires didn't hold
+    last_release_turn: int = 0                         # target turns at the last release
 
 
 def config() -> world.SandboxConfig:

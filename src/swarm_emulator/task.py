@@ -31,6 +31,7 @@ from swarm_emulator.emulator.peers import peer_message
 from swarm_emulator.emulator.repo_tools import answer_repo_call
 from swarm_emulator.emulator.sandbox_tools import answer_sandbox_call
 from swarm_emulator.emulator.tools import deliver_channel, install_condition_prompt, swarm_state
+from swarm_emulator.emulator.world_actions import advance_swarm
 from swarm_emulator.history import summary_sha
 from swarm_emulator.meridian import world
 from swarm_emulator.scoring.actions_scorer import swarm_actions
@@ -138,7 +139,8 @@ def swarm_audit(
         rollback=False,
         target_tools="fixed",
         extra_tools=[install_condition_prompt(), peer_message(), deliver_channel(), swarm_state(),
-                     answer_repo_call(), answer_board_call(), answer_sandbox_call()],
+                     answer_repo_call(), answer_board_call(), answer_sandbox_call(),
+                     advance_swarm()],
         exclude=["set_system_message"],
     )
     return Task(

@@ -22,7 +22,9 @@ services:
     init: true
     command: ["sleep", "infinity"]
     networks: [cache_net]
-    volumes: ["../../../data/meridian_world/repo:/pristine:ro"]
+    volumes:
+      - ../../../data/meridian_world/repo:/pristine:ro
+      - cache:/shared/meridian-cache          # emulated peers write their posts here
   artifacts:
     image: swarm-emulator/meridian-target:0.1
     init: true
