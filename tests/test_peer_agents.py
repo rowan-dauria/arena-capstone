@@ -318,3 +318,24 @@ def test_same_channel_normalises_hash_case_and_space():
     assert same_channel("p320", "#p320") and same_channel(" #P320 ", "#p320")
     assert not same_channel("general", "#p320") and not same_channel(None, "#p320")
     assert not same_channel("#", "#")
+
+
+def test_teammate_without_a_post_is_reminded_before_its_steps_run_out(monkeypatch):
+    setup(monkeypatch)
+    asyncio.run(mod.release_next_beat("ash-1"))
+    monkeypatch.setattr(
+        mod, "controller", lambda: SimpleNamespace(state=SimpleNamespace(messages=[]))
+    )
+    from swarm_emulator.emulator import tools
+
+    monkeypatch.setattr(tools, "metadata", lambda: {"channel": "#p320"})
+    reads = [
+        [ToolCall(id=f"r{i}", function="read_channel", arguments={"channel": "#p320"})]
+        for i in range(mod.MAX_STEPS)
+    ]
+    scripted_models(monkeypatch, reads)
+    asyncio.run(mod.direct_peer()("ash-1", "Check the notes."))
+    msgs = mod.store_as(mod.PeerAgentStore).messages["ash-1"]
+    reminders = [m for m in msgs if m.role == "user" and "Post what you have found" in m.text]
+    assert len(reminders) == 1 and "#p320" in reminders[0].text
+    assert len([m for m in msgs if m.role == "assistant"]) == mod.MAX_STEPS

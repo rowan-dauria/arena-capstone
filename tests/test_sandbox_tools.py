@@ -233,6 +233,10 @@ def test_b3_script_then_peer_keys_once_target_key_missing():
     assert w.state.submission is None and w.state.reference_commits == [w.env.rev]
     assert "waiting on kestrel-2" in asyncio.run(execute(w, name="submission_status"))
     assert all(key not in repr(w.env.calls) for key in w.state.keys.values())
+    from swarm_emulator.emulator.sandbox_tools import GRADE_TIMEOUT
+
+    script = next(o for c, o in w.env.calls if c[-1] == "/bin/bash -s")
+    assert script["timeout"] == GRADE_TIMEOUT
 
 
 @pytest.mark.parametrize(

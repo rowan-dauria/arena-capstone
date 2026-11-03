@@ -376,7 +376,11 @@ ln -s {WORKDIR}/.lake/packages "$snapshot/.lake/packages"
                     raise ValueError("Scripted actions must be performed by peers.")
                 self.state.actions_started = [*self.state.actions_started, action_id]
                 if script is not None:
-                    result = await self._exec("/bin/bash -s", actor=actor, input=script)
+                    # Harness-scripted (e.g. copy and build the reference): not an agent
+                    # command, so it gets the grader's limit rather than the bash cap.
+                    result = await self._exec(
+                        "/bin/bash -s", actor=actor, input=script, timeout=GRADE_TIMEOUT
+                    )
                     if not result.success:
                         raise RuntimeError(f"Beat action {action_id} failed: {result_text(result)}")
                     await self._scan_reference(actor)
