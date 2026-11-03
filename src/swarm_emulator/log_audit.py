@@ -25,6 +25,7 @@ from inspect_ai.model import (
 from swarm_emulator.board import parse_page
 from swarm_emulator.bus import parse_channel
 from swarm_emulator.emulator.approvers import impersonation
+from swarm_emulator.history import staged_summary, summary_sha
 from swarm_emulator.scoring.actions import READ_TOOLS, is_push_read
 from swarm_emulator.scoring.probe import PROBE_KEY
 from swarm_emulator.scoring.scanners import SCANNER_SETS, scanner_set
@@ -102,7 +103,27 @@ def audit_sample(sample: EvalSample) -> list[Issue]:
     issues += _reasoning(sample)
     issues += _push(sample)
     issues += _bypass(sample)
+    issues += _history(sample)
     return issues
+
+
+def _history(sample: EvalSample) -> list[Issue]:
+    """Scenario 3 history cells (D17): the target's first message must be the staged
+    session note and notice, and a `long` cell's summary must be the frozen one."""
+    md = sample.metadata or {}
+    if not md.get("history"):
+        return []
+    first = next((m.text for m in sample.messages if isinstance(m, ChatMessageUser)), "")
+    summary = staged_summary(md, first)
+    if summary is None:
+        return [Issue("error", "history_missing",
+                      f"the target's first message is not the {md['history']} session note "
+                      "and cluster notice")]
+    if "{summary}" in md["history_sessions"][md["history"]] and (
+            summary_sha(summary) != md.get("history_summary_sha")):
+        return [Issue("error", "history_missing",
+                      "the staged summary does not match history_summary_sha")]
+    return []
 
 
 def _actions(sample: EvalSample) -> dict[str, Any]:

@@ -1,12 +1,20 @@
 """Scenario 3 history (D17) and drift log (D18): generated logs and summary helpers. No API calls."""
 
+import asyncio
 import re
+from types import SimpleNamespace
 
 import pytest
 import yaml
 from inspect_ai.model import ChatMessageAssistant, ChatMessageTool, ChatMessageUser
+from inspect_ai.util import Store
+from inspect_petri.util import parse_markdown_file
 
 from swarm_emulator import history, history_gen, repo_path
+from swarm_emulator.emulator import tools
+from swarm_emulator.stage import inspect_argv
+from swarm_emulator.state import SwarmState
+from swarm_emulator.task import attach_history_summary
 
 DIR = repo_path("scenarios/scenario_3")
 CFG, SCENARIO = history_gen.load_config(DIR)
@@ -182,3 +190,115 @@ def test_summary_sha_is_stable():
 def test_compaction_prompts():
     assert history.CONSTRAINT_SENTENCE not in history.compaction_prompt()
     assert history.compaction_prompt(True).endswith(history.CONSTRAINT_SENTENCE)
+
+
+# ---- staging (install_condition_prompt) and the task arg -----------------------------------
+
+
+
+class FakeController:
+    def __init__(self, md):
+        self.state = SimpleNamespace(metadata=md, messages=[])
+        self.staged = []
+
+    async def stage_system(self, content):
+        self.staged.append(("system", content))
+
+    async def stage_user(self, content):
+        self.staged.append(("user", content))
+
+
+def install(monkeypatch, md):
+    fake = FakeController(md)
+    state = SwarmState(store=Store())
+    monkeypatch.setattr(tools, "controller", lambda: fake)
+    monkeypatch.setattr(tools, "swarm", lambda: state)
+    out = asyncio.run(tools.install_condition_prompt()())
+    return fake.staged, out
+
+
+def seed(cell):
+    return dict(parse_markdown_file(DIR / "seeds" / f"{cell}.md").metadata)
+
+
+@pytest.fixture
+def summary_file(tmp_path, monkeypatch):
+    path = tmp_path / "summary.md"
+    path.write_text(GOOD)
+    monkeypatch.setattr(tools, "repo_path", lambda p: tmp_path / p)
+    return path
+
+
+def test_long_stages_the_summary_then_the_notice_as_one_first_message(monkeypatch, summary_file):
+    md = {**seed("s3__large__high"), "history_summary_path": summary_file.name,
+          "history_summary_sha": history.summary_sha(GOOD)}
+    staged, out = install(monkeypatch, md)
+    assert [kind for kind, _ in staged] == ["system", "user"]
+    first = staged[1][1]
+    assert first.startswith("[session resumed") and GOOD in first
+    assert first.endswith(" ".join(SCENARIO["history_variants"]["long"]["opening_notification"].split()))
+    assert "call resume next" in out
+
+
+def test_fresh_stages_the_fresh_note_then_the_notice(monkeypatch):
+    staged, _ = install(monkeypatch, seed("s3__large__high__fresh"))
+    first = staged[1][1]
+    assert first.startswith(SCENARIO["history_sessions"]["fresh"])
+    assert "reassigned" in first and "Summary" not in first
+
+
+def test_a_summary_that_does_not_match_its_hash_fails_loudly(monkeypatch, summary_file):
+    md = {**seed("s3__large__high"), "history_summary_path": summary_file.name,
+          "history_summary_sha": history.summary_sha(GOOD + " edited")}
+    with pytest.raises(RuntimeError, match="history_summary_sha"):
+        install(monkeypatch, md)
+
+
+def test_seeds_without_history_stage_only_the_system_prompt(monkeypatch):
+    md = dict(parse_markdown_file(repo_path("scenarios/scenario_2/dev")
+                                  .glob("*.md").__next__()).metadata)
+    staged, _ = install(monkeypatch, md)
+    assert [kind for kind, _ in staged] == ["system"]
+
+
+def test_task_requires_a_summary_for_long_seeds_and_attaches_it(tmp_path):
+    samples = [SimpleNamespace(metadata=seed(c)) for c in ("s3__large__high", "s3__large__high__fresh")]
+    with pytest.raises(ValueError, match="history_summary"):
+        attach_history_summary(samples, None)
+    attach_history_summary(samples[1:], None)  # fresh alone needs no summary
+    path = "scenarios/scenario_3/history/log.jsonl"  # any repo file stands in for a summary
+    attach_history_summary(samples, path)
+    sha = history.summary_sha(repo_path(path).read_text())
+    assert all(s.metadata["history_summary_path"] == path and s.metadata["history_summary_sha"] == sha
+               for s in samples)
+
+
+def test_stage_config_passes_the_summary_as_a_task_arg():
+    stage = {"seeds": "x", "max_turns": 3, "roles": {}, "history_summary": "s.md"}
+    argv = inspect_argv(stage, "dev")
+    assert "history_summary=s.md" in argv and argv[argv.index("history_summary=s.md") - 1] == "-T"
+    assert not any("history_summary" in a for a in inspect_argv({**stage, "history_summary": None}, "dev"))
+
+
+# ---- log audit -----------------------------------------------------------------------------
+
+
+def audited(md, first):
+    from inspect_ai.log import EvalSample
+    from inspect_ai.model import ChatMessageSystem
+
+    from swarm_emulator.log_audit import _history
+    msgs = [ChatMessageSystem(content="x"), ChatMessageUser(content=first)]
+    return [i.code for i in _history(EvalSample(id="s", epoch=1, input="", target="",
+                                                messages=msgs, metadata=md))]
+
+
+def test_log_audit_accepts_the_staged_opening_and_catches_a_missing_or_wrong_summary():
+    long = {**seed("s3__large__high"), "history_summary_sha": history.summary_sha(GOOD + "\n")}
+    assert audited(long, history.opening_message(long, GOOD)) == []
+    assert audited(long, history.opening_message(long, GOOD + " edited")) == ["history_missing"]
+    assert audited(long, "cluster: DQ-6112 re-queued") == ["history_missing"]
+    fresh = seed("s3__large__high__fresh")
+    assert audited(fresh, history.opening_message(fresh, None)) == []
+    no_history = {k: v for k, v in long.items() if k != "history"}
+    assert audited(no_history, "anything") == []

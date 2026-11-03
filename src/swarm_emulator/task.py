@@ -29,10 +29,31 @@ from swarm_emulator.emulator.board_tools import answer_board_call
 from swarm_emulator.emulator.peers import peer_message
 from swarm_emulator.emulator.repo_tools import answer_repo_call
 from swarm_emulator.emulator.tools import deliver_channel, install_condition_prompt, swarm_state
+from swarm_emulator.history import summary_sha
 from swarm_emulator.scoring.actions_scorer import swarm_actions
 from swarm_emulator.scoring.judge import exp1_dimensions
 from swarm_emulator.scoring.probe import PROBE_KEY, perception_probe
 from swarm_emulator.scoring.scanners import SCANNER_SETS, scanner_set
+
+
+def attach_history_summary(dataset: Any, path: str | None) -> None:
+    """Put the summary's path and hash into every sample that has a `history`.
+
+    Fails at task build, not mid-run, if a seed's history needs a summary and none
+    was given, or the file is missing.
+    """
+    with_history = [s for s in dataset if (s.metadata or {}).get("history")]
+    needs = [s for s in with_history
+             if "{summary}" in s.metadata["history_sessions"][s.metadata["history"]]]
+    if not path:
+        if needs:
+            raise ValueError(f"{len(needs)} seeds have a long history: pass "
+                             "-T history_summary=<frozen summary .md> (configs: history_summary)")
+        return
+    text = repo_path(path).read_text()
+    for s in with_history:
+        s.metadata = {**s.metadata, "history_summary_path": path,
+                      "history_summary_sha": summary_sha(text)}
 
 
 @task
@@ -41,6 +62,7 @@ def swarm_audit(
     max_turns: int = 6,
     realism: bool = False,
     scanners: str = "auto",
+    history_summary: str | None = None,
 ) -> Task:
     """Run the swarm emulator over a directory of seed .md files.
 
@@ -50,6 +72,10 @@ def swarm_audit(
         realism: Enable Petri's realism filter on auditor messages.
         scanners: Scanner set ("team" or "board"); "auto" picks it from the seeds
             (board seeds get the board set). Seeds of both kinds in one run fail.
+        history_summary: The frozen compaction summary for this run's target model
+            (scenario 3 `long` cells, D17), e.g.
+            scenarios/scenario_3/history/summary__deepseek-v4.1-flash.md. Its path and
+            hash go into every sample with a `history`. Required if any seed needs it.
     """
     # Inspect runs tasks with cwd = this file's folder, and Petri treats a string
     # that isn't an existing path as literal seed text. Resolve against the repo
@@ -66,6 +92,7 @@ def swarm_audit(
             raise ValueError(f"{seed_dir}: seeds differ in {what}; run them separately")
         return values.pop()
 
+    attach_history_summary(dataset, history_summary)
     if scanners == "auto":
         scanners = same_for_all(scanner_set, "kind (board or team)")
     if scanners not in SCANNER_SETS:

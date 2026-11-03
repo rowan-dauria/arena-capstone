@@ -61,6 +61,8 @@ def inspect_argv(stage: dict[str, Any], stage_name: str) -> list[str]:
         "--epochs", str(stage.get("epochs", 1)),
         "--log-dir", f"logs/{stage_name}",
     ]
+    if stage.get("history_summary"):  # scenario 3 long cells: per target model (D17)
+        argv[3:3] = ["-T", f"history_summary={stage['history_summary']}"]
     for role, model in stage["roles"].items():
         argv += ["--model-role", f"{role}={model}"]
     return argv

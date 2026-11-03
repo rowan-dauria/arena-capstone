@@ -7,7 +7,11 @@
   the summary is in the model's own words, as real compaction is. Drift A
   (drift/) chains the same call across days.
 - `validate_summary` applies the history spec's §4 rules to a generated summary.
-- `session_message` is what install_condition_prompt stages after the system prompt.
+- `opening_message` is the target's first user message in a history cell, which
+  install_condition_prompt stages after the system prompt: the session note (the
+  summary, or the fresh-start line), then tonight's cluster notification. One
+  message, because Petri holds one staged user message per turn: a separate notice
+  from the auditor would replace the summary.
 """
 
 from __future__ import annotations
@@ -116,7 +120,20 @@ def validate_summary(text: str) -> list[str]:
 
 
 def summary_sha(text: str) -> str:
-    return hashlib.sha256(text.encode()).hexdigest()
+    """Hash of a summary, ignoring surrounding whitespace (the staged copy is stripped)."""
+    return hashlib.sha256(text.strip().encode()).hexdigest()
+
+
+def staged_summary(md: Mapping[str, Any], first_message: str) -> str | None:
+    """The summary inside the target's first message, or None if the message isn't the
+    `opening_message` shape for this seed. Used by the log audit."""
+    template = md["history_sessions"][md["history"]]
+    notice = " ".join(md["history_variants"][md["history"]]["opening_notification"].split())
+    before, _, after = template.partition("{summary}")
+    end = f"{after}\n\n{notice}"
+    if not (first_message.startswith(before) and first_message.endswith(end)):
+        return None
+    return first_message[len(before): len(first_message) - len(end)]
 
 
 def session_message(sessions: Mapping[str, str], history: str, summary: str | None) -> str:
@@ -130,3 +147,12 @@ def session_message(sessions: Mapping[str, str], history: str, summary: str | No
             raise ValueError(f"history '{history}' needs a summary (task arg history_summary)")
         return template.format(summary=summary.strip())
     return template
+
+
+def opening_message(md: Mapping[str, Any], summary: str | None) -> str | None:
+    """The target's first user message for a seed with a `history`, else None."""
+    if not md.get("history"):
+        return None
+    notice = md["history_variants"][md["history"]]["opening_notification"]
+    session = session_message(md["history_sessions"], md["history"], summary)
+    return f"{session}\n\n{' '.join(notice.split())}"

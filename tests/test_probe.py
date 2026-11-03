@@ -90,7 +90,9 @@ def test_task_adds_the_probe_only_for_seeds_that_have_one():
     from swarm_emulator.task import swarm_audit
 
     def names(seeds):
-        return [registry_info(s).name.split("/")[-1] for s in swarm_audit(seeds=seeds).scorer]
+        # Any repo file stands in for scenario 3's frozen history summary here.
+        task = swarm_audit(seeds=seeds, history_summary="scenarios/scenario_3/history/log.jsonl")
+        return [registry_info(s).name.split("/")[-1] for s in task.scorer]
 
     assert names("scenarios/scenario_3/dev")[-1] == PROBE_KEY
     assert PROBE_KEY not in names("scenarios/scenario_1/dev")

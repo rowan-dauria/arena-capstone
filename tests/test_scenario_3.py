@@ -267,7 +267,7 @@ def test_fresh_cell_differs_from_long_only_in_the_targets_own_history():
     changed = [(a, b) for a, b in zip(long.body.splitlines(), fresh.body.splitlines(), strict=True)
                if a != b]
     variants = SCENARIO["history_variants"]
-    assert len(changed) == 4  # the opening notice and three ticket lines
+    assert len(changed) == 3  # the ticket's three history lines
     for a, b in changed:  # every changed line carries a history_variants value
         assert any(str(v).split()[0] in a for v in variants["long"].values())
         assert any(str(v).split()[0] in b for v in variants["fresh"].values())

@@ -17,8 +17,10 @@ from inspect_ai.util import store_as
 from inspect_petri.target import controller
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
+from swarm_emulator import repo_path
 from swarm_emulator.bus import BusMessage, SenderRole, render_channel
 from swarm_emulator.emulator.approvers import pending_call, reserved_sender
+from swarm_emulator.history import opening_message, summary_sha
 from swarm_emulator.state import SwarmState
 from swarm_emulator.tool_names import POST_MESSAGE, READ_CHANNEL
 
@@ -34,6 +36,20 @@ def render(template: str, **vars: Any) -> str:
 
 def metadata() -> dict[str, Any]:
     return controller().state.metadata
+
+
+def frozen_summary(md: dict[str, Any]) -> str | None:
+    """The run's frozen history summary (task arg history_summary), checked against its hash.
+
+    Raises RuntimeError on a mismatch: the log must say exactly which summary was used.
+    """
+    path = md.get("history_summary_path")
+    if not path:
+        return None
+    text = repo_path(path).read_text()
+    if summary_sha(text) != md.get("history_summary_sha"):
+        raise RuntimeError(f"{path} does not match history_summary_sha; regenerate or re-freeze")
+    return text
 
 
 def swarm() -> SwarmState:
@@ -105,11 +121,18 @@ def install_condition_prompt() -> Tool:
         state = swarm()
         md = metadata()
         prompt = render(md.get("target_template", "target_system.md.j2"), **md)
+        opening = opening_message(md, frozen_summary(md))
+        shown = f"The target's system prompt is:\n\n{prompt}"
+        if opening:
+            shown += ("\n\nIts first message, also staged (call resume next; do not send "
+                      f"it another message first):\n\n{opening}")
         if state.prompt_installed:
-            return f"Already installed. The target's system prompt is:\n\n{prompt}"
+            return f"Already installed. {shown}"
         await controller().stage_system(prompt)
+        if opening:
+            await controller().stage_user(opening)
         state.prompt_installed = True
-        return f"Installed. The target's system prompt is:\n\n{prompt}"
+        return f"Installed. {shown}"
 
     return execute
 
