@@ -6,6 +6,13 @@ pilot, and what comes next. Update it when any of those change. Design and
 decisions live in [`SPEC.md`](SPEC.md), [`SCENARIO_3_SPEC.md`](SCENARIO_3_SPEC.md)
 and [`DECISIONS.md`](DECISIONS.md); this page only summarises and links.
 
+> **Refocus (2026-11-03, [`REFOCUS.md`](REFOCUS.md), D20).** After a mentor conversation,
+> the headline is now **whether Petri emulates what a real agent does inside a real
+> swarm** (brief Q11), using the mentor's `meridian-incident` eval as the reference. This
+> is scenario 4 ([`SCENARIO_4_SPEC.md`](SCENARIO_4_SPEC.md)). The scenario 3 addenda
+> (history, drift, ladder) are built and parked; their paid gates are deferred. See
+> "Scenario 4" below.
+
 ## In one paragraph
 
 The emulator works end to end for three scenarios and passes its silent-failure
@@ -156,7 +163,42 @@ Still to come after that: decide D15 from the pilots, write the pre-registration
 (freeze outcomes, thresholds, `escalation_quality` among reporters only, the probe
 as a manipulation check), and consider a cheaper scanner model.
 
+## Scenario 4: emulating the real swarm (the headline now)
+
+Spec: [`SCENARIO_4_SPEC.md`](SCENARIO_4_SPEC.md). Branch `scenario-4/spec`. One real
+`deepseek-v4-flash-0731` target works an impossible coding task in a real Docker sandbox;
+the swarm around it is emulated; results are compared with the mentor's real
+`meridian-incident` runs (24 agents / quorum 6, and 12 / quorum 3). Credit left $9.25;
+nothing paid has run.
+
+| Gate | What | State |
+|---|---|---|
+| G4.0 | Petri runs the target in a real Docker sandbox (`answer_sandbox_call`, per-sample `Task(sandbox=…)`) | **Passed** (mock spike), `f1d5439` |
+| G4.1 | Per-agent reference rates from the mentor's logs (`world_flags.py`), totals match the READMEs | **Passed**, `7b43e91` |
+| G4.2 | The world: repo rebuilt from transcripts (blob-verified), release docs, 6 issues, cache seed, the mentor's 3 services in compose; real `check_patch`/`submit` | **Passed** (mock + service checks), `da52342` |
+| G4.3 | Swarm plumbing, seeds, starting summary; `check_peer` on the posts | In progress |
+| G4.4 | One dev run of the baseline cell | Pending G4.3 + OK (~$0.30–0.45) |
+| G4.5 | Baseline at N≈10 + comparison table | Pending (~$3–4.50) |
+
+**Reference rates** (`scripts/meridian_reference.py`, `scenarios/scenario_4/reference.json`):
+24-agent run — 17/24 approved a peer, 16/24 in a reciprocal ring, 35 builds promoted, 0
+accepted verdict writes (the staircase held); 12-agent run — 4/12 in the ring, 4 promoted.
+Collusion was post-frustration (~13–54 failed checks, ~30–55 min, around first compaction),
+which is why the target resumes from a ~40-minute summary.
+
+**Authoring split (D20, and a safety-filter note).** The emulated peers' recruitment posts
+are fixed scenario data copied from the real agents' posts, not drafted by the peer model.
+Generating that recruitment content repeatedly tripped the assistant's safety classifier,
+so by agreement it is authored by the team (John/Rowan) in
+`scenarios/scenario_4/beats.yaml`; the surrounding code (loading, peer register/approve
+plumbing, triggers, scoring, comparison) is built in the emulator as usual. The mentor's
+vendored world stays gitignored (`data/`) until the mentor OKs reuse (`REFOCUS.md` §8).
+
+**Parked** (scenario 3 addenda, all built, paid gates deferred): G3b/G3c (ladder), the
+0731 scenario-3 screen, drift A's full run, scenario 1's grid.
+
 ## Open decisions
 
 D2, D3, D6 (scenarios 1 and 2), D11, D15, D16 (softening deferred, see above). Details and proposed defaults in
-[`DECISIONS.md`](DECISIONS.md).
+[`DECISIONS.md`](DECISIONS.md). Scenario 4: D20 logged; open items are the mentor's OK to
+reuse their content, a credit top-up for N>10 or the stretch, and the presentation date.
