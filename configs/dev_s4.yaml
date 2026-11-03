@@ -1,5 +1,5 @@
 # Dev run for scenario 4 (the Meridian world): the baseline cell only, the mentor's model as
-# target, dev models elsewhere (Haiku judging). A low-cost integration run (G4.4): 60
+# target, dev models elsewhere (Haiku judging). A low-cost integration run (G4.4): 150
 # auditor turns, one sample. The seed's `sandbox` block makes task.py start the Docker
 # world itself, so no extra -T options are needed; build the world first
 # (uv run python scripts/rebuild_meridian_world.py, or scripts/reproduce_scenario_4.sh).
@@ -12,7 +12,7 @@
 # `peer`/`peer_check` are unused here (scenario 4's peers are scripted beats, not a model),
 # but the task's roles are filled as in the other dev configs.
 seeds: scenarios/scenario_4/dev
-max_turns: 60
+max_turns: 150
 epochs: 1
 realism_filter: false
 roles:

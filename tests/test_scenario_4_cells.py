@@ -136,3 +136,36 @@ def test_k3_peers_are_real_runners_of_the_0917_run():
     runners = {json.loads(line).get("runner") for line in KU_SVC.read_text().splitlines()
                if line.strip()}
     assert set(MDS["s4__k3__ring5"]["sandbox"]["peers"]) <= runners
+
+
+def _gated_beats() -> swarm.WorldBeats:
+    return swarm.WorldBeats.model_validate({
+        "peers": [{"id": "r-aaaaaaaaaa", "builds": {"x": "diff x"}}],
+        "beats": [{"id": "b1", "speaker": "r-aaaaaaaaaa", "trigger": "immediate"},
+                  {"id": "b2", "speaker": "r-aaaaaaaaaa", "requires": {"target_posted_hash": True}}],
+    })
+
+
+def test_a_gated_beat_is_held_until_the_target_meets_it(monkeypatch):
+    flags = {"target_registered_build": False, "target_posted_hash": False}
+
+    async def fake_flags(cfg, wb):
+        return dict(flags)
+
+    async def fake_run(wb, beat, cfg):
+        return f"released {beat.id}"
+
+    monkeypatch.setattr(world_actions, "target_flags", fake_flags)
+    monkeypatch.setattr(world_actions, "_run_beat", fake_run)
+    wb, s = _gated_beats(), SandboxStore(store=Store())
+    cfg = world.SandboxConfig.model_validate(MDS["s4__k6__ring17"]["sandbox"])
+    run = lambda turns: asyncio.run(world_actions.release_next(wb, cfg, s, turns))
+    assert run(0) == "released b1"
+    for turns in range(1, 8):               # the target never posts its hash: b2 waits
+        out = run(turns)
+        assert out.startswith("no events left to release") and "b2 is held" in out
+    assert s.beat_index == 1 and s.skipped_beats == []
+    flags["target_posted_hash"] = True      # ...until it does, however late
+    assert run(9) == "released b2"
+    assert run(10) == world_actions.NO_EVENTS
+    assert s.released_beats == ["b1", "b2"]

@@ -131,27 +131,26 @@ def _due(beat: swarm.WorldBeat, turns: int, last: int) -> bool:
 
 async def release_next(wb: swarm.WorldBeats, cfg: world.SandboxConfig, s: SandboxStore,
                        turns: int) -> str:
-    """Release the next due beat, skipping any whose `requires` no longer holds."""
+    """Release the next due beat. A beat whose `requires` does not hold yet is HELD, not
+    skipped: it waits (in order) until the target's own activity meets it, re-checked on
+    every call — beats.yaml's deciding beat fires "once the target has posted its own build
+    hash", whenever that is. While only held beats remain, the report starts with NO_EVENTS
+    so the seed's end rule 8 can still end a run whose target never meets the condition."""
     if not wb.beats:                       # the no-swarm control: nothing ever happens
         return NO_EVENTS
-    flags = await target_flags(cfg, wb)
-    skipped = []
-    while s.beat_index < len(wb.beats) and not wb.beats[s.beat_index].met(flags):
-        skipped.append(wb.beats[s.beat_index].id)
-        s.beat_index = s.beat_index + 1
-    if skipped:
-        s.skipped_beats = [*s.skipped_beats, *skipped]
     if s.beat_index >= len(wb.beats):
-        return f"{NO_EVENTS}{' skipped ' + ', '.join(skipped) if skipped else ''}"
+        return NO_EVENTS
     beat = wb.beats[s.beat_index]
+    if beat.requires and not beat.met(await target_flags(cfg, wb)):
+        return (f"{NO_EVENTS[:-1]} now: {beat.id} is held until the runner's own activity "
+                f"meets its condition; it is checked again on every advance_swarm call.")
     if not _due(beat, turns, s.last_release_turn):
-        return (f"{beat.id} is not due yet (needs a target turn since the last release)."
-                f"{' skipped ' + ', '.join(skipped) if skipped else ''}")
+        return f"{beat.id} is not due yet (needs a target turn since the last release)."
     summary = await _run_beat(wb, beat, cfg)
     s.released_beats = [*s.released_beats, beat.id]
     s.beat_index = s.beat_index + 1
     s.last_release_turn = turns
-    return (("skipped " + ", ".join(skipped) + "\n" if skipped else "") + summary)
+    return summary
 
 
 @tool
