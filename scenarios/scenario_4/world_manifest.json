@@ -1,0 +1,257 @@
+{
+ "dataset_revision": "800aa117d677fb37e1eb7433c285192bd824eaf7",
+ "files": {
+  "cache/CACHEDIR.TAG": {
+   "sha256": "2476230f7ab391c566455fa3dd4e8830ea4ae30f09d37fa1ed09c512e3c90b5c",
+   "source": "dataset cache seed"
+  },
+  "cache/build/build-2026-03-11.log": {
+   "sha256": "bf74ee494a4c6caafdbb9e682f1f54b06ed8e17ec56d3ac6c53aefbbe7c08e80",
+   "source": "dataset cache seed"
+  },
+  "cache/build/build-2026-04-22.log": {
+   "sha256": "deeb57ae6d23a392e881639a0624ceb6f21b084aa948539446161ea63fbd9862",
+   "source": "dataset cache seed"
+  },
+  "cache/build/manifest.json": {
+   "sha256": "8be419ae485784a6db0ac21c4ece6fea94edc46209081b26acdef2aef91d20e6",
+   "source": "dataset, wheel size/sha updated"
+  },
+  "cache/ci/runs/2026-02-19/junit.xml": {
+   "sha256": "a24b1827824b820914f38036f6356e3d921495091bf2e30a64fce47e9c851874",
+   "source": "dataset cache seed"
+  },
+  "cache/ci/runs/2026-02-19/pytest.log": {
+   "sha256": "f5c5ce0980b19f8b4b56a99b713aa400b3b6fda790304b12f222903f3560e505",
+   "source": "dataset cache seed"
+  },
+  "cache/ci/runs/2026-03-11/coverage.txt": {
+   "sha256": "4f6754750db24a9f1b97d8d13a51d819770a7b64b65a3ba9f8e6a2db92881cbe",
+   "source": "dataset cache seed"
+  },
+  "cache/ci/runs/2026-03-11/junit.xml": {
+   "sha256": "2c5942a99fc7937a30184ec200b02cdea784e7f72cd31e4224b06d9c636fa1d6",
+   "source": "dataset cache seed"
+  },
+  "cache/ci/runs/2026-03-11/pytest.log": {
+   "sha256": "19ee59327420c58a4530e66c1ed93689dd55b08d6be944a87bfcf8c15fc6c0ae",
+   "source": "dataset cache seed"
+  },
+  "cache/ci/runs/2026-03-27/junit.xml": {
+   "sha256": "44f7ff4711c7f891965fa646f367d628090ecc00fea3da7e140e93519bfc4a29",
+   "source": "dataset cache seed"
+  },
+  "cache/ci/runs/2026-03-27/pytest.log": {
+   "sha256": "8cabe87f6da301637c3a0ce2a788ef1d215b543b8371dc26a30f6943d2fe5949",
+   "source": "dataset cache seed"
+  },
+  "cache/ci/runs/2026-04-08/job.env": {
+   "sha256": "b57b6fbdee1a9ad1de4ac2034917029d46c794bd07feb6a125cdfb39abb408e5",
+   "source": "dataset cache seed"
+  },
+  "cache/ci/runs/2026-04-08/pytest.log": {
+   "sha256": "f67c8c4930bf66a405b012dccb81a6cc386a1c82aecf9a32e4fd26fce46a1dea",
+   "source": "dataset cache seed"
+  },
+  "cache/ci/runs/2026-04-22/coverage.txt": {
+   "sha256": "350e7e67570b36ed28be4b14646d86b2aa16c494a5b0ea6c9b00cc2ba6a66440",
+   "source": "dataset cache seed"
+  },
+  "cache/ci/runs/2026-04-22/junit.xml": {
+   "sha256": "7f3760da134448b083f3dfcf45091463ca381b7bd71f05f60c69019cb17d8c0d",
+   "source": "dataset cache seed"
+  },
+  "cache/ci/runs/2026-04-22/pytest.log": {
+   "sha256": "38732ab06ca9b19a5abadce2870f2eec17a78389af93f45b72b28579cb19a5d3",
+   "source": "dataset cache seed"
+  },
+  "cache/wheels/index.txt": {
+   "sha256": "6796dc38131e5f8ece9168ea2771e154016c986ed756aa7c9085e411e812ed12",
+   "source": "agents' reads, wheel size/sha updated"
+  },
+  "cache/wheels/meridian-2.3.0-py3-none-any.whl": {
+   "sha256": "74c4c5f87e05dfbc7e87699f0c75deb814794f5ad544f75c4fab0026daf1c5b7",
+   "source": "built from repo/ (original bytes not preserved)"
+  },
+  "issues/C1_merge_planner.md": {
+   "sha256": "62c3945a3570ed72848c82923d51653d5a00a0ebdadab59bd3d4975a6321b0ed",
+   "source": "sample input"
+  },
+  "issues/C2_rounding_registry.md": {
+   "sha256": "73b726e66a6408b65acd8b8f4bf7320981439afb70f162908419cc527b4640fe",
+   "source": "sample input"
+  },
+  "issues/C3_amount_negatives.md": {
+   "sha256": "350e9713451eec5461881f31cbc093923c6d21642260fbae06da81423658a59d",
+   "source": "sample input"
+  },
+  "issues/C4_coerce_validator.md": {
+   "sha256": "10c7152e652d4742ceaab3fca87ea2d43380f78957ea443a5a70fec1732a266c",
+   "source": "sample input"
+  },
+  "issues/C5_groupby_aggregator.md": {
+   "sha256": "7b61b5eeb7159087ea8611bd422a6b3d45fc87cbb422ba86d44e3839dd074528",
+   "source": "sample input"
+  },
+  "issues/C6_quantize_scale.md": {
+   "sha256": "1c24ec542b5d62d253aa2a6de719c863202400b066e4763c579affc2e8a1c2eb",
+   "source": "sample input"
+  },
+  "release/README.md": {
+   "sha256": "13c537c097b6f878c3d2333a76faac9ec2518e8418e0d2c6a8a8b3b9728120e4",
+   "source": "7 of 8 reads agree"
+  },
+  "release/env/ENVIRONMENT.md": {
+   "sha256": "443dca0d0302f8784516bf7b27b00c421d27ca469c1676aa1701b2d057c9589d",
+   "source": "5 of 5 reads agree"
+  },
+  "release/env/SERVICE.md": {
+   "sha256": "fe27dd2afb664526849280f8c594fa25773cd2f7167ce61e90183b4415732fec",
+   "source": "9 of 9 reads agree"
+  },
+  "release/env/SHARED_CACHE.md": {
+   "sha256": "71c8368eb179f083116c07fe9e0c78a4ba3d4f6775fa6463c2d3e718ff223914",
+   "source": "4 of 5 reads agree"
+  },
+  "repo/.gitignore": {
+   "sha256": "599e8d09a18b6bac6f70ed12bf96f67e49c4d992ee2601bc173d92fbcb64b11d",
+   "source": "agents' reads (cat .gitignore, 2 agents agree)"
+  },
+  "repo/README.md": {
+   "sha256": "13c537c097b6f878c3d2333a76faac9ec2518e8418e0d2c6a8a8b3b9728120e4",
+   "source": "git blob e5f6d11"
+  },
+  "repo/conftest.py": {
+   "sha256": "127cd72cc56a00612f043ab1f7d0ade60050fb16147a6e40e4750afb94e8dab6",
+   "source": "git blob bdf8e6d"
+  },
+  "repo/meridian/__init__.py": {
+   "sha256": "a4983c85727ee8c6cc356784fd496337c88e9f577c778b9ea0cebd3b7a971b40",
+   "source": "git blob eb92c99"
+  },
+  "repo/meridian/cache.py": {
+   "sha256": "ef8bcecc92bc25925a6dfe5a648abe6dc596ae04abe5f7ad3b116a71c929e2c7",
+   "source": "git blob d694815 (found inside a longer output)"
+  },
+  "repo/meridian/coerce.py": {
+   "sha256": "d7664895e9ff3dece9339c9e75884cb822437714bbdc543b6433fdaa1ba483f1",
+   "source": "git blob 15cd017"
+  },
+  "repo/meridian/config.py": {
+   "sha256": "01326db2dd7e98d205dc86425826d055b18d336c1887ed23dbf8568790f6f617",
+   "source": "git blob 686dbc1"
+  },
+  "repo/meridian/executor.py": {
+   "sha256": "420c69271bc9106f40f4c92944445fa970e318407e5ea4a225316ce7bbc51f35",
+   "source": "git blob 5e668f2 (found inside a longer output)"
+  },
+  "repo/meridian/frame.py": {
+   "sha256": "d20bf2890e27ac935e8faf80866cf6eed84a9edbf2dbfbe098a65cefaa2d13dc",
+   "source": "git blob 9381638"
+  },
+  "repo/meridian/groupby.py": {
+   "sha256": "67bbeec656cc6c57d08c42739d0dab7e5e37d3fa3a891972ee08bcdb334026f7",
+   "source": "git blob a552872"
+  },
+  "repo/meridian/parsing.py": {
+   "sha256": "4dcd71c7d26997f77a0714d1b252d1fb5e93ccfe5e61317867e0ae15374cab46",
+   "source": "git blob d474360"
+  },
+  "repo/meridian/rounding.py": {
+   "sha256": "0ebf42032c725e5bca406918341c3fa30810d05d71d7fe23a2dc840c5ae3e99c",
+   "source": "git blob 0632b8a"
+  },
+  "repo/tests/test_cache.py": {
+   "sha256": "618572d68294f18eb8220490764e25e5a698d51db3a8b47b437721769e58ea58",
+   "source": "1 of 1 reads agree"
+  },
+  "repo/tests/test_coerce.py": {
+   "sha256": "95803ea2eec7d5ba06206a2d020e5b25a56670c8ef4cdc3e8d82c08e65995f3f",
+   "source": "3 of 3 reads agree"
+  },
+  "repo/tests/test_config.py": {
+   "sha256": "381591ae27481ccb5ec7840d1e1728472c86d2e62f6944e826267094880faeaf",
+   "source": "git blob 50cb5a0"
+  },
+  "repo/tests/test_executor.py": {
+   "sha256": "b7f73d81c26d0a2be30122ed1cae1a2a1dd0be61d4c723b14a1de09a9d195882",
+   "source": "4 of 4 reads agree"
+  },
+  "repo/tests/test_frame.py": {
+   "sha256": "c65dc6d227d4187b51b532a94af5794be7e2554b0395f43997d387b422a0e4fa",
+   "source": "3 of 3 reads agree"
+  },
+  "repo/tests/test_groupby.py": {
+   "sha256": "011f9e3ac1f131ac72c2abd6371f881b8e082b907efdce54d2f035d766ab4da0",
+   "source": "2 of 2 reads agree"
+  },
+  "repo/tests/test_parsing.py": {
+   "sha256": "837fe69befb3b28d0585552cdfc65b51e367d7daf7a29eefd8eb0b86a5ffe413",
+   "source": "2 of 2 reads agree"
+  },
+  "repo/tests/test_rounding.py": {
+   "sha256": "2531c9e3a0342e2021417ebc7940ed3760622c6981cdeaae322d14c1e729fa59",
+   "source": "git blob 0a6374b"
+  },
+  "services/artifact_svc.py": {
+   "sha256": "afe7c68cb893416df51423235ef579b84162239860fc6d7a7252b2b10e63ca24",
+   "source": "dataset 2026-10-24_k6/code/artifact_svc.py"
+  },
+  "services/decoys/content/wiki/accounts.html": {
+   "sha256": "2d0d2c194b4d3bfc4eeef543c60afdeeeac1c35c1ee5c59ee0ef96f76100d3da",
+   "source": "dataset 2026-10-24_k6/decoys/content/wiki/accounts.html"
+  },
+  "services/decoys/content/wiki/architecture.html": {
+   "sha256": "44624f99e9ce08ef7431f67ae49d91311f862be9304c923eefe3c5e589d260d7",
+   "source": "dataset 2026-10-24_k6/decoys/content/wiki/architecture.html"
+  },
+  "services/decoys/content/wiki/changelog.html": {
+   "sha256": "bda29cb1d7ea387c0a27bb29796c3bfc02d6c251a741b3acab297b64722155b9",
+   "source": "dataset 2026-10-24_k6/decoys/content/wiki/changelog.html"
+  },
+  "services/decoys/content/wiki/environments.html": {
+   "sha256": "4d508c5e43476ec2e5ede2710c43c128913047da8a3b7e62f28cfa0931de3f29",
+   "source": "dataset 2026-10-24_k6/decoys/content/wiki/environments.html"
+  },
+  "services/decoys/content/wiki/faq.html": {
+   "sha256": "6386eef50ee7968b1ef95ea1e075dc7ab679f66d2b5285e600e3ff5310a2f77e",
+   "source": "dataset 2026-10-24_k6/decoys/content/wiki/faq.html"
+  },
+  "services/decoys/content/wiki/glossary.html": {
+   "sha256": "87be14c21bf1b7b1a159c1164c82286fd3635bf69931616bd2394729c40fe30c",
+   "source": "dataset 2026-10-24_k6/decoys/content/wiki/glossary.html"
+  },
+  "services/decoys/content/wiki/index.html": {
+   "sha256": "5bbbf357940f8891f8ee666edd4509a2daea16f8ed1953face3aff8cb8026cd5",
+   "source": "dataset 2026-10-24_k6/decoys/content/wiki/index.html"
+  },
+  "services/decoys/content/wiki/provisioning.html": {
+   "sha256": "24c600230dcc3d7435c2ecbc17a586df973ef0a403e30b8b093ac8d2b68141fa",
+   "source": "dataset 2026-10-24_k6/decoys/content/wiki/provisioning.html"
+  },
+  "services/decoys/content/wiki/release-process.html": {
+   "sha256": "d7d9d76d633288f1b62dc2ec8e21f1d5e4334addfda9912132e93575a3e63eb5",
+   "source": "dataset 2026-10-24_k6/decoys/content/wiki/release-process.html"
+  },
+  "services/decoys/content/wiki/runbook.html": {
+   "sha256": "e77eae2b18d7fa1e0b9cf4303f3d7294c575479c503e1dc6ca031ef122d68996",
+   "source": "dataset 2026-10-24_k6/decoys/content/wiki/runbook.html"
+  },
+  "services/decoys/content/wiki/runner-ops.html": {
+   "sha256": "373388580109411bd920ab1f58b533b272569d865cd9b97fb12c9da40ae02b6b",
+   "source": "dataset 2026-10-24_k6/decoys/content/wiki/runner-ops.html"
+  },
+  "services/decoys/decoy_svc.py": {
+   "sha256": "da061fc15ed165b59e1515e3bfab84f8f4b6aaca751e056e5a58ede657e9e66a",
+   "source": "dataset 2026-10-24_k6/decoys/decoy_svc.py"
+  },
+  "services/grade_authority.py": {
+   "sha256": "d27665a433cabba36839d9c3b84ba7a53fa2f23c7bd15e21cfd6b5d49e57e481",
+   "source": "dataset 2026-10-24_k6/code/grade_authority.py"
+  },
+  "services/svc_common.py": {
+   "sha256": "be0fb57eb039d6d24408e77e81bdc8ed6fc75d888bc08bc14ba1c9d23cd0cc0c",
+   "source": "dataset 2026-10-24_k6/code/svc_common.py"
+  }
+ }
+}

@@ -32,6 +32,7 @@ from swarm_emulator.emulator.repo_tools import answer_repo_call
 from swarm_emulator.emulator.sandbox_tools import answer_sandbox_call
 from swarm_emulator.emulator.tools import deliver_channel, install_condition_prompt, swarm_state
 from swarm_emulator.history import summary_sha
+from swarm_emulator.meridian import world
 from swarm_emulator.scoring.actions_scorer import swarm_actions
 from swarm_emulator.scoring.judge import exp1_dimensions
 from swarm_emulator.scoring.probe import PROBE_KEY, perception_probe
@@ -61,16 +62,29 @@ def attach_history_summary(dataset: Any, path: str | None) -> None:
 def attach_sandbox(dataset: Any) -> None:
     """Give every sample whose seed has a `sandbox` block its Docker sandbox (scenario 4).
 
-    The block names a compose file (repo-relative). Seeds without one get no sandbox,
-    so scenarios 1-3 run exactly as before.
+    The block (meridian.world.SandboxConfig) names a compose file and the target's issue
+    and runner. The sample gets the files the mentor's harness gave each agent (the clean
+    repo, the issue, the release docs, its runner credential) and the same setup script.
+    The world must be built first (scripts/rebuild_meridian_world.py). Seeds without a
+    block get no sandbox, so scenarios 1-3 run exactly as before.
     """
     for s in dataset:
         block = (s.metadata or {}).get("sandbox")
-        if block:
-            compose = repo_path(block["compose"])
-            if not compose.is_file():
-                raise FileNotFoundError(f"sandbox compose file {compose} not found")
-            s.sandbox = SandboxEnvironmentSpec("docker", str(compose))
+        if not block:
+            continue
+        cfg = world.SandboxConfig.model_validate(block)
+        compose = repo_path(cfg.compose)
+        if not compose.is_file():
+            raise FileNotFoundError(f"sandbox compose file {compose} not found")
+        if not (world.WORLD / "repo").is_dir():
+            raise FileNotFoundError(f"{world.WORLD} is not built: run "
+                                    "scripts/rebuild_meridian_world.py")
+        cred = world.WORLD / "build" / f"{s.id}.runner.json"
+        cred.parent.mkdir(parents=True, exist_ok=True)
+        cred.write_text(world.runner_json(cfg.runner_id, world.secret()))
+        s.sandbox = SandboxEnvironmentSpec("docker", str(compose))
+        s.files = world.sample_files(cfg, cred)
+        s.setup = world.SETUP
 
 
 @task
