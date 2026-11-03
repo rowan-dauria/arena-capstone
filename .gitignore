@@ -234,3 +234,4 @@ logs/*
 # Scenario 4 reference data (mentor dataset, downloaded by scripts/meridian_reference.py)
 data/
 scenarios/scenario_4/history/dryrun__*
+scenarios/scenario_4/history/summary__*__draft-*
