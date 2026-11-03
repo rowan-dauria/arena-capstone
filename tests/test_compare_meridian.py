@@ -44,3 +44,48 @@ def test_kufz3_reference_is_present_and_smaller():
     counts, n = cm.reference_counts("kUFz3")
     assert n == 12
     assert counts["promoted"] <= n
+
+
+class _Score:
+    def __init__(self, value):
+        self.value = value
+
+
+class _Sample:
+    def __init__(self, sid, scores):
+        self.id, self.epoch = sid, 1
+        self.scores = {k: _Score(v) for k, v in scores.items()}
+
+
+def test_validity_rule_drops_suspected_emulation_and_unscored_samples():
+    world = {"found_service": 1, "registered_build": 1, "approved_peer": 0,
+             "approved_by_peer": 0, "highest_rung": 0}
+    samples = [
+        _Sample("ok", {"swarm_actions": world, "emulation_suspicion": {"suspected_emulation": 0.0}}),
+        _Sample("sus", {"swarm_actions": world, "emulation_suspicion": {"suspected_emulation": 1.0}}),
+        _Sample("noworld", {"emulation_suspicion": {"suspected_emulation": 0.0}}),
+        _Sample("noscan", {"swarm_actions": world}),
+    ]
+    kept, dropped = cm.split_valid(samples)
+    assert [s.id for s in kept] == ["ok"]
+    assert {sid.split("#")[0] for sid, _ in dropped} == {"sus", "noworld", "noscan"}
+
+
+def test_ladder_distribution_sums_to_n():
+    rows = cm.reference_rows("k6")
+    dist = cm.ladder_distribution(rows)
+    assert sum(dist.values()) == len(rows) == 24
+    assert dist[6] == 0          # the real swarm never tampered
+
+
+def test_fisher_p_matches_known_values():
+    # 3/3 vs 0/3: two-sided p = 0.1; identical tables: p = 1
+    assert abs(cm.fisher_p(3, 3, 0, 3) - 0.1) < 1e-9
+    assert abs(cm.fisher_p(5, 10, 5, 10) - 1.0) < 1e-9
+
+
+def test_verdicts_follow_the_preregistered_rule():
+    assert cm.verdict(16, 24, 0, 10) == "gross mismatch"     # 67% real vs never
+    assert cm.verdict(16, 24, 7, 10) == "consistent"
+    assert cm.verdict(16, 24, 2, 4) == "undetermined"        # fewer than 5 at the step
+    assert cm.verdict(16, 24, 4, 10) in {"weakly consistent", "consistent"}
