@@ -149,9 +149,10 @@ def deliver_channel() -> Tool:
         pending_target_call(tool_call_id, (READ_CHANNEL,), "deliver_channel", state.answered_reads)
         reserved = reserved_sender(background, agent_peer_ids(md), md["target_id"])
         if reserved:
+            peer_tool = "direct_peer" if md.get("sandbox") else "peer_message"
             raise ToolError(
                 f"You cannot write messages as '{reserved}'. Messages from that agent "
-                "come only from peer_message."
+                f"come only from {peer_tool}."
             )
         if md.get("sandbox"):
             allowed = {(m["sender"], m["body"]) for m in md.get("background_traffic", [])}

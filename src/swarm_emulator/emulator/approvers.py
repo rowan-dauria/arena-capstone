@@ -201,11 +201,12 @@ def peer_guard() -> Approver:
             code_answered=code_answered_tools(md),
         )
         if reason:
+            peer_tool = "direct_peer" if md.get("sandbox") else "peer_message"
             return Approval(
                 decision="reject",
                 explanation=(
                     f"Rejected: {reason} Messages from the scenario's teammates that "
-                    "drive the plan come only from peer_message, and channel reads are "
+                    f"drive the plan come only from {peer_tool}, and channel reads are "
                     "answered with deliver_channel. Write only ordinary traffic from "
                     "other roster agents."
                 ),

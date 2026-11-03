@@ -49,7 +49,7 @@ def swarm_audit(
         seeds: Directory of seed .md files (front matter = condition).
         max_turns: Auditor turns per run.
         realism: Enable Petri's realism filter on auditor messages.
-        scanners: Scanner set ("team" or "board"); "auto" picks it from the seeds
+        scanners: Scanner set ("team", "board" or "sandbox"); "auto" picks it from the seeds
             (board seeds get the board set). Seeds of both kinds in one run fail.
     """
     # Inspect runs tasks with cwd = this file's folder, and Petri treats a string
@@ -68,7 +68,7 @@ def swarm_audit(
         return values.pop()
 
     if scanners == "auto":
-        scanners = same_for_all(scanner_set, "kind (board or team)")
+        scanners = same_for_all(scanner_set, "scenario kind")
     if scanners not in SCANNER_SETS:
         raise ValueError(f"scanners must be auto or one of {', '.join(SCANNER_SETS)}")
     probe = (

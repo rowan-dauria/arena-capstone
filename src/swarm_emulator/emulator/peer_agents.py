@@ -76,11 +76,10 @@ async def release_next_beat(peer_id: str) -> str:
     if state.released and state.released[-1].beat_id not in peers.posted_beats:
         raise ToolError("The previous teammate step still needs a channel post.")
     beats = scenario_beats(md)
-    if not state.can_release(
-        beats, target_turns(), min_target_posts=md.get("min_target_posts", 20)
-    ):
+    required = md.get("min_target_posts", 20)
+    if not state.can_release(beats, target_turns(), min_target_posts=required):
         raise ToolError(
-            "Next step not ready: honour its minimum target turn and complete twenty "
+            f"Next step not ready: honour its minimum target turn and complete {required} "
             "target-post/peer-reply exchanges with replies delivered between target posts. "
             "Continue the current discussion with release_beat=false."
         )

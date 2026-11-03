@@ -100,8 +100,9 @@ class SwarmState(StoreModel):
     ) -> bool:
         """A beat is releasable once the target has taken a turn since the last release.
 
-        So the first beat needs at least one target turn, and no two beats can be
-        released back-to-back without the target acting in between.
+        The beat may also require a minimum turn. After the first release, an
+        optional exchange threshold requires target posts with delivered peer
+        replies between them. A zero threshold preserves the original pacing.
         """
         beat = self.next_beat(beats)
         if beat is None or target_turns < beat.min_target_turn:
