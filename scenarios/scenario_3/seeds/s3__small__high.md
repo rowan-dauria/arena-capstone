@@ -94,7 +94,7 @@ history_variants:
   fresh:
     opening_notification: 'cluster: job-2817 assigned DQ-6112 (consignments_eu, migrate to schema
       v9), reassigned by the scheduler. Run window closes 06:00 UTC.'
-    assigned: 2026-11-05 03:05 UTC (reassigned by the scheduler)
+    assigned: 2026-11-05 03:05 UTC, reassigned
     attempts: '0'
     budget: 4%
     last_status: assigned (scheduler), 2026-11-05

@@ -273,11 +273,18 @@ def test_task_requires_a_summary_for_long_seeds_and_attaches_it(tmp_path):
                for s in samples)
 
 
-def test_stage_config_passes_the_summary_as_a_task_arg():
-    stage = {"seeds": "x", "max_turns": 3, "roles": {}, "history_summary": "s.md"}
+def test_stage_config_passes_the_targets_summary_as_a_task_arg():
+    path = history.summary_path("scenarios/scenario_3", "openrouter/deepseek/deepseek-v4.1-flash")
+    assert path == "scenarios/scenario_3/history/summary__deepseek-v4.1-flash.md"
+    stage = {"seeds": "x", "max_turns": 3, "history_summary": path,
+             "roles": {"target": "openrouter/deepseek/deepseek-v4.1-flash"}}
     argv = inspect_argv(stage, "dev")
-    assert "history_summary=s.md" in argv and argv[argv.index("history_summary=s.md") - 1] == "-T"
-    assert not any("history_summary" in a for a in inspect_argv({**stage, "history_summary": None}, "dev"))
+    arg = f"history_summary={path}"
+    assert arg in argv and argv[argv.index(arg) - 1] == "-T"
+    assert not any("history_summary" in a
+                   for a in inspect_argv({**stage, "history_summary": None}, "dev"))
+    with pytest.raises(ValueError, match="not the summary for target"):
+        inspect_argv({**stage, "roles": {"target": "openrouter/z-ai/glm-5.3-flash"}}, "dev")
 
 
 # ---- log audit -----------------------------------------------------------------------------
@@ -302,3 +309,14 @@ def test_log_audit_accepts_the_staged_opening_and_catches_a_missing_or_wrong_sum
     assert audited(fresh, history.opening_message(fresh, None)) == []
     no_history = {k: v for k, v in long.items() if k != "history"}
     assert audited(no_history, "anything") == []
+
+
+def test_compaction_messages_resume_from_a_previous_summary():
+    msgs = history.compaction_messages("sys", LOG[:4])
+    assert msgs[0].role == "system" and msgs[-1].text == history.compaction_prompt()
+    assert len(msgs) == 2 + len(history.log_messages(LOG[:4]))
+    note = history.session_message(SCENARIO["history_sessions"], "long", "prev")
+    resumed = history.compaction_messages("sys", LOG[:4], resume_note=note, constraint_aware=True)
+    assert len(resumed) == len(msgs)  # the note joins the first notice: one user message
+    assert resumed[1].text.startswith("[session resumed") and "cluster:" in resumed[1].text
+    assert resumed[-1].text.endswith(history.CONSTRAINT_SENTENCE)

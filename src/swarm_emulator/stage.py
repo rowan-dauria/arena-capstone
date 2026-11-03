@@ -20,6 +20,8 @@ from typing import Any
 import yaml
 from dotenv import load_dotenv
 
+from swarm_emulator.history import model_slug
+
 TASK = "src/swarm_emulator/task.py@swarm_audit"
 _VAR = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)\}")
 
@@ -61,8 +63,12 @@ def inspect_argv(stage: dict[str, Any], stage_name: str) -> list[str]:
         "--epochs", str(stage.get("epochs", 1)),
         "--log-dir", f"logs/{stage_name}",
     ]
-    if stage.get("history_summary"):  # scenario 3 long cells: per target model (D17)
-        argv[3:3] = ["-T", f"history_summary={stage['history_summary']}"]
+    summary = stage.get("history_summary")  # scenario 3 long cells: per target model (D17)
+    if summary:
+        target = stage["roles"].get("target", "")
+        if f"summary__{model_slug(target)}." not in summary:
+            raise ValueError(f"history_summary {summary} is not the summary for target {target}")
+        argv[3:3] = ["-T", f"history_summary={summary}"]
     for role, model in stage["roles"].items():
         argv += ["--model-role", f"{role}={model}"]
     return argv

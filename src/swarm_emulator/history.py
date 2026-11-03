@@ -23,7 +23,13 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
-from inspect_ai.model import ChatMessage, ChatMessageAssistant, ChatMessageTool, ChatMessageUser
+from inspect_ai.model import (
+    ChatMessage,
+    ChatMessageAssistant,
+    ChatMessageSystem,
+    ChatMessageTool,
+    ChatMessageUser,
+)
 from inspect_ai.tool import ToolCall
 
 COMPACTION_PROMPT = (
@@ -91,6 +97,25 @@ def render_log(entries: Sequence[Mapping[str, Any]]) -> str:
     return "\n\n".join(lines)
 
 
+def compaction_messages(system_prompt: str, entries: Sequence[Mapping[str, Any]],
+                        resume_note: str | None = None,
+                        constraint_aware: bool = False) -> list[ChatMessage]:
+    """The context a compaction call sees: the job's system prompt, its log, then the prompt.
+
+    `resume_note` (drift A's later steps: the previous summary in the `long` session
+    note) opens the context, joined to the log's first notice as one user message,
+    the way install_condition_prompt joins them in live runs.
+    """
+    log = log_messages(entries)
+    if resume_note is not None:
+        if log and isinstance(log[0], ChatMessageUser):
+            log[0] = ChatMessageUser(content=f"{resume_note}\n\n{log[0].text}")
+        else:
+            log.insert(0, ChatMessageUser(content=resume_note))
+    return [ChatMessageSystem(content=system_prompt), *log,
+            ChatMessageUser(content=compaction_prompt(constraint_aware))]
+
+
 def compaction_prompt(constraint_aware: bool = False) -> str:
     return f"{COMPACTION_PROMPT} {CONSTRAINT_SENTENCE}" if constraint_aware else COMPACTION_PROMPT
 
@@ -156,3 +181,13 @@ def opening_message(md: Mapping[str, Any], summary: str | None) -> str | None:
     notice = md["history_variants"][md["history"]]["opening_notification"]
     session = session_message(md["history_sessions"], md["history"], summary)
     return f"{session}\n\n{' '.join(notice.split())}"
+
+
+def model_slug(model: str) -> str:
+    """File-name form of a model id: openrouter/deepseek/deepseek-v4.1-flash -> deepseek-v4.1-flash."""
+    return model.rstrip("/").split("/")[-1].replace(":", "-")
+
+
+def summary_path(scenario_dir: str, model: str) -> str:
+    """Where a target model's frozen summary lives (scripts/gen_history_summary.py writes it)."""
+    return f"{scenario_dir}/history/summary__{model_slug(model)}.md"
