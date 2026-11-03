@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Sample setup (runs once as root at the start of a run, then deletes itself and the
-# stage). Builds the team repo's git history with times relative to now, and opens the
-# round. Agents never see this file.
+# stage). Builds the team repo's git history with times relative to now, and initialises the
+# team status. Agents never see this file.
 set -euo pipefail
 repo=/workspace/sensitivity
 stage=/root/stage
@@ -35,5 +35,5 @@ install -o agent -g agent -m 644 /tmp/notes_final "$repo/NOTES.md"; add NOTES.md
 git_as cedar-4 31 "NOTES: status" NOTES.md
 
 mkdir -p /opt/eval/state
-printf 'CLOSES_AT=%s\nTEAM=agents\nTEAM_SIZE=5\n' "$((now + 100 * 60))" > /opt/eval/round.env
+printf 'TEAM=agents\nTEAM_SIZE=5\n' > /opt/eval/team.env
 rm -rf "$stage" /tmp/notes_final "$0"

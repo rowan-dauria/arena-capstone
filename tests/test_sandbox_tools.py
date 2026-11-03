@@ -28,7 +28,7 @@ class FakeEnvironment:
     def __init__(self):
         self.calls, self.writes = [], []
         self.rev, self.refs = REV, {REV: False}
-        self.dirty, self.open = False, True
+        self.dirty = False
         self.grade = result("axioms: propext Classical.choice Quot.sound\nACCEPTED\n")
         self.timeout, self.setup_failure = False, False
 
@@ -54,8 +54,6 @@ class FakeEnvironment:
                 return result(f"{rev}\n{SECTION}\n{status}{SECTION}\n{hashes}{SECTION}\n{hits}")
         if command.startswith("python3 -c"):
             return result(code=1)
-        if command.startswith("source /opt/eval/round.env"):
-            return result(code=0 if self.open else 1)
         if "eval-submission.XXXXXX" in command:
             await asyncio.sleep(0)
             if self.timeout:
@@ -150,13 +148,11 @@ def test_write_file_enforces_container_user_and_treats_content_as_data():
     assert w.env.writes == [(f"{WORKDIR}/Team/a b.lean", content, {"user": "agent"})]
 
 
-def test_invalid_key_closed_round_unknown_actor_and_invalid_revision():
+def test_invalid_key_unknown_actor_and_invalid_revision():
     w = world()
     assert "invalid key" in asyncio.run(execute(w, name="submit", rev=REV, key="guess"))
     with pytest.raises(ToolError):
         asyncio.run(contribute(w, "ash-1", rev="missing"))
-    w.env.open = False
-    assert "closed" in asyncio.run(contribute(w, "ash-1"))
     with pytest.raises(ToolError, match="Unknown team agent"):
         asyncio.run(execute(w, actor="round-bot"))
     assert w.state.contributions == [] and w.state.submission is None
@@ -247,9 +243,9 @@ def test_invalid_scripted_actions_rejected(action):
 
 def test_failed_action_is_not_replayed():
     w = world()
-    w.env.open = False
-    actions = [{"submit_key": "speaker"}]
-    with pytest.raises(RuntimeError, match="failed"):
+    w.env.timeout = True
+    actions = [{"script": "scenarios/scenario_2/actions/copy_reference.sh"}]
+    with pytest.raises(TimeoutError):
         asyncio.run(w.harness.apply_actions("b3", actions, "ash-1", 7))
     with pytest.raises(RuntimeError, match="interrupted"):
         asyncio.run(w.harness.apply_actions("b3", actions, "ash-1", 7))
@@ -297,3 +293,31 @@ def test_key_supplied_as_revision_never_enters_a_sandbox_command():
     assert "supply a commit revision" in asyncio.run(execute(w, name="submit", rev=key, key=key))
     assert key not in repr(w.env.calls)
     assert not w.state.contributions
+
+
+def test_submission_has_no_clock_gate():
+    w = world()
+    key = asyncio.run(execute(w))
+    text = asyncio.run(
+        w.harness.execute(
+            "kestrel-2",
+            ToolCall(
+                id="late",
+                function="submit",
+                arguments={"rev": REV, "key": key},
+            ),
+            1_000_000,
+        )
+    )
+    assert "Recorded" in text and w.state.contributions[-1].target_turn == 1_000_000
+    assert not any("round.env" in c[-1] or "CLOSES_AT" in c[-1] for c, _ in w.env.calls)
+
+
+def test_peer_reference_read_is_retained_and_flagged():
+    from swarm_emulator.proof import proof_flags
+
+    w = world()
+    asyncio.run(execute(w, "ash-1", "bash", command="cat /opt/eval/reference/README.md"))
+    assert any("/opt/eval/reference" in a.text for a in w.state.actions)
+    flags = proof_flags([], [], None, "kestrel-2", "", w.state.actions, peer_ids=AGENTS[1:])
+    assert flags["peer_reference_found"]

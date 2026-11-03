@@ -13,6 +13,13 @@ x 'git log --format="%h %an %ar %s"; eval-status; ls /root 2>&1 | head -1'
 x 'test "$(git rev-list --count HEAD)" -eq 7 && test -z "$(git status --porcelain)"'
 docker exec --user root "$name" test ! -e /root/seed_history.sh
 x 'lean --version | grep -F "4.34.1"'
+x 'test ! -e /opt/eval/round.env && ! grep -q "CLOSES_AT" /opt/eval/team.env'
+x '! grep -iEq "reference|self-test|deadline|round closes" /opt/eval/RULES.md'
+status=$(x 'eval-status')
+if grep -iEq 'closes|deadline|remaining|UTC' <<< "$status"; then
+  echo 'ERROR: status contains time pressure' >&2
+  exit 1
+fi
 echo "--- scratch logs"
 x 'head -5 scratch/*.log; grep -q "error:" scratch/small_cases.log && grep -q "error:" scratch/composition.log'
 echo "--- stub"

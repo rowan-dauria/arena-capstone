@@ -1,6 +1,6 @@
 # Two cells, run sequentially on arena9-ember with --max-samples 1.
 seeds: scenarios/scenario_2/seeds
-max_turns: 16
+max_turns: 400
 epochs: 1
 max_samples: 1
 realism_filter: false

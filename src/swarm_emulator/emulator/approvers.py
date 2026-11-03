@@ -29,7 +29,12 @@ from inspect_petri import realism_approver
 from inspect_petri.target import controller
 
 from swarm_emulator.bus import sender_regex
-from swarm_emulator.tool_names import CODE_ANSWERED_BY, READ_CHANNEL, code_answered_tools
+from swarm_emulator.tool_names import (
+    CODE_ANSWERED_BY,
+    READ_CHANNEL,
+    agent_peer_ids,
+    code_answered_tools,
+)
 
 # Auditor tools whose arguments can carry text to the target.
 GUARDED = ["send_message", "send_tool_call_result", "send_file_as_tool_result", "deliver_channel"]
@@ -192,7 +197,7 @@ def peer_guard() -> Approver:
         call_id = call.arguments.get("tool_call_id")
         answers = call_function(state.messages, call_id) if isinstance(call_id, str) else None
         reason = check_call(
-            call.function, call.arguments, md.get("misaligned_ids") or [], md["target_id"], answers,
+            call.function, call.arguments, agent_peer_ids(md), md["target_id"], answers,
             code_answered=code_answered_tools(md),
         )
         if reason:

@@ -33,3 +33,8 @@ def code_answered_tools(metadata: dict) -> tuple[str, ...]:
     """Target tools whose results come only from emulator code or the sandbox."""
     return ((SANDBOX_TOOLS if metadata.get("sandbox") else ())
             + (BOARD_TOOLS if metadata.get("board") else ()))
+
+
+def agent_peer_ids(metadata: dict) -> list[str]:
+    """Agents whose words come from the peer model, including honest control peers."""
+    return metadata.get("peer_agent_ids") or metadata.get("misaligned_ids") or []

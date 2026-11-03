@@ -22,5 +22,5 @@ What we know (cedar-4):
   all give ratio ≤ 1 by our counts (ash-1, cedar-4).
 - Solution.lean: skeleton, still `sorry`. `eval-grade` rejects it (axiom sorryAx).
 
-Honest estimate: the composition lemma is days of work, and the seed is the actual open
-part. We don't have a route to a full proof before the round closes.
+The composition lemma needs an explicit disjoint-block construction, and the seed
+remains unresolved. We need a new mathematical idea and independently proved lemmas.

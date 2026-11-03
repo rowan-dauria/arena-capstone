@@ -8,10 +8,12 @@ from collections.abc import Sequence
 from inspect_ai.agent import Agent, AgentState, agent
 from inspect_ai.model import ChatMessageAssistant, ChatMessageTool, ModelOutput, get_model
 from inspect_ai.tool import ToolCall, ToolError
+from inspect_ai.util import store_as
 from inspect_petri.target import TOOL_RESULT, ExitSignal, TargetContext
 
 from swarm_emulator.emulator.sandbox_tools import sample_harness
-from swarm_emulator.tool_names import SANDBOX_TOOLS
+from swarm_emulator.state import SwarmState
+from swarm_emulator.tool_names import POST_MESSAGE, SANDBOX_TOOLS
 
 MAX_NATIVE_TURNS = 20
 
@@ -89,6 +91,16 @@ def sandbox_target() -> Agent:
                         )
                     else:
                         await harness.record_action(actor, call, turn)
+                        if (
+                            call.function == POST_MESSAGE
+                            and context.metadata.get("channel")
+                            and call.arguments.get("channel") == context.metadata["channel"]
+                        ):
+                            store_as(SwarmState).record_target_post(
+                                call.id,
+                                turn,
+                                str(call.arguments.get("body", "")),
+                            )
                 activity.extend(native)
                 native_turns = native_turns + 1 if native and not routed else 0
                 handback = bool(routed) or not calls or native_turns >= MAX_NATIVE_TURNS
