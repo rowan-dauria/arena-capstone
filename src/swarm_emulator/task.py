@@ -26,8 +26,9 @@ from inspect_petri import (
 from swarm_emulator import repo_path
 from swarm_emulator.emulator.approvers import swarm_approval_policies
 from swarm_emulator.emulator.board_tools import answer_board_call
+from swarm_emulator.emulator.peer_agents import direct_peer
 from swarm_emulator.emulator.peers import peer_message
-from swarm_emulator.emulator.repo_tools import answer_repo_call
+from swarm_emulator.emulator.sandbox_target import sandbox_target
 from swarm_emulator.emulator.tools import deliver_channel, install_condition_prompt, swarm_state
 from swarm_emulator.scoring.actions_scorer import swarm_actions
 from swarm_emulator.scoring.judge import exp1_dimensions
@@ -70,20 +71,33 @@ def swarm_audit(
         scanners = same_for_all(scanner_set, "kind (board or team)")
     if scanners not in SCANNER_SETS:
         raise ValueError(f"scanners must be auto or one of {', '.join(SCANNER_SETS)}")
-    probe = [perception_probe()] if same_for_all(lambda md: bool(md.get(PROBE_KEY)),
-                                                 f"whether they have a {PROBE_KEY}") else []
+    probe = (
+        [perception_probe()]
+        if same_for_all(lambda md: bool(md.get(PROBE_KEY)), f"whether they have a {PROBE_KEY}")
+        else []
+    )
 
+    is_sandbox = same_for_all(lambda md: bool(md.get("sandbox")), "sandbox kind")
+    sandbox_config = same_for_all(
+        lambda md: md["sandbox"]["compose"] if md.get("sandbox") else None, "sandbox compose"
+    )
     dimensions = exp1_dimensions()
     tools = auditor_tools(
         prefill=False,
         rollback=False,
         target_tools="fixed",
-        extra_tools=[install_condition_prompt(), peer_message(), deliver_channel(), swarm_state(),
-                     answer_repo_call(), answer_board_call()],
+        extra_tools=[
+            install_condition_prompt(),
+            *([direct_peer()] if is_sandbox else [peer_message()]),
+            deliver_channel(),
+            swarm_state(),
+            answer_board_call(),
+        ],
         exclude=["set_system_message"],
     )
     return Task(
         dataset=dataset,
+        sandbox=("docker", str(repo_path(sandbox_config))) if is_sandbox else None,
         solver=audit_solver(
             auditor=auditor_agent(
                 max_turns=max_turns,
@@ -91,9 +105,13 @@ def swarm_audit(
                 realism_filter=realism,
                 approval=swarm_approval_policies(realism),
             ),
-            target=target_agent(),
+            target=sandbox_target() if is_sandbox else target_agent(),
         ),
-        scorer=[audit_judge(dimensions), swarm_actions(), *(s() for s in SCANNER_SETS[scanners]),
-                *probe],
+        scorer=[
+            audit_judge(dimensions),
+            swarm_actions(),
+            *(s() for s in SCANNER_SETS[scanners]),
+            *probe,
+        ],
         viewer=audit_viewer(dimensions),
     )

@@ -32,7 +32,6 @@ from swarm_emulator import repo_path
 from swarm_emulator.board import board_history
 from swarm_emulator.bus import BusMessage, parse_channel
 from swarm_emulator.emulator.peer_check import ACCEPT, grader_prompt, parse_label
-from swarm_emulator.emulator.repo_tools import apply_actions
 from swarm_emulator.emulator.tools import (
     metadata,
     render,
@@ -124,6 +123,8 @@ def peer_message() -> Tool:
                         "Apply your ending rule now: if the target has acted since its last "
                         "read, call end_conversation.")
             return "No teammate messages to release."
+        if any(b.actions for b in beats):
+            raise ToolError("Sandbox beats must be released with direct_peer.")
         turns = target_turns()
         if not state.can_release(beats, turns):
             return "Not yet: release the next teammate message after the target has acted."
@@ -148,12 +149,9 @@ def peer_message() -> Tool:
 
         state.queue_msg(unstamped(speaker, "worker", body, channel=where))
         state.mark_released(beat, speaker, turns)
-        done = apply_actions(beat.actions, speaker)
-        acted = "".join(f"\n- {d}" for d in done)
         reader = (f"answer_board_call on the next read of {where}" if md.get("board")
                   else "the next read_channel")
-        return (f"Queued from {speaker} for {reader}:\n\n{body}"
-                + (f"\n\nRepo actions applied:{acted}" if done else ""))
+        return f"Queued from {speaker} for {reader}:\n\n{body}"
 
     return execute
 

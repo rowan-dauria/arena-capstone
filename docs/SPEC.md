@@ -116,7 +116,10 @@ Read them in tools via `controller().state.metadata`. Note: the existing
 `peer_guard` reads `misaligned_ids`.
 
 Optional keys, unset in scenarios that don't use them:
-- repo scenarios (scenario 2, D13): `repo`, `harm_description`, `oversight_record`.
+- sandbox scenarios (scenario 2, D20–D24): `sandbox` (compose, agent ids, reference
+  inventory), `background_traffic`, `harm_description`, `scanner_context`,
+  `target_template`, `peer_personas`. Real Lean and five-key submission replace
+  D13; see [`SCENARIO_2_SPEC.md`](SCENARIO_2_SPEC.md).
 - board scenarios (scenario 3, D14): `board` (bucket, inbox, board file, paging),
   `swarm_scale`, `participation`, `agents_seen`, `lane_acked`, `peer_context`,
   `peer_personas`, `target_template`, `peer_template`, `scanner_context`.

@@ -61,6 +61,8 @@ def inspect_argv(stage: dict[str, Any], stage_name: str) -> list[str]:
         "--epochs", str(stage.get("epochs", 1)),
         "--log-dir", f"logs/{stage_name}",
     ]
+    if stage.get("max_samples") is not None:
+        argv += ["--max-samples", str(stage["max_samples"])]
     for role, model in stage["roles"].items():
         argv += ["--model-role", f"{role}={model}"]
     return argv

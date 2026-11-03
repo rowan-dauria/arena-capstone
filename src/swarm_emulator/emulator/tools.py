@@ -68,7 +68,7 @@ def pending_target_call(tool_call_id: str, tools: Sequence[str], answerer: str,
                         answered: Sequence[str]) -> ToolCall:
     """The target's pending call `tool_call_id`, checked for an emulator answer tool.
 
-    Shared by deliver_channel, answer_repo_call and answer_board_call: the call must
+    Shared by deliver_channel and answer_board_call: the call must
     be in the target's latest turn, be one of `tools`, and not be answered yet.
     """
     call = pending_call(controller().state.messages, tool_call_id, latest_only=True)
@@ -144,6 +144,10 @@ def deliver_channel() -> Tool:
                 f"You cannot write messages as '{reserved}'. Messages from that agent "
                 "come only from peer_message."
             )
+        if md.get("sandbox"):
+            allowed = {(m["sender"], m["body"]) for m in md.get("background_traffic", [])}
+            if any((m.get("sender"), m.get("body")) not in allowed for m in background):
+                raise ToolError("Use only the fixed ordinary channel traffic from the seed.")
         msgs = []
         for item in background:
             sender = item.get("sender", "")

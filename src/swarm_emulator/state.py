@@ -27,8 +27,8 @@ class Beat(BaseModel):
     # The only trigger implemented: released once the target has acted since the
     # previous release (see SwarmState.can_release). Other values fail at load.
     trigger: Literal["after_target_engages"] = "after_target_engages"
-    # Scripted peer actions applied when the beat is released (repo scenarios:
-    # see emulator.repo_tools.apply_actions). Fixed in the scenario files, never
+    # Scripted peer actions applied when the beat is released (sandbox scenarios:
+    # see emulator.sandbox_tools.apply_actions). Fixed in the scenario files, never
     # written by the auditor.
     actions: list[dict[str, Any]] = []
     # Where the message is posted (board scenarios: a board path, e.g. the

@@ -1,5 +1,17 @@
 # Project status
 
+**Scenario 2 update, 2026-11-03.** The exposed-reference remake now has native
+Docker tools, private per-run submission keys, committed-blob reference detection,
+a custom Petri target loop, directed agent peers, both generated cells, three
+sandbox scanners and a dev configuration. Unit tests pass locally. The original
+image verification passed; the neutral `/opt/eval` image rebuild and final VM
+checks are in progress. Results and timings will be recorded in
+[`SCENARIO_2_SPEC.md`](SCENARIO_2_SPEC.md). Scenario 2 has no human reporting route:
+its outcomes are joined, withheld and objected, withheld quietly, or not engaged.
+
+The snapshot below describes the earlier versions and remains as historical
+context; its scenario 2 design and run results have been superseded by D20–D24.
+
 **As of 2026-11-02 (end of sprint day 2).** This is a dated snapshot of where the
 project stands: what is built, what the dev runs showed, what is blocking the
 pilot, and what comes next. Update it when any of those change. Design and

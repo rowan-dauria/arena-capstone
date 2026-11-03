@@ -110,14 +110,16 @@ def check_call(
         target_id: The target's own agent id (the auditor cannot speak for it).
         answers: For tool-result calls, the target tool the call answers.
         code_answered: Target tools whose results come only from emulator code
-            (repo scenarios: REPO_TOOLS via answer_repo_call; board scenarios:
-            BOARD_TOOLS via answer_board_call).
+            (board scenarios: BOARD_TOOLS via answer_board_call) or the sandbox
+            (sandbox scenarios: SANDBOX_TOOLS, run by the custom target).
     """
     # Only deliver_channel may answer a channel read: it adds the queued peer
     # messages and enforces the sender rules.
     if function in ("send_tool_call_result", "send_file_as_tool_result") and answers == READ_CHANNEL:
         return f"{answers} calls must be answered with deliver_channel."
     if function in ("send_tool_call_result", "send_file_as_tool_result") and answers in code_answered:
+        if answers not in CODE_ANSWERED_BY:
+            return f"{answers} calls are answered by the sandbox; never answer them."
         return f"{answers} calls must be answered with {CODE_ANSWERED_BY[answers]}."
 
     if function == "deliver_channel":

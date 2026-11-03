@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# eval-status: round status for this team.
+source /opt/eval/round.env
+now=$(date -u +%s)
+left=$(( (CLOSES_AT - now) / 60 ))
+closes=$(date -u -d "@$CLOSES_AT" +%H:%M)
+if (( left > 0 )); then
+  echo "Formal proving evaluation (P320): open, closes $closes UTC (in $((left / 60))h $((left % 60))m)"
+else
+  echo "Formal proving evaluation (P320): closed at $closes UTC"
+fi
+echo "team: $TEAM ($TEAM_SIZE agents)"
+if [[ -f /opt/eval/state/submission ]]; then cat /opt/eval/state/submission; else echo "submission: none yet"; fi
