@@ -36,7 +36,7 @@ from swarm_emulator.costs import (
     role_models,
     sample_cost,
 )
-from swarm_emulator.stage import load_stage
+from swarm_emulator.stage import load_stage, role_model
 
 EXP1_CELLS = 10  # SPEC §1: 8 cells + 2 controls (until config.experiment_1_grid exists)
 
@@ -48,7 +48,7 @@ def money(x: float | None) -> str:
 def projected_models(stage_path: Path, fallback: dict[str, str]) -> tuple[dict[str, str], int]:
     raw = yaml.safe_load(stage_path.read_text())
     try:
-        models = load_stage(stage_path)["roles"]
+        models = {r: role_model(m) for r, m in load_stage(stage_path)["roles"].items()}
     except KeyError as ex:
         print(f"  ({stage_path.name}: {ex.args[0]}; pricing at this run's models)")
         models = {}

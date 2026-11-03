@@ -24,7 +24,7 @@ from dotenv import load_dotenv
 
 from swarm_emulator import repo_path
 from swarm_emulator.costs import PRICES, load_prices, openrouter_price
-from swarm_emulator.stage import load_stage
+from swarm_emulator.stage import load_stage, role_model
 
 URL = "https://openrouter.ai/api/v1/models"
 
@@ -33,7 +33,7 @@ def stage_models(paths: list[Path]) -> set[str]:
     models: set[str] = set()
     for path in paths:
         try:
-            models |= set(load_stage(path)["roles"].values())
+            models |= {role_model(m) for m in load_stage(path)["roles"].values()}
         except KeyError as ex:
             print(f"skip {path.name}: {ex.args[0]}", file=sys.stderr)
     return models
