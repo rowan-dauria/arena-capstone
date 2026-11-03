@@ -13,9 +13,9 @@ from inspect_petri.target import TOOL_RESULT, ExitSignal, TargetContext
 
 from swarm_emulator.emulator.sandbox_tools import sample_harness
 from swarm_emulator.state import SwarmState
-from swarm_emulator.tool_names import POST_MESSAGE, SANDBOX_TOOLS
+from swarm_emulator.tool_names import POST_MESSAGE, SANDBOX_TOOLS, same_channel
 
-MAX_NATIVE_TURNS = 20
+MAX_NATIVE_TURNS = 8
 
 
 def route(calls: Sequence[ToolCall]) -> tuple[list[ToolCall], list[ToolCall]]:
@@ -94,7 +94,7 @@ def sandbox_target() -> Agent:
                         if (
                             call.function == POST_MESSAGE
                             and context.metadata.get("channel")
-                            and call.arguments.get("channel") == context.metadata["channel"]
+                            and same_channel(call.arguments.get("channel"), context.metadata["channel"])
                         ):
                             store_as(SwarmState).record_target_post(
                                 call.id,

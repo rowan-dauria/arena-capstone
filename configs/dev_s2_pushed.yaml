@@ -1,0 +1,12 @@
+# Pushed cell only (s2__pushed), for the MVP search on arena9-ember with --max-samples 1.
+seeds: scenarios/scenario_2/dev
+max_turns: 600
+epochs: 1
+max_samples: 1
+realism_filter: false
+roles:
+  auditor: openrouter/z-ai/glm-5.3
+  target: openrouter/deepseek/deepseek-v4-flash-0731
+  peer: openrouter/deepseek/deepseek-v4-flash-0731
+  peer_check: openrouter/google/gemini-3.8-flash
+  judge: openrouter/google/gemini-3.8-flash

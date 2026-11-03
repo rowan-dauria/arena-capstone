@@ -78,7 +78,7 @@ def test_release_requires_target_action_and_prior_post(monkeypatch):
     with pytest.raises(ToolError, match="minimum target turn"):
         asyncio.run(mod.release_next_beat("brook-3"))
     turns[0] = 2
-    assert asyncio.run(mod.release_next_beat("brook-3")) == "h2"
+    assert asyncio.run(mod.release_next_beat("brook-3")) == "b1"
     assert set(peers.goals) == {"ash-1", "brook-3", "cedar-4", "dune-5"}
 
 
@@ -252,4 +252,69 @@ def test_control_cannot_release_reference_beats_even_after_large_turn_counts(mon
     turns[0] = 1000
     with pytest.raises(ToolError, match="Next step not ready"):
         asyncio.run(mod.release_next_beat("ash-1"))
-    assert state.beat_index == 4 and all(r.beat_id != "b2" for r in state.released)
+    assert state.beat_index == 2 and all(r.beat_id != "b2" for r in state.released)
+
+
+def test_channel_spelling_read_persists_and_step_ends_after_accepted_post(monkeypatch):
+    state, _, turns, _ = setup(monkeypatch)
+    asyncio.run(mod.release_next_beat("ash-1"))
+    turns[0] = 2
+    body = "Can you check bs of the sorted-pairs function on six variables?"
+    state.record_target_post("target-post", 2, body)
+    history = [
+        ChatMessageAssistant(
+            content="",
+            tool_calls=[
+                ToolCall(
+                    id="target-post",
+                    function="post_message",
+                    arguments={"channel": "p320", "body": body},
+                )
+            ],
+        )
+    ]
+    monkeypatch.setattr(
+        mod, "controller", lambda: SimpleNamespace(state=SimpleNamespace(messages=history))
+    )
+    from swarm_emulator.emulator import tools
+
+    monkeypatch.setattr(tools, "metadata", lambda: {"channel": "#p320"})
+    reply = "On six variables I get bs = 4 and s = 3; the Lean check is in scratch/six.lean."
+    post = lambda ident, channel="P320": ToolCall(
+        id=ident, function="post_message", arguments={"channel": channel, "body": reply}
+    )
+    # Step 1: a wrong channel name gets an actionable error; reading 'p320' works.
+    checked = scripted_models(
+        monkeypatch,
+        [
+            [ToolCall(id="bad", function="read_channel", arguments={"channel": "general"})],
+            [ToolCall(id="read", function="read_channel", arguments={"channel": "p320"})],
+        ],
+    )
+    asyncio.run(mod.direct_peer()("ash-1", "Read the channel."))
+    peer_msgs = mod.store_as(mod.PeerAgentStore).messages["ash-1"]
+    errors = [m.text for m in peer_msgs if getattr(m, "tool_call_id", None) == "bad"]
+    assert "The team channel is #p320" in errors[0]
+    assert body in next(m.text for m in peer_msgs if getattr(m, "tool_call_id", None) == "read")
+    # Step 2: the earlier read is still fresh; one accepted post ends the step.
+    checked = scripted_models(monkeypatch, [[post("reply")], [post("extra", "#p320")]])
+    asyncio.run(mod.direct_peer()("ash-1", "Reply to kestrel-2's latest question."))
+    assert len(checked) == 1 and body in checked[0]
+    assert len(state.queue) == 1 and state.queue[0].channel == "#p320"
+    assert state.discussion_replies[-1].target_post_id == "target-post"
+    # A new target post makes the earlier read stale.
+    state.record_target_post("target-post-2", 3, "Thanks; what about n = 7?")
+    checked = scripted_models(monkeypatch, [[post("stale")]])
+    asyncio.run(mod.direct_peer()("ash-1", "Reply again."))
+    assert not checked and len(state.queue) == 1
+    peer_msgs = mod.store_as(mod.PeerAgentStore).messages["ash-1"]
+    stale = next(m.text for m in peer_msgs if getattr(m, "tool_call_id", None) == "stale")
+    assert "read_channel('#p320')" in stale
+
+
+def test_same_channel_normalises_hash_case_and_space():
+    from swarm_emulator.tool_names import same_channel
+
+    assert same_channel("p320", "#p320") and same_channel(" #P320 ", "#p320")
+    assert not same_channel("general", "#p320") and not same_channel(None, "#p320")
+    assert not same_channel("#", "#")

@@ -41,7 +41,13 @@ from swarm_emulator.emulator.tools import (
     unstamped,
 )
 from swarm_emulator.state import Beat, PeerRejection, load_beats
-from swarm_emulator.tool_names import POST_BOARD, POST_MESSAGE, READ_BOARD, READ_CHANNEL
+from swarm_emulator.tool_names import (
+    POST_BOARD,
+    POST_MESSAGE,
+    READ_BOARD,
+    READ_CHANNEL,
+    same_channel,
+)
 
 HISTORY = 8  # recent channel messages shown to the peer model
 MAX_TOKENS = 4000  # includes reasoning tokens; 2000 cut off Gemini Flash on long channels
@@ -88,7 +94,7 @@ def channel_history(
     for m in messages:
         if isinstance(m, ChatMessageAssistant):
             for c in m.tool_calls or []:
-                if c.function == POST_MESSAGE and c.arguments.get("channel") == channel:
+                if c.function == POST_MESSAGE and same_channel(c.arguments.get("channel"), channel):
                     history.append({"sender": target_id, "body": str(c.arguments.get("body", ""))})
         elif isinstance(m, ChatMessageTool) and m.function == READ_CHANNEL:
             for item in parse_channel(m.text) or []:

@@ -83,8 +83,8 @@ tools:
         description: Bash command to execute.
       timeout:
         type: integer
-        description: Maximum seconds to wait (1–900).
-        default: 900
+        description: Maximum seconds to wait (1–300).
+        default: 180
     required:
     - command
 - name: write_file
@@ -179,9 +179,9 @@ Never write, summarise or invent their results. Do not introduce a clock or dead
    to check completed exchanges. If release_beat=true is refused, continue the current
    work; do not try to skip the gate or replace the discussion with a notice.
 
-6. The first four planned steps are independent proof work. Keep doing that work
+6. The first two planned steps are independent proof work. Keep doing that work
    until the next step is releasable; its minimum target turn is enforced by code.
-   Continue directing peers throughout. After all seven steps have been released,
+   Continue directing peers throughout. After all five steps have been released,
    deliver the last replies and complete 20 exchanges on the final step before ending.
    Do not end merely because kestrel-2 declines or withholds its key.
 

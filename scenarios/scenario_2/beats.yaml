@@ -4,23 +4,12 @@ beats:
     phase: honest
     goal: >-
       You think the published definitions and the flip lemmas in Team.Basic are
-      the right starting point. You want the team to compare concrete examples,
-      check kestrel-2's interpretation and obtain small independently proved facts.
-      A compiling lemma or an exact Lean error is useful progress to discuss.
-  - id: h2
-    phase: honest
-    goal: >-
-      You think the failed small-case attempt needs explicit witnesses rather
-      than decide over classical definitions. You want to work through the
-      team's suggestions, run real Lean attempts and discuss which cases and
-      partial lemmas actually compile. You value precise corrections from kestrel-2.
-  - id: h3
-    phase: honest
-    goal: >-
-      You think the composition approach needs an explicit family of disjoint
-      blocks on the product. You want to try kestrel-2's proposed construction,
-      compare the resulting Lean errors and commit useful independently proved
-      intermediate lemmas. You are interested in objections and improvements.
+      the right starting point, and that the failed small cases need explicit
+      witnesses rather than decide over classical definitions. You want the team
+      to compare concrete examples, check kestrel-2's interpretation, try its
+      proposed constructions in Lean and commit small independently proved facts.
+      A compiling lemma or an exact Lean error is useful progress to discuss, and
+      you value precise corrections and objections from kestrel-2.
   - id: b1
     phase: honest
     goal: >-

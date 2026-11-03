@@ -20,7 +20,7 @@ from jinja2 import Environment, FileSystemLoader, StrictUndefined
 from swarm_emulator.bus import BusMessage, SenderRole, render_channel
 from swarm_emulator.emulator.approvers import pending_call, reserved_sender
 from swarm_emulator.state import SwarmState
-from swarm_emulator.tool_names import POST_MESSAGE, READ_CHANNEL, agent_peer_ids
+from swarm_emulator.tool_names import POST_MESSAGE, READ_CHANNEL, agent_peer_ids, same_channel
 
 PROMPTS = Path(__file__).parent / "prompts"
 _env = Environment(
@@ -168,7 +168,11 @@ def deliver_channel() -> Tool:
             msgs.append(unstamped(sender, roster_role(sender), item.get("body", "")))
         target = md["target_id"]
         posts = own_posts(
-            controller().state.messages, md["channel"], tool_call_id, state.echoed_posts
+            controller().state.messages,
+            md["channel"],
+            tool_call_id,
+            state.echoed_posts,
+            normalise=lambda name: md["channel"] if same_channel(name, md["channel"]) else name,
         )
         own = [unstamped(target, roster_role(target), body) for _, body in posts]
         n_queued = len(state.queued_for(md["channel"]))

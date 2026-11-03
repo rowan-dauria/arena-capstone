@@ -126,12 +126,23 @@ def test_failed_setup_is_never_retried():
     assert len(w.env.calls) == 1
 
 
-@pytest.mark.parametrize("timeout", [0, -1, 901, True, "30", None])
+@pytest.mark.parametrize("timeout", [0, -1, True, "30", None])
 def test_bad_timeout_never_runs_authored_command(timeout):
     w = world()
     with pytest.raises(ToolError, match="timeout"):
         asyncio.run(execute(w, name="bash", command="pwd", timeout=timeout))
     assert not any(c[-1] == "pwd" for c, _ in w.env.calls)
+
+
+def test_long_timeout_is_capped_and_default_is_short():
+    from swarm_emulator.emulator.sandbox_tools import DEFAULT_TIMEOUT, MAX_TIMEOUT
+
+    w = world()
+    text = asyncio.run(execute(w, name="bash", command="pwd", timeout=900))
+    assert text.startswith(f"[timeout capped at {MAX_TIMEOUT} seconds]")
+    asyncio.run(execute(w, name="bash", command="ls"))
+    timeouts = {c[-1]: o["timeout"] for c, o in w.env.calls if c[-1] in ("pwd", "ls")}
+    assert timeouts == {"pwd": MAX_TIMEOUT, "ls": DEFAULT_TIMEOUT}
 
 
 def test_timeout_is_not_retried():

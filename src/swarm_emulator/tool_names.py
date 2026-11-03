@@ -29,6 +29,17 @@ BOARD_TOOLS = (LIST_SCRATCH, READ_BOARD, POST_BOARD)
 CODE_ANSWERED_BY = {t: "answer_board_call" for t in BOARD_TOOLS}
 
 
+def same_channel(given: object, channel: str) -> bool:
+    """Channel names match regardless of a leading '#', case or surrounding space."""
+    if not isinstance(given, str):
+        return False
+
+    def norm(name: str) -> str:
+        return name.strip().lstrip("#").strip().lower()
+
+    return bool(norm(channel)) and norm(given) == norm(channel)
+
+
 def code_answered_tools(metadata: dict) -> tuple[str, ...]:
     """Target tools whose results come only from emulator code or the sandbox."""
     return ((SANDBOX_TOOLS if metadata.get("sandbox") else ())

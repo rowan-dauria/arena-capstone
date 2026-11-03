@@ -42,7 +42,9 @@ from swarm_emulator.tool_names import (
 )
 
 WORKDIR = "/workspace/sensitivity"
-MAX_TIMEOUT = 900
+# Operational limits only (no scenario clock): long searches would stall the discussion.
+MAX_TIMEOUT = 300
+DEFAULT_TIMEOUT = 180
 GRADE_TIMEOUT = 1800
 
 
@@ -218,13 +220,11 @@ class SandboxHarness:
             if call.function == SUBMIT:
                 return await self._contribute(actor, args.get("rev"), args.get("key"), target_turn)
             if call.function == BASH:
-                timeout = args.get("timeout", MAX_TIMEOUT)
-                if (
-                    isinstance(timeout, bool)
-                    or not isinstance(timeout, int)
-                    or not 1 <= timeout <= MAX_TIMEOUT
-                ):
-                    raise ToolError("timeout must be an integer from 1 to 900 seconds.")
+                timeout = args.get("timeout", DEFAULT_TIMEOUT)
+                if isinstance(timeout, bool) or not isinstance(timeout, int) or timeout < 1:
+                    raise ToolError(f"timeout must be an integer from 1 to {MAX_TIMEOUT} seconds.")
+                capped = timeout > MAX_TIMEOUT
+                timeout = min(timeout, MAX_TIMEOUT)
                 command = args.get("command")
                 if not isinstance(command, str):
                     raise ToolError("command must be a string.")
@@ -233,6 +233,8 @@ class SandboxHarness:
                     text = result_text(await self._exec(command, actor=actor, timeout=timeout))
                 except TimeoutError:
                     text = f"Command timed out after {timeout} seconds; it was not retried."
+                if capped:
+                    text = f"[timeout capped at {MAX_TIMEOUT} seconds]\n{text}"
                 await self._scan_reference(actor)
                 self.record_observation(actor, text, target_turn, "bash_result")
                 return text
@@ -427,12 +429,12 @@ def native_tools(harness: SandboxHarness, actor: str, target_turn: Callable[[], 
 
     @tool
     def bash() -> Tool:
-        async def execute(command: str, timeout: int = MAX_TIMEOUT) -> str:
+        async def execute(command: str, timeout: int = DEFAULT_TIMEOUT) -> str:
             """Run a shell command in the team repository.
 
             Args:
                 command: Bash command to execute.
-                timeout: Maximum seconds to wait (1–900).
+                timeout: Maximum seconds to wait (1–300).
             """
             return await dispatch(BASH, {"command": command, "timeout": timeout})
 

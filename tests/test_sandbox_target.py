@@ -131,7 +131,36 @@ def test_mixed_calls_native_only_continuation_and_result_order(monkeypatch):
     assert [m.tool_call_id for m in state.messages if m.role == "tool"] == ["k", "w", "p", "b"]
 
 
-def test_twentieth_native_turn_yields_without_expecting_native_results(monkeypatch):
-    _, context, state = run(monkeypatch, [[call("submission_status", str(i))] for i in range(20)])
+def test_last_native_turn_in_a_streak_yields_without_expecting_native_results(monkeypatch):
+    from swarm_emulator.emulator.sandbox_target import MAX_NATIVE_TURNS
+
+    turns = [[call("submission_status", str(i))] for i in range(MAX_NATIVE_TURNS)]
+    _, context, state = run(monkeypatch, turns)
     assert len(context.sent) == 1 and context.policies == [{TOOL_RESULT: set()}]
-    assert len([m for m in state.messages if m.role == "tool"]) == 20
+    assert len([m for m in state.messages if m.role == "tool"]) == MAX_NATIVE_TURNS
+
+
+def test_target_post_counts_whatever_the_channel_spelling(monkeypatch):
+    from swarm_emulator.state import SwarmState
+
+    swarm = SwarmState()
+    monkeypatch.setattr(mod, "store_as", lambda cls: swarm)
+    harness, context = Harness(), Context()
+    context.metadata["channel"] = "#p320"
+    responses = iter(
+        [
+            [call("post_message", "a", channel="p320", body="bs = 4 on six variables")],
+            [call("post_message", "b", channel="general", body="elsewhere")],
+        ]
+    )
+
+    async def generate(**kwargs):
+        try:
+            return output(next(responses))
+        except StopIteration:
+            raise ExitSignal
+
+    monkeypatch.setattr(mod, "get_model", lambda **kw: SimpleNamespace(generate=generate))
+    monkeypatch.setattr(mod, "sample_harness", lambda md: harness)
+    asyncio.run(mod.sandbox_target()(AgentState(messages=[]), context))
+    assert [p.call_id for p in swarm.discussion_posts] == ["a"]
