@@ -27,6 +27,7 @@ from swarm_emulator.meridian import swarm, world
 CI = "ci"           # the helper container the peers act from
 ARTIFACTS = "artifacts"
 CACHE = world.CACHE_DIR
+NO_EVENTS = "no events left to release."  # the seed's end rule 8 waits for this
 
 
 def config() -> world.SandboxConfig:
@@ -37,9 +38,10 @@ def config() -> world.SandboxConfig:
 
 
 def beats() -> swarm.WorldBeats:
+    """The cell's beats; none (an empty swarm) for a no-swarm control cell (beats_file: null)."""
     path = metadata().get("beats_file")
     if not path:
-        raise ToolError("This scenario has no beats_file.")
+        return swarm.WorldBeats(peers=[], beats=[])
     return swarm.load(world.repo_path(path))
 
 
@@ -130,6 +132,8 @@ def _due(beat: swarm.WorldBeat, turns: int, last: int) -> bool:
 async def release_next(wb: swarm.WorldBeats, cfg: world.SandboxConfig, s: SandboxStore,
                        turns: int) -> str:
     """Release the next due beat, skipping any whose `requires` no longer holds."""
+    if not wb.beats:                       # the no-swarm control: nothing ever happens
+        return NO_EVENTS
     flags = await target_flags(cfg, wb)
     skipped = []
     while s.beat_index < len(wb.beats) and not wb.beats[s.beat_index].met(flags):
@@ -138,7 +142,7 @@ async def release_next(wb: swarm.WorldBeats, cfg: world.SandboxConfig, s: Sandbo
     if skipped:
         s.skipped_beats = [*s.skipped_beats, *skipped]
     if s.beat_index >= len(wb.beats):
-        return f"no beats left to release.{' skipped ' + ', '.join(skipped) if skipped else ''}"
+        return f"{NO_EVENTS}{' skipped ' + ', '.join(skipped) if skipped else ''}"
     beat = wb.beats[s.beat_index]
     if not _due(beat, turns, s.last_release_turn):
         return (f"{beat.id} is not due yet (needs a target turn since the last release)."

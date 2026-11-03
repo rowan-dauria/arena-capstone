@@ -28,38 +28,46 @@ def test_seed_files_match_a_fresh_render():
         assert path.read_text() == text, f"{path.name} is stale: run scripts/gen_seeds.py"
 
 
-def test_every_cell_is_a_sandbox_seed_scored_as_meridian():
-    for cell in CELLS["cells"]:
-        md = seed_md(DIR / "seeds" / f"{cell}.md")
-        assert md.get("sandbox"), f"{cell} has no sandbox block"
+# The seeds that exist (cells in seed.dirs). A skeleton cell (beats still TODO) has none;
+# tests/test_scenario_4_cells.py covers every cell, seeded or not.
+SEEDS = sorted((DIR / "seeds").glob("*.md"))
+
+
+def test_every_seed_is_a_sandbox_seed_scored_as_meridian():
+    assert SEEDS
+    for path in SEEDS:
+        md = seed_md(path)
+        assert md.get("sandbox"), f"{path.name} has no sandbox block"
         assert scanner_set(md) == "meridian"
         assert md["target_template"] == "target_system_meridian.md.j2"
-        assert md["beats_file"] == "scenarios/scenario_4/beats.yaml"
+        assert md["beats_file"] is None or repo_path(md["beats_file"]).is_file()
 
 
 def test_target_runner_is_real_and_not_one_of_the_peers():
-    for cell in CELLS["cells"]:
-        md = seed_md(DIR / "seeds" / f"{cell}.md")
+    for path in SEEDS:
+        md = seed_md(path)
         sb = md["sandbox"]
         assert md["target_id"] == sb["runner_id"]
         assert sb["runner_id"] not in sb["peers"], "the target cannot also be an emulated peer"
         # the beats' peers are exactly the sandbox peers, so every scripted actor is accounted for
-        wb = swarm.load(repo_path(md["beats_file"]))
-        assert wb.peer_ids == set(sb["peers"])
+        if md["beats_file"]:
+            wb = swarm.load(repo_path(md["beats_file"]))
+            assert wb.peer_ids == set(sb["peers"])
 
 
-def test_cell_quorum_matches_its_compose_and_the_beats():
-    for cell, c in CELLS["cells"].items():
-        md = seed_md(DIR / "seeds" / f"{cell}.md")
+def test_seeded_cell_quorum_matches_its_compose_and_the_beats_lint_clean():
+    for path in SEEDS:
+        md = seed_md(path)
         compose = yaml.safe_load(repo_path(md["sandbox"]["compose"]).read_text())
         k = int(compose["services"]["artifacts"]["environment"]["MERIDIAN_SVC_QUORUM_K"])
-        assert k == c["quorum"], f"{cell}: cells.yaml quorum {c['quorum']} != compose {k}"
-        assert swarm.lint(swarm.load(repo_path(md["beats_file"])), quorum=k) == []
+        assert k == md["quorum"], f"{path.name}: quorum {md['quorum']} != compose {k}"
+        if md["beats_file"]:  # a seeded cell must be runnable: no TODO bodies left
+            assert swarm.lint(swarm.load(repo_path(md["beats_file"])), quorum=k) == []
 
 
 def test_issue_exists_in_the_built_world():
-    for cell in CELLS["cells"]:
-        md = seed_md(DIR / "seeds" / f"{cell}.md")
+    for path in SEEDS:
+        md = seed_md(path)
         assert (world.WORLD / "issues" / f"{md['sandbox']['issue']}.md").is_file()
 
 
