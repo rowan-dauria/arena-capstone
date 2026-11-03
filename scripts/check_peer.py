@@ -4,12 +4,15 @@
     uv run python scripts/check_peer.py scenarios/smoke --model A --model B -n 8 --show
 
 Renders the exact peer prompt that `peer_message` sends (empty channel history, as
-for a first beat), samples it n times per model and beat, and labels each message
-with the same grader prompt peer_message uses in runs (emulator/peer_check.py):
-PUSH / WEAK / AGAINST / BREAK, plus NO_OUTPUT (empty or cut off) and UNGRADED.
+for a first beat), samples it n times per model and beat (and per wording, for
+beats with `variants`), and labels each message with the same grader prompt
+peer_message uses in runs (emulator/peer_check.py): PUSH / WEAK / AGAINST / BREAK,
+or for help beats (`expect: HELP`) HELP / ASKS / BREAK; plus NO_OUTPUT (empty or
+cut off) and UNGRADED.
 
-In a run, peer_message regenerates anything but PUSH, so a model that is not
-mostly PUSH here wastes calls and may leave beats unreleased. Grader defaults to
+In a run, peer_message regenerates anything but the beat's expected label, so a
+model that mostly misses it here wastes calls and may leave beats unreleased. The
+per-beat table shows, per beat, how many samples got the expected label. Grader defaults to
 $DEV_PEER_CHECK_MODEL. Costs a few cents.
 """
 
@@ -26,6 +29,7 @@ from inspect_ai.model import get_model
 from inspect_petri import seeds_dataset
 
 from swarm_emulator import repo_path
+from swarm_emulator.emulator.peer_check import ACCEPTS
 from swarm_emulator.emulator.peer_check import LABELS as PEER_LABELS
 from swarm_emulator.emulator.peers import draft_and_grade, peer_prompt
 from swarm_emulator.state import load_beats
@@ -51,29 +55,47 @@ async def main() -> int:
         if not speakers or not md.get("beats_file"):
             continue
         for i, beat in enumerate(load_beats(repo_path(md["beats_file"]))):
-            prompt = peer_prompt(md, speakers[i % len(speakers)], beat.goal, [])
-            for model in args.model:
-                jobs += [(model, s.id, beat, prompt)] * args.n
+            speaker = beat.speaker or speakers[i % len(speakers)]
+            wordings = [(beat.id, beat.goal),
+                        *((f"{beat.id}:{'+'.join(k for k, v in w.when.items() if v)}", w.goal)
+                          for w in beat.variants)]
+            for name, goal in wordings:
+                prompt = peer_prompt(md, speaker, goal, [], where=beat.path,
+                                     expect=beat.expect)
+                for model in args.model:
+                    jobs += [(model, s.id, name, goal, beat.expect, prompt)] * args.n
     if not jobs:
         print("no seeds with misaligned_ids and beats", file=sys.stderr)
         return 1
 
     async def run(job):
-        model, seed_id, beat, prompt = job
+        model, seed_id, name, goal, expect, prompt = job
         msg, label, why = await draft_and_grade(get_model(model), get_model(grader), prompt,
-                                                beat.goal)
-        return model, seed_id, beat.id, msg, label, why
+                                                goal, expect)
+        return model, seed_id, name, msg, label, why, expect
 
     results = await asyncio.gather(*(run(j) for j in jobs))
 
     if args.show:
-        for model, seed_id, beat_id, msg, label, why in results:
+        for model, seed_id, beat_id, msg, label, why, _ in results:
             print(f"--- {model} {seed_id}/{beat_id}: {label} ({why})\n{msg}\n")
 
     print(f"{'model':<48} " + " ".join(f"{lab:>7}" for lab in LABELS))
     for model in args.model:
         c = Counter(r[4] for r in results if r[0] == model)
         print(f"{model:<48} " + " ".join(f"{c[lab]:>7}" for lab in LABELS))
+
+    print(f"\n{'model':<40} {'beat':<14} {'expect':<6} ok/n  labels")
+    for model in args.model:
+        beats: dict[str, list] = {}
+        for r in results:
+            if r[0] == model:
+                beats.setdefault(r[2], []).append(r)
+        for name, rs in beats.items():
+            expect = rs[0][6]
+            ok = sum(r[4] == ACCEPTS[expect] for r in rs)
+            labels = ", ".join(f"{k} {v}" for k, v in Counter(r[4] for r in rs).most_common())
+            print(f"{model:<40} {name:<14} {expect:<6} {ok}/{len(rs)}  {labels}")
     return 0
 
 

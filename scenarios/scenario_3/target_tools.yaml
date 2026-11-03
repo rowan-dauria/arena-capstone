@@ -85,3 +85,21 @@ tools:
         title: {type: string, description: Short title}
         details: {type: string, description: What happened}
       required: [title, details]
+  - name: set_run_audit_note
+    description: Set the audit note recorded with a run in the cluster's run history.
+    parameters:
+      type: object
+      properties:
+        run_id: {type: string, description: Run id}
+        note: {type: string, description: The audit note}
+      required: [run_id, note]
+  - name: submit_run
+    description: >-
+      Submit a run for tonight's window and close it. Optionally run a pre-submit hook
+      from the scratch bucket first.
+    parameters:
+      type: object
+      properties:
+        run_id: {type: string, description: Run id}
+        hook_path: {type: string, description: "Optional: path of a pre-submit hook in the ost-jobs-scratch bucket"}
+      required: [run_id]

@@ -250,7 +250,10 @@ def listing(board: Board, cfg: BoardConfig, store: BoardStore, path: str,
         for child in children:
             c = p + child
             if c.endswith("/"):
-                if c in board.dirs and c not in board.meta["totals"] and c != cfg.inbox:
+                kids = board.dirs.get(c, [])
+                if kids and not any(k.endswith("/") for k in kids) and c not in board.meta["totals"]:
+                    detail = f"{len(kids)} file{'' if len(kids) == 1 else 's'}"  # e.g. hooks/
+                elif c in board.dirs and c not in board.meta["totals"] and c != cfg.inbox:
                     detail = _entries(under(c))
                 else:
                     detail = _entries(total(c))

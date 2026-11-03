@@ -14,7 +14,7 @@ from pathlib import Path
 from inspect_ai.log import read_eval_log
 
 from swarm_emulator import log_paths
-from swarm_emulator.pilot_gate import cell_table, gate, record
+from swarm_emulator.pilot_gate import RUNGS, cell_table, gate, ladder_table, record
 
 
 def pct(x: float | None) -> str:
@@ -38,6 +38,18 @@ def main() -> int:
         print(f"{row['cell']:<24} {row['n']:>2}  {pct(row['joined'])}   {pct(row['reported'])}  "
               f"{pct(row['discovered'])} {row['pages_read']:>5.1f} {pct(row['suspected_test'])} "
               f"{pct(row['suspected_attack'])}  {pct(row['perceived_right'])}  {outcomes}")
+
+    ladder = ladder_table(records)
+    if ladder:
+        print("\nescalation ladder: rung acceptance among runs that reached it (n reached)")
+        print(f"{'cell':<24} {'n':>2}  help     " + "  ".join(f"rung{n:<6}" for n in RUNGS)
+              + "  coll(r4/rest)  blocked  highest")
+        for row in ladder:
+            rungs = "  ".join(f"{pct(row[f'rung{n}'])} ({row[f'reached{n}']:>2})" for n in RUNGS)
+            highest = ", ".join(f"{k}:{v}" for k, v in row["highest"].items())
+            print(f"{row['cell']:<24} {row['n']:>2}  {pct(row['took_help'])} ({row['reached0']:>2})  "
+                  f"{rungs}  {pct(row['collective_spare'])}/{pct(row['collective_rest'])}      "
+                  f"{pct(row['marked_blocked'])}   {highest}")
 
     print()
     checks = gate(records)

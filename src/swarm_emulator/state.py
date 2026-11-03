@@ -21,12 +21,22 @@ from swarm_emulator.bus import BusMessage
 from swarm_emulator.clock import nth_tick
 
 
+class BeatVariant(BaseModel):
+    """Alternative goal wording, used when the target's flags match `when` (D19)."""
+
+    when: dict[str, bool]
+    goal: str
+
+
 class Beat(BaseModel):
     id: str
     goal: str
-    # The only trigger implemented: released once the target has acted since the
-    # previous release (see SwarmState.can_release). Other values fail at load.
-    trigger: Literal["after_target_engages"] = "after_target_engages"
+    # When the beat may be released (SwarmState.can_release). Both values need a
+    # target turn since the previous release, and board scenarios also hold a beat
+    # until the last one on its path has been read. `immediate` marks beats that
+    # don't depend on the target's reply (the ladder's help beats, D19);
+    # `after_target_engages` beats follow up on it. Other values fail at load.
+    trigger: Literal["after_target_engages", "immediate"] = "after_target_engages"
     # Scripted peer actions applied when the beat is released (repo scenarios:
     # see emulator.repo_tools.apply_actions). Fixed in the scenario files, never
     # written by the auditor.
@@ -34,12 +44,34 @@ class Beat(BaseModel):
     # Where the message is posted (board scenarios: a board path, e.g. the
     # target's inbox or a lane). None means the seed's one channel.
     path: str | None = None
+    # D19 (scenario 3's ladder). Scenarios 1 and 2 use none of these.
+    # Who speaks; None means round-robin over misaligned_ids.
+    speaker: str | None = None
+    # What peer_check must see: PUSH (argues for the goal) or HELP (accurate help,
+    # no ask beyond comparing notes).
+    expect: Literal["PUSH", "HELP"] = "PUSH"
+    # Flags from the target's tool calls so far (scoring.actions.target_flags) that
+    # must hold for the beat to be released; otherwise it is skipped and recorded.
+    requires: dict[str, bool] = {}
+    # Alternative goals by flag; the first whose `when` holds replaces `goal`.
+    variants: list[BeatVariant] = []
+
+    def met(self, flags: dict[str, bool]) -> bool:
+        return all(bool(flags.get(k, False)) == v for k, v in self.requires.items())
+
+    def goal_for(self, flags: dict[str, bool]) -> str:
+        for v in self.variants:
+            if all(bool(flags.get(k, False)) == want for k, want in v.when.items()):
+                return v.goal
+        return self.goal
 
 
 class Release(BaseModel):
     beat_id: str
     speaker: str
     target_turn: int
+    path: str | None = None  # where it was queued (None: the seed's one channel)
+    delivered: bool = False  # a read has handed it to the target (ladder `reached_*`)
 
 
 class PeerRejection(BaseModel):
@@ -71,6 +103,7 @@ class SwarmState(StoreModel):
     answered_reads: list[str] = Field(default_factory=list)
     echoed_posts: list[str] = Field(default_factory=list)  # target post_message call ids shown back
     peer_rejections: list[PeerRejection] = Field(default_factory=list)
+    skipped: list[str] = Field(default_factory=list)  # beats whose `requires` didn't hold
     msg_count: int = 0
 
     # ---- beats --------------------------------------------------------------
@@ -99,10 +132,26 @@ class SwarmState(StoreModel):
         beat = self.next_beat(beats)
         return beat is not None and bool(self.queued_for(beat.path or default_path))
 
-    def mark_released(self, beat: Beat, speaker: str, target_turn: int) -> None:
+    def skip_unmet(self, beats: list[Beat], flags: dict[str, bool]) -> list[str]:
+        """Move past beats whose `requires` doesn't hold; returns the ids skipped.
+
+        Called when the next beat is due, so a condition is judged on what the
+        target has done by then. Skips are recorded: they aren't lost beats.
+        """
+        skipped = []
+        while (beat := self.next_beat(beats)) is not None and not beat.met(flags):
+            skipped.append(beat.id)
+            self.beat_index = self.beat_index + 1
+        if skipped:
+            self.skipped = [*self.skipped, *skipped]
+        return skipped
+
+    def mark_released(self, beat: Beat, speaker: str, target_turn: int,
+                      path: str | None = None) -> None:
         self.released = [
             *self.released,
-            Release(beat_id=beat.id, speaker=speaker, target_turn=target_turn),
+            Release(beat_id=beat.id, speaker=speaker, target_turn=target_turn,
+                    path=path if path is not None else beat.path),
         ]
         self.beat_index = self.beat_index + 1
 
@@ -163,6 +212,11 @@ class SwarmState(StoreModel):
         `channel`, or all if None), log messages, mark the read answered, and
         remember which target posts have been shown back."""
         self.queue = [m for m in self.queue if channel is not None and m.channel != channel]
+        self.released = [
+            r.model_copy(update={"delivered": True})
+            if channel is None or r.path is None or r.path == channel else r
+            for r in self.released
+        ]
         self.record_delivered(msgs)
         self.answered_reads = [*self.answered_reads, tool_call_id]
         self.echoed_posts = [*self.echoed_posts, *post_ids]
