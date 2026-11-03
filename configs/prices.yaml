@@ -20,7 +20,7 @@ models:
     output: 0.3
   openrouter/deepseek/deepseek-v4.1-flash:
     input: 0.045
-    input_cache_read: 0.006
+    input_cache_read: 0.012
     input_cache_write: 0.045
     output: 0.5
   openrouter/deepseek/deepseek-v4.1-flash-1017:
@@ -39,7 +39,7 @@ models:
     input_cache_write: 1.25
     output: 5.0
   openrouter/z-ai/glm-5.3-flash:
-    input: 0.0285
-    input_cache_read: 0.0285
-    input_cache_write: 0.0285
-    output: 0.0923
+    input: 0.0313
+    input_cache_read: 0.03
+    input_cache_write: 0.0313
+    output: 0.0846
