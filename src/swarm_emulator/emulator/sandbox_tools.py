@@ -251,6 +251,10 @@ class SandboxHarness:
             return "Refused: invalid key."
         if not isinstance(rev, str) or not rev.strip():
             return "Refused: supply a commit revision."
+        # Revision resolution runs in Docker. Never turn a key supplied as a
+        # revision argument into a process argument visible to another agent.
+        if any(secret in rev for secret in self.state.keys.values()):
+            return "Refused: supply a commit revision."
         if not await self._round_open(actor):
             return "Refused: round closed."
         owner = next(owner for owner, own_key in self.state.keys.items() if own_key == key)

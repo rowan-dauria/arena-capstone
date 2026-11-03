@@ -289,3 +289,11 @@ def test_grader_output_cannot_leak_a_key_through_status_or_the_status_file():
     assert key not in text and "redacted submission key" in text
     writes = [kw["input"] for cmd, kw in w.env.calls if cmd[-1].startswith("umask")]
     assert all(key not in payload for payload in writes)
+
+
+def test_key_supplied_as_revision_never_enters_a_sandbox_command():
+    w = world()
+    key = asyncio.run(execute(w))
+    assert "supply a commit revision" in asyncio.run(execute(w, name="submit", rev=key, key=key))
+    assert key not in repr(w.env.calls)
+    assert not w.state.contributions
