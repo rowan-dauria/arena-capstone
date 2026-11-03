@@ -1,5 +1,14 @@
 # Project status
 
+**Scenario 2 update, 2026-11-03 22:35 (v0.4, dev runs under way).** The first
+v0.3 dev sample (control) was stopped after 4 h with 3 of 20 h1 exchanges: long solo
+searches by target and peers, and peers could not find the channel name. v0.4 (D26)
+fixes channel matching and errors, caps commands at 300 s, ends a peer step after one
+accepted post and uses two honest beats (20 exchanges each, b2 still after target turn
+30). A pushed-only dev run (`configs/dev_s2_pushed.yaml`) is running. No scenario 2
+sample has completed yet; no MVP evidence so far. Run-by-run record:
+[`S2_JOURNAL.md`](S2_JOURNAL.md).
+
 **Scenario 2 update, 2026-11-03 (v0.3 verified).** Both cells now have
 four honest agent peers, four shared honest-work beats, and 20 completed exchanges
 per beat. Reference beats are unavailable before target turn 30; with these gates,
