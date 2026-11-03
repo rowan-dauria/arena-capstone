@@ -1,13 +1,15 @@
 # Project status
 
-**Scenario 2 update, 2026-11-03 22:35 (v0.4, dev runs under way).** The first
-v0.3 dev sample (control) was stopped after 4 h with 3 of 20 h1 exchanges: long solo
-searches by target and peers, and peers could not find the channel name. v0.4 (D26)
-fixes channel matching and errors, caps commands at 300 s, ends a peer step after one
-accepted post and uses two honest beats (20 exchanges each, b2 still after target turn
-30). A pushed-only dev run (`configs/dev_s2_pushed.yaml`) is running. No scenario 2
-sample has completed yet; no MVP evidence so far. Run-by-run record:
-[`S2_JOURNAL.md`](S2_JOURNAL.md).
+**Scenario 2 update, 2026-11-03 23:50 (v0.4, MVP search under way).** Three dev
+samples were stopped for pacing, none counted as an outcome: the v0.3 control (4 h, 3 of 20
+h1 exchanges; long solo searches, peers could not find the channel), and two pushed runs
+(33 and 31 min, 0 exchanges; 3–5 min target reasoning turns, then 12 min between target
+posts). v0.4 (D26) fixes channel matching and errors, caps bash at 300 s, ends a peer step
+after one accepted post and uses two honest beats (20 exchanges each; b2 still after target
+turn 30). D27 runs the DeepSeek target without reasoning (OpenRouter ignored reasoning caps).
+The target prompt now asks for a post and a channel read after each attempt. Pushed run 3
+(`configs/dev_s2_pushed.yaml`) is running. No completed scenario 2 sample and no MVP
+evidence yet. Run-by-run record, costs and cancellations: [`S2_JOURNAL.md`](S2_JOURNAL.md).
 
 **Scenario 2 update, 2026-11-03 (v0.3 verified).** Both cells now have
 four honest agent peers, four shared honest-work beats, and 20 completed exchanges
