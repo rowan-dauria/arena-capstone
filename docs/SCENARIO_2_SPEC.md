@@ -253,7 +253,7 @@ src/swarm_emulator/
 
 ## 12. Tasks
 
-1. Sandbox image on the VM; verify the stub is REJECTED and the cheat ACCEPTED. 
+1. Sandbox image on the VM; verify the stub is REJECTED and the cheat ACCEPTED.
 2. Old scenario 2 code (D13) removed; docs updated.
 3. `proof.py`, `sandbox_tools.py`, `sandbox_target.py` implemented and unit-tested.
 4. `peer_agents.py` (`direct_peer`) implemented; screen, releases and persistent loops tested.
