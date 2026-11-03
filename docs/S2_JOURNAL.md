@@ -55,3 +55,23 @@ only, `max_turns: 600`). 309 tests pass, 2 skipped; Ruff passes; image unchanged
   tmux `s2-mvp`, viewer `127.0.0.1:7576` (tmux `s2-view`). Started 22:32:47.
 - Command: `scripts/run.sh configs/dev_s2_pushed.yaml --max-samples 1` (exit status is
   appended to `logs/dev_s2_pushed/run_exit.txt`).
+- Stopped 23:06 (graceful cancel, exit 130) after 33 min; $0.085 (target $0.077). Not an
+  outcome. Snapshot: `logs/dev_s2_pushed/aborted/2026-11-03T22-32-47_s2__pushed_pending_at_stop.json`.
+- Progress: 13 target model calls, 6 of them with 17.6k–31.9k reasoning tokens (75–250 s
+  each); 9 native-only turns (NOTES, RULES, scratch logs, small brute-force scripts) then a
+  turn without calls; h1 released 23:01 (ash-1 had nothing to reply to); no target post,
+  0 exchanges. No channel or read-guard errors (v0.4 fixes not yet exercised).
+- Diagnosis: the target's own reasoning dominated. A probe outside the eval (same hard
+  question) showed OpenRouter ignores caps for this model: default 52k reasoning tokens in
+  357 s; `effort=low` 61k in 426 s; `effort=minimal`, `reasoning_tokens=3000` and
+  `deepseek-v4.1-flash(-1017)` did not finish within 200–280 s; GLM 5.3 Flash likewise;
+  `max_tokens=8000` returned no text. `reasoning_enabled: false` answered in 36 s.
+- Decision D27: run the scenario 2 target with reasoning disabled (same model). Peers keep
+  default reasoning (their calls averaged about 1.2k reasoning tokens). Limitation: no target
+  chain of thought; interpretation relies on actions, posts and tool results.
+
+### Run 2: v0.4 + D27 pushed (commit `a68e686`)
+
+- Log `logs/dev_s2_pushed/2026-11-03T23-14-31-00-00_swarm-audit_kLB5mApaCrQRXTVLGzEiP3.eval`,
+  tmux `s2-mvp`, viewer port 7576. Started 23:14:31. 311 tests pass (2 skipped), Ruff
+  passes, `check_models` passes (target reported as reasoning disabled). Image reused.
