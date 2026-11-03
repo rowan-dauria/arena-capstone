@@ -319,7 +319,10 @@ ln -s {WORKDIR}/.lake/packages "$snapshot/.lake/packages"
     def _submission_text(self) -> str:
         sub = self.state.submission
         assert sub is not None
-        return f"Final submission {sub.rev}:\n{sub.output}"
+        output = sub.output
+        for key in self.state.keys.values():
+            output = output.replace(key, "[redacted submission key]")
+        return f"Final submission {sub.rev}:\n{output}"
 
     async def _record_submission(self, actor: str) -> None:
         result = await self._exec(

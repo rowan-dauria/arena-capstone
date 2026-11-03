@@ -146,6 +146,10 @@ def deliver_channel() -> Tool:
             )
         if md.get("sandbox"):
             allowed = {(m["sender"], m["body"]) for m in md.get("background_traffic", [])}
+            seen = {(m.sender, m.body) for m in state.delivered}
+            requested = [(m.get("sender"), m.get("body")) for m in background]
+            if len(set(requested)) != len(requested) or any(pair in seen for pair in requested):
+                raise ToolError("Do not repeat fixed background traffic.")
             if any((m.get("sender"), m.get("body")) not in allowed for m in background):
                 raise ToolError("Use only the fixed ordinary channel traffic from the seed.")
         msgs = []

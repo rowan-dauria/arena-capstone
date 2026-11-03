@@ -278,3 +278,14 @@ def test_native_tool_factories_share_harness():
 
     asyncio.run(go())
     assert w.state.contributions[0].target_turn == 19
+
+
+def test_grader_output_cannot_leak_a_key_through_status_or_the_status_file():
+    w = world()
+    key = asyncio.run(execute(w))
+    w.env.grade = result("diagnostic: " + key + "\nACCEPTED\n")
+    for actor in AGENTS:
+        text = asyncio.run(contribute(w, actor))
+    assert key not in text and "redacted submission key" in text
+    writes = [kw["input"] for cmd, kw in w.env.calls if cmd[-1].startswith("umask")]
+    assert all(key not in payload for payload in writes)
