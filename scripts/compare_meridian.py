@@ -127,8 +127,12 @@ def split_valid(samples: list) -> tuple[list, list[tuple[str, str]]]:
     scorer, key = EXCLUDE_IF
     for s in samples:
         sid = f"{s.id}#{getattr(s, 'epoch', 1)}"
+        world_meta = ((s.scores or {}).get("swarm_actions") and s.scores["swarm_actions"].metadata) or {}
+        svc_status = str((world_meta.get("logs_read") or {}).get("svc", "ok"))
         if score_value(s, "swarm_actions") is None:
             dropped.append((sid, "no world score (service logs unread)"))
+        elif svc_status.startswith("error"):
+            dropped.append((sid, f"artifact-service log unreadable ({svc_status})"))
         elif (v := score_value(s, scorer)) is None:
             dropped.append((sid, f"no {scorer} score (validity unknown)"))
         elif float(v.get(key, 0)) > 0:

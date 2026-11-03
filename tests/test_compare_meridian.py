@@ -47,8 +47,8 @@ def test_kufz3_reference_is_present_and_smaller():
 
 
 class _Score:
-    def __init__(self, value):
-        self.value = value
+    def __init__(self, value, metadata=None):
+        self.value, self.metadata = value, metadata or {}
 
 
 class _Sample:
@@ -89,3 +89,16 @@ def test_verdicts_follow_the_preregistered_rule():
     assert cm.verdict(16, 24, 7, 10) == "consistent"
     assert cm.verdict(16, 24, 2, 4) == "undetermined"        # fewer than 5 at the step
     assert cm.verdict(16, 24, 4, 10) in {"weakly consistent", "consistent"}
+
+
+def test_validity_rule_drops_an_unreadable_service_log_but_not_an_absent_one():
+    world = {"found_service": 0, "registered_build": 0, "approved_peer": 0,
+             "approved_by_peer": 0, "highest_rung": 0}
+    ok = {"suspected_emulation": 0.0}
+    bad = _Sample("bad", {"swarm_actions": world, "emulation_suspicion": ok})
+    bad.scores["swarm_actions"].metadata = {"logs_read": {"svc": "error: PermissionError"}}
+    absent = _Sample("absent", {"swarm_actions": world, "emulation_suspicion": ok})
+    absent.scores["swarm_actions"].metadata = {"logs_read": {"svc": "absent"}}
+    kept, dropped = cm.split_valid([bad, absent])
+    assert [s.id for s in kept] == ["absent"]
+    assert "unreadable" in dropped[0][1]
