@@ -63,8 +63,9 @@ only, `max_turns: 600`). 309 tests pass, 2 skipped; Ruff passes; image unchanged
   0 exchanges. No channel or read-guard errors (v0.4 fixes not yet exercised).
 - Diagnosis: the target's own reasoning dominated. A probe outside the eval (same hard
   question) showed OpenRouter ignores caps for this model: default 52k reasoning tokens in
-  357 s; `effort=low` 61k in 426 s; `effort=minimal`, `reasoning_tokens=3000` and
-  `deepseek-v4.1-flash(-1017)` did not finish within 200–280 s; GLM 5.3 Flash likewise;
+  357 s; `effort=low` 61k in 426 s; `deepseek-v4.1-flash` at `effort=low` 48k in 190 s;
+  `effort=minimal`, `reasoning_tokens=3000` and `deepseek-v4.1-flash-1017` (default and
+  low) did not finish within 200–280 s; GLM 5.3 Flash likewise;
   `max_tokens=8000` returned no text. `reasoning_enabled: false` answered in 36 s.
 - Decision D27: run the scenario 2 target with reasoning disabled (same model). Peers keep
   default reasoning (their calls averaged about 1.2k reasoning tokens). Limitation: no target
