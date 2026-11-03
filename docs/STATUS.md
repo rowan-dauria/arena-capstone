@@ -98,21 +98,30 @@ Scenario 3 specifics:
 4. **Scenario 1 grid** waits on D2 (top misaligned level in the hierarchy), D3
    (number of beats) and D11 (background traffic).
 
-## Next steps
+## Next steps: the scenario 3 addenda (plan agreed 2026-11-03)
 
-1. Add OpenRouter credit (about $15–20 covers a re-screen and the scenario 3 pilot).
-2. Decide D16. If softening: revise the harmful facts, re-check that the twins
-   still differ only in those facts, and screen DeepSeek again on the pair
-   (`scripts/run.sh configs/screen_s3.yaml`). Consider screening a second target
-   (e.g. Mistral Large 4).
-3. Scenario 3 pilot: `scripts/run.sh configs/pilot_s3.yaml`, then
-   `uv run python scripts/gate_s3.py logs/pilot_s3 --latest` (go/fallback, §9).
-4. Decide D15 (which scenario headlines Experiment 1) from the pilots.
-5. Pre-registration: freeze outcomes, thresholds (gate, `escalation_quality`
-   analysed only among runs that reported), and the probe as a manipulation check.
-6. Cost: consider a cheaper model for the scanners (the judge is ~80% of run cost).
+Three addenda extend scenario 3: [`SCENARIO_3_HISTORY_SPEC.md`](SCENARIO_3_HISTORY_SPEC.md)
+(D17), [`SCENARIO_3_DRIFT_SPEC.md`](SCENARIO_3_DRIFT_SPEC.md) (D18) and
+[`SCENARIO_3_LADDER_SPEC.md`](SCENARIO_3_LADDER_SPEC.md) (D19). D16 is updated:
+the harmful policy stays as it is for now, and history is tried first as the lever
+on joining. They are built in stages, each ending in a gate: free checks first
+(unit tests, generated files fresh, rendered prompts read), then the smallest paid
+run that proves the feature works. Paid gates need OpenRouter credit and an OK.
+
+| Stage | What | Gate |
+|---|---|---|
+| 0 | Specs fixed after review; D16–D19 logged | Docs only, tests unchanged |
+| 1 | History: `history_variants`, generated log, summary helpers, staging, `history_use` scanner, sixth cell | G1a free; G1b generate and approve the dev summary (~$0.01); G1c dev runs long vs fresh (~$2) |
+| 2 | Drift A (parallel with 1): `drift/` helpers, retention judge, Inspect task, report, overnight script | G2a judge on hand-made summaries; G2b dry run with resume and budget stop (<$1); G2c overnight run |
+| 3 | Ladder: beat contract, HELP grading, job-5530 and board counts, two tools, rung flags, `ladder_reasons` | G3a free; G3b `check_peer` on the ladder beats; G3c dev runs harmful + twin (~$2–3) |
+| 4 | Integration | Full tests; dev grid of 6 cells with everything on (~$4–5); DeepSeek screen (informs D16); pilot 6 × 3 and `gate_s3.py` |
+| 5 | Drift B, after A's results | Policy-pointer decision first |
+
+Still to come after that: decide D15 from the pilots, write the pre-registration
+(freeze outcomes, thresholds, `escalation_quality` among reporters only, the probe
+as a manipulation check), and consider a cheaper scanner model.
 
 ## Open decisions
 
-D2, D3, D6 (scenarios 1 and 2), D11, D15, D16. Details and proposed defaults in
+D2, D3, D6 (scenarios 1 and 2), D11, D15, D16 (softening deferred, see above). Details and proposed defaults in
 [`DECISIONS.md`](DECISIONS.md).

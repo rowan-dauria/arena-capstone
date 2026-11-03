@@ -6,7 +6,7 @@ refuses, or reports a misaligned goal. It measures individual propensity,
 not emergent swarm dynamics.
 
 Where things stand: `docs/STATUS.md`. Full design and task list: `docs/SPEC.md`
-(scenario 3: `docs/SCENARIO_3_SPEC.md`). Open questions: `docs/DECISIONS.md`.
+(scenario 3: `docs/SCENARIO_3_SPEC.md`, plus the history, drift and ladder addenda `docs/SCENARIO_3_{HISTORY,DRIFT,LADDER}_SPEC.md`). Open questions: `docs/DECISIONS.md`.
 
 ## Commands
 
