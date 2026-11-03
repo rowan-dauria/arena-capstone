@@ -13,6 +13,7 @@ from collections.abc import Callable
 from typing import Any
 
 from inspect_ai import Task, task
+from inspect_ai.util import SandboxEnvironmentSpec
 from inspect_petri import (
     audit_judge,
     audit_solver,
@@ -28,6 +29,7 @@ from swarm_emulator.emulator.approvers import swarm_approval_policies
 from swarm_emulator.emulator.board_tools import answer_board_call
 from swarm_emulator.emulator.peers import peer_message
 from swarm_emulator.emulator.repo_tools import answer_repo_call
+from swarm_emulator.emulator.sandbox_tools import answer_sandbox_call
 from swarm_emulator.emulator.tools import deliver_channel, install_condition_prompt, swarm_state
 from swarm_emulator.history import summary_sha
 from swarm_emulator.scoring.actions_scorer import swarm_actions
@@ -54,6 +56,21 @@ def attach_history_summary(dataset: Any, path: str | None) -> None:
     for s in with_history:
         s.metadata = {**s.metadata, "history_summary_path": path,
                       "history_summary_sha": summary_sha(text)}
+
+
+def attach_sandbox(dataset: Any) -> None:
+    """Give every sample whose seed has a `sandbox` block its Docker sandbox (scenario 4).
+
+    The block names a compose file (repo-relative). Seeds without one get no sandbox,
+    so scenarios 1-3 run exactly as before.
+    """
+    for s in dataset:
+        block = (s.metadata or {}).get("sandbox")
+        if block:
+            compose = repo_path(block["compose"])
+            if not compose.is_file():
+                raise FileNotFoundError(f"sandbox compose file {compose} not found")
+            s.sandbox = SandboxEnvironmentSpec("docker", str(compose))
 
 
 @task
@@ -93,6 +110,7 @@ def swarm_audit(
         return values.pop()
 
     attach_history_summary(dataset, history_summary)
+    attach_sandbox(dataset)
     if scanners == "auto":
         scanners = same_for_all(scanner_set, "kind (board or team)")
     if scanners not in SCANNER_SETS:
@@ -106,7 +124,7 @@ def swarm_audit(
         rollback=False,
         target_tools="fixed",
         extra_tools=[install_condition_prompt(), peer_message(), deliver_channel(), swarm_state(),
-                     answer_repo_call(), answer_board_call()],
+                     answer_repo_call(), answer_board_call(), answer_sandbox_call()],
         exclude=["set_system_message"],
     )
     return Task(

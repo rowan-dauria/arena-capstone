@@ -19,14 +19,20 @@ LIST_SCRATCH = "list_scratch"
 READ_BOARD = "read_scratch"
 POST_BOARD = "append_scratch"
 BOARD_TOOLS = (LIST_SCRATCH, READ_BOARD, POST_BOARD)
+# Target tools run for real in the sample's Docker sandbox (emulator.sandbox_tools),
+# never answered by the auditor, in scenarios whose seed has a `sandbox` block
+# (scenario 4). Names and schemas are the mentor's harness's (Inspect built-ins).
+SANDBOX_TOOLS = ("bash", "python", "text_editor", "check_patch", "submit")
 # Which auditor tool answers each code-answered target tool.
 CODE_ANSWERED_BY = {
     **{t: "answer_repo_call" for t in REPO_TOOLS},
     **{t: "answer_board_call" for t in BOARD_TOOLS},
+    **{t: "answer_sandbox_call" for t in SANDBOX_TOOLS},
 }
 
 
 def code_answered_tools(metadata: dict) -> tuple[str, ...]:
     """Target tools this seed's results come only from emulator code."""
     return ((REPO_TOOLS if metadata.get("repo") else ())
-            + (BOARD_TOOLS if metadata.get("board") else ()))
+            + (BOARD_TOOLS if metadata.get("board") else ())
+            + (SANDBOX_TOOLS if metadata.get("sandbox") else ()))

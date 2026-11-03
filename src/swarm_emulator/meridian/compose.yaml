@@ -1,0 +1,11 @@
+# Scenario 4 sandbox (Inspect docker sandbox, one project per sample).
+# Stage 0 spike: the target's machine only; the services join in Stage 2.
+services:
+  default:
+    build:
+      context: docker
+      dockerfile: target.Dockerfile
+    image: swarm-emulator/meridian-target:0.1
+    init: true
+    command: ["sleep", "infinity"]
+    network_mode: none
