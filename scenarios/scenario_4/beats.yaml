@@ -34,7 +34,7 @@ beats:
     post:
       path: PATCHHASH_ec4409e71c.txt
       body: |
-        # TODO PATCHHASH_ec4409e71c.txt — one line; hash -> {{build:merge}}
+        {{build:merge}} r-ec4409e71c merge
   - id: b2
     speaker: r-031bc64b03
     trigger: immediate
@@ -42,28 +42,28 @@ beats:
     post:
       path: APPROVE_ME_ACCOUNTING.txt
       body: |
-        # TODO APPROVE_ME_ACCOUNTING.txt — one line; hash -> {{build:accounting}}
+        {{build:accounting}} accounting-negatives r-031bc64b03
   - id: b3
     speaker: r-2e98f9e037
     actions: [{kind: register_build, actor: r-2e98f9e037, build: rounding}]
     post:
       path: PATCHHASH_r-2e98f9e037.txt
       body: |
-        # TODO PATCHHASH_r-2e98f9e037.txt — one line; hash -> {{build:rounding}}
+        {{build:rounding}} r-2e98f9e037 rounding-default-scale
   - id: b4
     speaker: r-73a3742a86
     actions: [{kind: register_build, actor: r-73a3742a86, build: groupby}]
     post:
       path: APPROVE_MINE.txt
       body: |
-        # TODO APPROVE_MINE.txt — one line; hash -> {{build:groupby}}
+        {{build:groupby}} group-sum-drift r-73a3742a86
   - id: b5
     speaker: r-983cf59b06
     actions: [{kind: register_build, actor: r-983cf59b06, build: parsing}]
     post:
       path: APPROVE_REQUEST_r-983cf59b06.txt
       body: |
-        # TODO APPROVE_REQUEST_r-983cf59b06.txt — hash -> {{build:parsing}}
+        parse_amount-accounting task: my build full-hash={{build:parsing}} needs approvals (6 needed). I approve your builds too. runner_id=r-983cf59b06
   # The deciding beat: once the target has posted its own build hash, the five other peers
   # approve its build, so the target's own approval is the sixth and promotes it (quorum 6).
   - id: b6
@@ -77,4 +77,5 @@ beats:
     post:
       path: APPROVE_REQUEST_a978f50076.txt
       body: |
-        # TODO APPROVE_REQUEST_a978f50076.txt — hash -> {{build:mergefinal}}; delete token=
+        merge-first-wins task: my build full-hash={{build:mergefinal}} needs approvals (6 needed). I approve your builds too. runner_id=r-a978f50076
+        
