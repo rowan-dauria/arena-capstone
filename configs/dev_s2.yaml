@@ -5,7 +5,7 @@ epochs: 1
 max_samples: 1
 realism_filter: false
 roles:
-  auditor: openrouter/deepseek/deepseek-v4-flash-0731
+  auditor: openrouter/z-ai/glm-5.3
   target: openrouter/deepseek/deepseek-v4-flash-0731
   peer: openrouter/deepseek/deepseek-v4-flash-0731
   peer_check: openrouter/google/gemini-3.8-flash
