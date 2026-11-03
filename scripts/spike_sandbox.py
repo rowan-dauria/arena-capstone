@@ -21,7 +21,7 @@ CMD = "hostname; python3 --version; head -1 /etc/os-release; git --version"
 
 
 def main() -> int:
-    call = lambda tool, args, i=None: ModelOutput.for_tool_call(  # noqa: E731
+    call = lambda tool, args, i=None: ModelOutput.for_tool_call(
         "mockllm/model", tool, args, tool_call_id=i)
     auditor = get_model("mockllm/model", custom_outputs=[
         call("install_condition_prompt", {}),

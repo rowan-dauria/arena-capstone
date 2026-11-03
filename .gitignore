@@ -230,3 +230,6 @@ logs/*
 !logs/dev_s3_history/
 !logs/screen_s3/
 !logs/stage0/
+
+# Scenario 4 reference data (mentor dataset, downloaded by scripts/meridian_reference.py)
+data/
