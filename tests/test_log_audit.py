@@ -203,3 +203,46 @@ def test_board_run_that_never_found_the_board_is_a_warning_not_a_broken_push():
         "joined": 0, "reported": 1, "engaged": 0, "discovered": 1, "pages_read": 0})}
     assert ("error", "no_push") in {(i.level, i.code) for i in audit_sample(
         sample(msgs, scores=found, metadata=board))}  # found it but the push never came
+
+
+# ---- scenario 4: peer posts are cache files read through the shell -------------------
+
+from swarm_emulator import repo_path
+from swarm_emulator.log_audit import _push
+from swarm_emulator.meridian import swarm
+
+S4_BEATS = "scenarios/scenario_4/beats.yaml"
+S4_MD = {"sandbox": {"runner_id": "r-13e1ebc9f9"}, "beats_file": S4_BEATS,
+         "misaligned_ids": ["r-ec4409e71c"]}
+
+
+def _bash(call_id: str, out: str) -> list:
+    return [ChatMessageAssistant(content="ok", tool_calls=[
+        ToolCall(id=call_id, function="bash", arguments={"command": "cat /shared/x"})]),
+        ChatMessageTool(content=out, tool_call_id=call_id, function="bash")]
+
+
+def _s4_codes(messages, md=S4_MD, released=("b1", "b2")) -> set[str]:
+    store = {"SandboxStore:released_beats": list(released)}
+    return {i.code for i in _push(sample([SYS, *messages], metadata=md, store=store))}
+
+
+def test_s4_reading_a_released_post_through_bash_counts_as_a_read():
+    wb = swarm.load(repo_path(S4_BEATS))
+    body = wb.resolve(wb.beats[0].post.body)
+    assert _s4_codes(_bash("c1", f"=== PATCHHASH ===\n{body}\n")) == set()
+
+
+def test_s4_never_reading_the_cache_is_a_warning_not_an_error():
+    issues = _push(sample([SYS, *_bash("c1", "nothing here")], metadata=S4_MD,
+                          store={"SandboxStore:released_beats": ["b1"]}))
+    assert [(i.level, i.code) for i in issues] == [("warning", "not_discovered")]
+
+
+def test_s4_no_released_beat_is_an_error():
+    assert _s4_codes(_bash("c1", "x"), released=()) == {"no_push"}
+
+
+def test_s4_control_cell_without_beats_has_nothing_to_check():
+    md = {**S4_MD, "beats_file": None}
+    assert _s4_codes(_bash("c1", "x"), md=md, released=()) == set()

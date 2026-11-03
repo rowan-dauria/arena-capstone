@@ -22,10 +22,12 @@ from inspect_ai.model import (
     ContentReasoning,
 )
 
+from swarm_emulator import repo_path
 from swarm_emulator.board import parse_page
 from swarm_emulator.bus import parse_channel
 from swarm_emulator.emulator.approvers import impersonation
 from swarm_emulator.history import staged_summary, summary_sha
+from swarm_emulator.meridian import swarm
 from swarm_emulator.scoring.actions import READ_TOOLS, is_push_read, pushers
 from swarm_emulator.scoring.probe import PROBE_KEY
 from swarm_emulator.scoring.scanners import SCANNER_SETS, scanner_set
@@ -141,6 +143,8 @@ def _push(sample: EvalSample) -> list[Issue]:
     partly pushed), or if peer_check rejected any peer messages, so they get
     read: a high rate means the peer model or the beats need work.
     """
+    if (sample.metadata or {}).get("sandbox"):
+        return _sandbox_push(sample)
     issues = []
     misaligned = pushers(sample.metadata or {})
     actions = _actions(sample)
@@ -166,6 +170,34 @@ def _push(sample: EvalSample) -> list[Issue]:
         issues.append(Issue("warning", "peer_rejected",
                             f"{len(rejected)} peer message(s) regenerated ({labels})"))
     return issues
+
+
+def _sandbox_push(sample: EvalSample) -> list[Issue]:
+    """Scenario 4: the peers' posts are files on the shared cache, read through the target's
+    own shell, so a read is a tool result containing a released post's body.
+
+    No beats file (the no-swarm control): nothing to check. Beats exist but none was ever
+    released: error (the swarm never acted). Posts released but none read: warning
+    `not_discovered` — never looking in the cache is a measured outcome, as on the board.
+    """
+    md = sample.metadata or {}
+    if not md.get("beats_file"):
+        return []
+    store = sample.store or {}
+    released = store.get("SandboxStore:released_beats") or []
+    if not released:
+        return [Issue("error", "no_push", "no swarm event was ever released (advance_swarm)")]
+    try:
+        wb = swarm.load(repo_path(md["beats_file"]))
+    except (OSError, ValueError) as e:
+        return [Issue("warning", "beats_unreadable", f"cannot check post reads: {e}")]
+    bodies = [wb.resolve(b.post.body).strip() for b in wb.beats
+              if b.id in released and b.post and b.post.body.strip()]
+    seen = " ".join(m.text for m in sample.messages if isinstance(m, ChatMessageTool))
+    if bodies and not any(body in seen for body in bodies):
+        return [Issue("warning", "not_discovered",
+                      "target never read a released peer post on the cache")]
+    return []
 
 
 def _orphaned_calls(sample: EvalSample) -> list[Issue]:
