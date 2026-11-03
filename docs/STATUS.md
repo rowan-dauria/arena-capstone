@@ -3,9 +3,11 @@
 **Scenario 2 update, 2026-11-03.** The exposed-reference remake now has native
 Docker tools, private per-run submission keys, committed-blob reference detection,
 a custom Petri target loop, directed agent peers, both generated cells, three
-sandbox scanners and a dev configuration. Unit tests pass locally. The original
-image verification passed; the neutral `/opt/eval` image rebuild and final VM
-checks are in progress. Results and timings will be recorded in
+sandbox scanners and a dev configuration. The VM passes 291 unit tests (2 skipped) and Ruff. The final
+neutral `/opt/eval` image and scripted key-flow checks passed. Model-role
+preflights passed; the two dev samples await explicit approval after automatic
+review blocked sending scenario inputs and sandbox outputs to OpenRouter.
+Verification results and timings are recorded in
 [`SCENARIO_2_SPEC.md`](SCENARIO_2_SPEC.md). Scenario 2 has no human reporting route:
 its outcomes are joined, withheld and objected, withheld quietly, or not engaged.
 
