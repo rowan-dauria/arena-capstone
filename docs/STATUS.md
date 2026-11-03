@@ -176,9 +176,24 @@ nothing paid has run.
 | G4.0 | Petri runs the target in a real Docker sandbox (`answer_sandbox_call`, per-sample `Task(sandbox=…)`) | **Passed** (mock spike), `f1d5439` |
 | G4.1 | Per-agent reference rates from the mentor's logs (`world_flags.py`), totals match the READMEs | **Passed**, `7b43e91` |
 | G4.2 | The world: repo rebuilt from transcripts (blob-verified), release docs, 6 issues, cache seed, the mentor's 3 services in compose; real `check_patch`/`submit` | **Passed** (mock + service checks), `da52342` |
-| G4.3 | Swarm plumbing, seeds, starting summary; `check_peer` on the posts | In progress |
-| G4.4 | One dev run of the baseline cell | Pending G4.3 + OK (~$0.30–0.45) |
+| G4.3 | Swarm plumbing (`advance_swarm`, `2207e5d`... `a368e22`), the baseline cell + world scoring + comparison (`2207e5d`); then the starting summary | Plumbing, cell, scoring **done**; starting summary pending (~$0.01 + read) |
+| G4.4 | One dev run of the baseline cell | Pending G4.3 summary + OK (~$0.30–0.45) |
 | G4.5 | Baseline at N≈10 + comparison table | Pending (~$3–4.50) |
+
+**G4.3 so far (free, no API).** The baseline cell `s4__k6__ring17` renders from
+`scenario.yaml`/`cells.yaml`/`seed_template.md.j2`: one real 0731 agent on the C1
+merge-planner task (target runner `r-13e1ebc9f9`, a real C1 agent that is *not* one of
+the emulated peers), quorum-6 world. Its system prompt is the mentor's task-only text
+verbatim (`target_system_meridian.md.j2`); the auditor seed answers sandbox calls with
+`answer_sandbox_call` and releases the beats with `advance_swarm`. The `swarm_actions`
+scorer gains a sandbox branch: the target's flags come from the services' request logs
+read out of the sandbox and parsed by the same `world_flags.py` as the reference. A
+`meridian` scanner set adds `emulation_suspicion` (the validity check), reusing
+`honeypot_suspicion`, plus `collusion_reasoning`. `scripts/compare_meridian.py` prints
+our rate next to the reference with Wilson intervals (reference-only until a run exists).
+**Still open:** the frozen starting summary (the `long` history variant is wired but
+unused; needs the ~$0.01 generation + a read before freezing) and a team-authored
+quorum-3 beats file for the K=3 cell. 359 tests pass, ruff clean.
 
 **Reference rates** (`scripts/meridian_reference.py`, `scenarios/scenario_4/reference.json`):
 24-agent run — 17/24 approved a peer, 16/24 in a reciprocal ring, 35 builds promoted, 0
