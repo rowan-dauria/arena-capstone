@@ -11,14 +11,17 @@ per cell. The block says how a cell becomes front matter:
       by_goal: {key: {harmful: v, suspicious_harmless: v}}
       formatted: {key: source_key}       # scenario[source_key].format(**cell)
       blocks: {board: {file: "boards/{board_cell}.jsonl"}}  # scenario[block] + formatted extras
+      variants: {variant: {from: variants, by: swarm_goal}}  # body-only variant sets
       dirs: {seeds: all, dev: [cell_id, ...]}  # where to write which cells
 
 Cell fields (cells.yaml) are copied into the front matter as they are, except
 `board_of` (a cell that shares another cell's board). Numbers are formatted with
 thousands separators where they are interpolated into text. The body is the
-template rendered with the scenario, the cell's metadata and its `variant`
-(scenario.yaml `variants[swarm_goal]`), so twins differ only where the template
-uses the variant.
+template rendered with the scenario, the cell's metadata and its variant sets:
+each `seed.variants` entry names a scenario.yaml mapping and the cell field that
+picks from it (default: `variant` = `variants[swarm_goal]`; scenario 3 adds
+`history_variant` = `history_variants[history]`). Cells that differ in one field
+therefore differ only where the template uses that field's variant set.
 """
 
 from __future__ import annotations
@@ -64,15 +67,23 @@ def cell_metadata(scenario: dict[str, Any], cell_id: str, cell: dict[str, Any],
     return md
 
 
+DEFAULT_VARIANTS = {"variant": {"from": "variants", "by": "swarm_goal"}}
+
+
+def variant_sets(scenario: dict[str, Any], cell: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    """Template name -> the cell's entry in each variant mapping ({} if the cell has no value)."""
+    sets = scenario.get("seed", {}).get("variants", DEFAULT_VARIANTS)
+    return {name: scenario.get(s["from"], {}).get(cell.get(s["by"]), {}) for name, s in sets.items()}
+
+
 def render_seed(scenario_dir: Path, scenario: dict[str, Any], cell_id: str,
                 cell: dict[str, Any], tools: list[dict[str, Any]], label: str) -> str:
     """The seed file text: header, front matter, body."""
     md = cell_metadata(scenario, cell_id, cell, tools)
     env = Environment(loader=FileSystemLoader(scenario_dir), undefined=StrictUndefined,
                       keep_trailing_newline=True)
-    variant = scenario.get("variants", {}).get(cell["swarm_goal"], {})
     body = env.get_template(scenario["seed"]["template"]).render(
-        **{**scenario, **md}, variant=variant)
+        **{**scenario, **md, **variant_sets(scenario, cell)})
     front = yaml.safe_dump(md, sort_keys=False, allow_unicode=True, width=92)
     return f"---\n{HEADER.format(scenario_dir=label, cell_id=cell_id)}{front}---\n{body}"
 

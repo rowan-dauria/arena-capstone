@@ -18,6 +18,7 @@ from swarm_emulator.tool_names import BOARD_TOOLS, REPORT_TOOLS
 DIR = repo_path("scenarios/scenario_3")
 SEED = DIR / "dev" / "s3__large__high.md"
 TWIN = DIR / "dev_twin" / "s3__large__high__twin.md"
+FRESH = DIR / "seeds" / "s3__large__high__fresh.md"
 SCENARIO = yaml.safe_load((DIR / "scenario.yaml").read_text())
 CELLS = yaml.safe_load((DIR / "cells.yaml").read_text())
 TOOLS = yaml.safe_load((DIR / "target_tools.yaml").read_text())["tools"]
@@ -113,7 +114,7 @@ def test_peer_prompts_render_for_every_beat_and_stay_clean():
 
 
 def test_seed_body_and_beats_are_clean():
-    for path in (SEED, TWIN, DIR / "beats.yaml"):
+    for path in (SEED, TWIN, FRESH, DIR / "beats.yaml"):
         text = parse_markdown_file(path).body if path.suffix == ".md" else path.read_text()
         text = re.sub(r"^#.*$", "", text, flags=re.MULTILINE)  # file comments are for authors
         assert not words(text, BANNED + CONDITION_WORDS), path.name
@@ -231,7 +232,8 @@ def test_generator_is_deterministic(cell):
 
 def test_seed_files_match_a_fresh_render():
     files = seeds.seed_files(DIR, label="scenarios/scenario_3")
-    assert len(files) == len(CELLS["cells"]) + 4  # seeds/ plus dev/, dev_twin/ and pair/
+    dirs = SCENARIO["seed"]["dirs"]
+    assert len(files) == sum(len(CELLS["cells"]) if w == "all" else len(w) for w in dirs.values())
     for path, text in files.items():
         assert path.read_text() == text, f"{path.name} is stale: run scripts/gen_seeds.py"
 
@@ -247,6 +249,36 @@ def test_seed_metadata_carries_the_cell(cell):
 
 def test_auditor_instructions_are_identical_in_every_cell():
     bodies = {cell: parse_markdown_file(DIR / "seeds" / f"{cell}.md").body for cell in CELLS["cells"]}
-    harmful = {b for cell, b in bodies.items() if CELLS["cells"][cell]["swarm_goal"] == "harmful"}
-    assert len(harmful) == 1  # scale and participation never reach the auditor's instructions
-    assert not words(next(iter(harmful)), CONDITION_WORDS + ["1,184", "1,006", "213"])
+    for history in ("long", "fresh"):
+        harmful = {b for cell, b in bodies.items()
+                   if CELLS["cells"][cell]["swarm_goal"] == "harmful"
+                   and CELLS["cells"][cell]["history"] == history}
+        assert len(harmful) == 1  # scale and participation never reach the auditor's instructions
+        assert not words(next(iter(harmful)), CONDITION_WORDS + ["1,184", "1,006", "213"])
+
+
+# ---- history (D17, docs/SCENARIO_3_HISTORY_SPEC.md) ---------------------------------------
+
+
+def test_fresh_cell_differs_from_long_only_in_the_targets_own_history():
+    long, fresh = parse_markdown_file(DIR / "seeds" / "s3__large__high.md"), parse_markdown_file(FRESH)
+    assert {k for k in long.metadata if long.metadata[k] != fresh.metadata[k]} == {"history"}
+    assert set(fresh.metadata) == set(long.metadata)
+    changed = [(a, b) for a, b in zip(long.body.splitlines(), fresh.body.splitlines(), strict=True)
+               if a != b]
+    variants = SCENARIO["history_variants"]
+    assert len(changed) == 4  # the opening notice and three ticket lines
+    for a, b in changed:  # every changed line carries a history_variants value
+        assert any(str(v).split()[0] in a for v in variants["long"].values())
+        assert any(str(v).split()[0] in b for v in variants["fresh"].values())
+
+
+def test_every_cell_has_a_history_with_its_variant_and_session_message():
+    assert {c["history"] for c in CELLS["cells"].values()} == {"long", "fresh"}
+    assert set(SCENARIO["history_variants"]) == set(SCENARIO["history_sessions"]) == {"long", "fresh"}
+    assert set(SCENARIO["history_variants"]["long"]) == set(SCENARIO["history_variants"]["fresh"])
+    assert "{summary}" in SCENARIO["history_sessions"]["long"]
+    assert "{" not in SCENARIO["history_sessions"]["fresh"]
+    for text in (*SCENARIO["history_sessions"].values(),
+                 *(v["opening_notification"] for v in SCENARIO["history_variants"].values())):
+        assert not words(text, BANNED + CONDITION_WORDS + ["_relay", "relay", "board"])

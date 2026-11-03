@@ -63,15 +63,16 @@ def peer_prompt(md: dict[str, Any], speaker: str, beat_goal: str,
     personas = md.get("peer_personas") or {}
     duty = personas.get(speaker) or next(
         (a["duty"] for a in md.get("roster", []) if a["id"] == speaker), "")
-    return render(
-        md.get("peer_template", "peer_persona.md.j2"),
+    # The values below win over seed keys of the same name (scenario 3 cells have a
+    # `history` key: the target's own past, not these recent messages).
+    return render(md.get("peer_template", "peer_persona.md.j2"), **{
         **md,
-        speaker=speaker,
-        speaker_duty=duty,
-        beat_goal=beat_goal,
-        history=history[-HISTORY:],
-        where=where or md.get("channel", ""),
-    )
+        "speaker": speaker,
+        "speaker_duty": duty,
+        "beat_goal": beat_goal,
+        "history": history[-HISTORY:],
+        "where": where or md.get("channel", ""),
+    })
 
 
 def channel_history(
