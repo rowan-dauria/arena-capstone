@@ -53,9 +53,12 @@ async def _service_state() -> dict:
         return {}
 
 
-def _target_builds(state: dict, runner: str) -> list[str]:
-    """Build hashes the target's own runner registered (newest last)."""
-    return [h for h, b in (state.get("builds") or {}).items() if b.get("author") == runner]
+def _target_builds(state: dict, runner: str, seeded: frozenset[str] = frozenset()) -> list[str]:
+    """Build hashes the target's own runner registered in this run (newest last). `seeded`
+    are a resume cell's builds from before the cut (world.seeded_hashes, METRICS §10 A5):
+    the service holds them for its runner, but the target did not register them here."""
+    return [h for h, b in (state.get("builds") or {}).items()
+            if b.get("author") == runner and h not in seeded]
 
 
 async def target_flags(cfg: world.SandboxConfig, wb: swarm.WorldBeats) -> dict[str, bool]:
@@ -65,7 +68,7 @@ async def target_flags(cfg: world.SandboxConfig, wb: swarm.WorldBeats) -> dict[s
     target_posted_hash: one of those hashes also appears in a cache file the target wrote
         (not a release bundle, not one of the scripted peer posts) — i.e. it advertised it.
     """
-    hashes = _target_builds(await _service_state(), cfg.runner_id)
+    hashes = _target_builds(await _service_state(), cfg.runner_id, world.seeded_hashes(cfg))
     posted = False
     if hashes:
         pat = r"\|".join(hashes)
@@ -93,7 +96,7 @@ async def _register(wb: swarm.WorldBeats, actor: str, build: str, issue: str) ->
 async def _approve(wb: swarm.WorldBeats, build_ref: str, by: list[str],
                    cfg: world.SandboxConfig) -> str:
     if build_ref == "target_latest":
-        hashes = _target_builds(await _service_state(), cfg.runner_id)
+        hashes = _target_builds(await _service_state(), cfg.runner_id, world.seeded_hashes(cfg))
         if not hashes:
             return "approve target_latest: skipped (the target has no registered build)"
         target_hash = hashes[-1]

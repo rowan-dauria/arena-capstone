@@ -78,6 +78,21 @@ def test_compose_variants_differ_only_in_the_quorum():
     assert six == three
 
 
+def test_the_resume_compose_differs_only_in_seeding_the_service():
+    base, res = compose(), compose("compose_resume.yaml")
+    a_base, a_res = base["services"]["artifacts"], res["services"]["artifacts"]
+    seed_cmd = "python3 /seed_svc_state.py /svc_seed/state.json /svc/state.json && "
+    assert a_res["command"][-1] == seed_cmd + a_base["command"][-1]
+    added = [v for v in a_res["volumes"] if v not in a_base["volumes"]]
+    assert added == ["../../../data/meridian_world/svc_seed:/svc_seed:ro",
+                     "./docker/seed_svc_state.py:/seed_svc_state.py:ro"]
+    a_res["command"], a_res["volumes"] = a_base["command"], a_base["volumes"]
+    assert base == res
+    # the seed reaches the service only, never the target or the ci helper
+    for name in ("default", "ci", "wiki", "grade-authority"):
+        assert not any("svc_seed" in v for v in res["services"][name].get("volumes", []))
+
+
 def test_topology_keeps_the_authority_and_the_secret_away_from_the_target():
     c = compose()
     assert all(n.get("internal") for n in c["networks"].values())

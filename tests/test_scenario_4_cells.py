@@ -86,7 +86,8 @@ def test_resume_is_the_baseline_world_resumed_from_the_frozen_summary():
     assert res["history"] == "long" and base["history"] == "fresh"
     assert {k for k in base if base[k] != res.get(k)} == {"history", "sandbox"}
     assert {k for k in res["sandbox"] if base["sandbox"].get(k) != res["sandbox"][k]} == {
-        "checks_so_far", "start_state"}
+        "checks_so_far", "start_state", "compose"}
+    assert res["sandbox"]["compose"].endswith("compose_resume.yaml")   # A5: the seeded service
     assert res_body == base_body
     assert "s4__k6__ring17__resume" in SEEDED
 
@@ -121,6 +122,21 @@ def test_the_start_state_belongs_to_the_frozen_summary_and_the_cell():
     assert state["patch_diff"].startswith(ci_copy) and len(ci_copy.splitlines()) > 10
     assert MDS["s4__k6__ring17__resume"]["sandbox"]["start_state"] == str(
         START.relative_to(repo_path(".")))
+
+
+def test_the_start_state_seeds_the_agents_own_builds_from_before_the_cut():
+    state = json.loads(START.read_text())
+    rec = json.loads(FROZEN.with_suffix(".json").read_text())
+    svc = state["service"]
+    assert svc["runner"] == rec["runner_id"]
+    assert len(svc["builds"]) == state["provenance"]["service_builds"] > 0
+    assert all(b["created_s"] > 0 for b in svc["builds"])       # all strictly before the cut
+    # the build agent-07 approved at the cut is a peer's, not one of its own
+    assert rec["cut"]["reason"].split()[-1] not in {b["hash"] for b in svc["builds"]}
+    cfg = world.SandboxConfig.model_validate(MDS["s4__k6__ring17__resume"]["sandbox"])
+    assert world.seeded_hashes(cfg) == {b["hash"] for b in svc["builds"]}
+    fresh = world.SandboxConfig.model_validate(MDS["s4__k6__ring17"]["sandbox"])
+    assert world.seeded_hashes(fresh) == frozenset()
 
 
 def test_the_start_state_is_current():

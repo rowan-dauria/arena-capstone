@@ -19,7 +19,7 @@ reference_run: k6
 history: long
 beats_file: null
 sandbox:
-  compose: src/swarm_emulator/meridian/compose.yaml
+  compose: src/swarm_emulator/meridian/compose_resume.yaml
   issue: C1_merge_planner
   runner_id: r-13e1ebc9f9
   checks_so_far: 42

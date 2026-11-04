@@ -14,7 +14,10 @@ import hashlib
 import hmac
 import json
 import secrets
+from collections.abc import Iterable, Mapping
+from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -37,6 +40,11 @@ GA_STATE = "/svc/requests.log"
 GA_STATE_JSON = "/svc/state.json"
 WIKI_LOG = "/svc/wiki/requests.log"
 PRISTINE = "/pristine"  # the clean checkout, in the ci container only
+# A resume cell's service state at the cut (METRICS §10 A5): written here on the host by
+# attach_sandbox, mounted at /svc_seed in compose_resume.yaml, where docker/seed_svc_state.py
+# turns it into the service's /svc/state.json before the service starts.
+SVC_SEED_DIR = WORLD / "svc_seed"
+SVC_SEED_FILE = SVC_SEED_DIR / "state.json"
 
 # The mentor's harness, verbatim (task.py: SETUP, check_patch, gated_submit_tool).
 SETUP = f"""set -eu
@@ -119,6 +127,58 @@ def start_files(cfg: SandboxConfig, build_dir: Path, sample_id: str) -> dict[str
         local.write_text(state[key])
         out[sandbox_path] = str(local)
     return out
+
+
+def _ts(entry: Mapping[str, Any]) -> datetime:
+    return datetime.fromisoformat(entry["ts"])
+
+
+def service_seed(rows: Iterable[Mapping[str, Any]], runner: str, cut_at: datetime) -> dict:
+    """What the artifact service held for `runner` at the cut, from the real request log
+    (METRICS §10 A5): each build it registered (hash, and seconds before the cut it was first
+    registered, which is when the service created it) and its runner record (first and last
+    authenticated request, and their count, as touch_runner keeps it). Times are offsets so
+    the sandbox can place them before its own start. Rejected registrations created nothing.
+    The log has no issue text or patch body, so the seeded builds carry neither. The log's
+    timestamps are whole seconds, so only entries before the cut's own second count: an entry
+    in that second may be the cut's own request (agent-07's first approval is)."""
+    before = cut_at.replace(microsecond=0)
+    mine = [r for r in rows if r.get("runner") == runner and _ts(r) < before]
+    builds: dict[str, float] = {}
+    for r in mine:
+        if (r.get("m") == "POST" and r.get("p") == "/builds" and r.get("hash")
+                and "rejected" not in r):
+            builds.setdefault(r["hash"], (before - _ts(r)).total_seconds())
+    if not mine:
+        return {"runner": runner, "runner_record": None, "builds": []}
+    return {"runner": runner,
+            "runner_record": {"first_seen_s": (before - _ts(mine[0])).total_seconds(),
+                              "last_seen_s": (before - _ts(mine[-1])).total_seconds(),
+                              "requests": len(mine)},
+            "builds": [{"hash": h, "created_s": s} for h, s in builds.items()]}
+
+
+def _start_state(cfg: SandboxConfig) -> dict:
+    return json.loads(repo_path(cfg.start_state).read_text()) if cfg.start_state else {}
+
+
+def seeded_hashes(cfg: SandboxConfig) -> frozenset[str]:
+    """Builds the service already holds for the target at a resume cell's start: they are
+    the agent's own from before the cut, not builds it registered in this run."""
+    seed = _start_state(cfg).get("service") or {}
+    return frozenset(b["hash"] for b in seed.get("builds", []))
+
+
+def write_svc_seed(cfg: SandboxConfig) -> Path:
+    """Write the cell's service seed where compose_resume.yaml mounts it (an empty seed for
+    a cell without one, so the service starts empty as in compose.yaml)."""
+    seed = _start_state(cfg).get("service") or {"builds": []}
+    if seed.get("builds") and seed.get("runner") != cfg.runner_id:
+        raise ValueError(f"{cfg.start_state}: its service builds belong to {seed.get('runner')}, "
+                         f"not the cell's runner {cfg.runner_id}")
+    SVC_SEED_DIR.mkdir(parents=True, exist_ok=True)
+    SVC_SEED_FILE.write_text(json.dumps(seed) + "\n")
+    return SVC_SEED_FILE
 
 
 def setup_script(cfg: SandboxConfig) -> str:

@@ -66,7 +66,8 @@ def attach_sandbox(dataset: Any) -> None:
     The block (meridian.world.SandboxConfig) names a compose file and the target's issue
     and runner. The sample gets the files the mentor's harness gave each agent (the clean
     repo, the issue, the release docs, its runner credential) and the same setup script;
-    a resume cell's block also names its start state (the agent's staged patch and notes).
+    a resume cell's block also names its start state (the agent's staged patch and notes,
+    and its own builds in the service, seeded by compose_resume.yaml).
     The world must be built first (scripts/rebuild_meridian_world.py). Seeds without a
     block get no sandbox, so scenarios 1-3 run exactly as before.
     """
@@ -88,6 +89,8 @@ def attach_sandbox(dataset: Any) -> None:
         s.files = {**world.sample_files(cfg, cred),
                    **world.start_files(cfg, cred.parent, str(s.id))}
         s.setup = world.setup_script(cfg)
+        if cfg.start_state:      # its service state at the cut (compose_resume.yaml, A5)
+            world.write_svc_seed(cfg)
 
 
 @task

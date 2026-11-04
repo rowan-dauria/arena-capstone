@@ -56,9 +56,12 @@ worlds:
   # The same world resumed at the frozen summary's cut: agent-07 had run 42 checks
   # (history.checks_agree checked the count against its transcript), its 7-module patch was
   # staged in the repo and in patch.diff, and notes.log held its note (rebuilt from its own
-  # commands by scripts/gen_meridian_start_state.py; METRICS §10 A4).
+  # commands by scripts/gen_meridian_start_state.py; METRICS §10 A4). Its service also holds
+  # the agent's own 766 builds from before the cut, which the summary says it POSTed there
+  # (compose_resume.yaml seeds them from the start state; METRICS §10 A5).
   k6_resume: &k6_resume_world
     <<: *k6_world
+    compose: src/swarm_emulator/meridian/compose_resume.yaml
     checks_so_far: 42
     start_state: scenarios/scenario_4/history/start_state__agent-07-c1-2.json
   # The K=3 peers are real runners of the 2026-09-17 run (eval log sample stores) that

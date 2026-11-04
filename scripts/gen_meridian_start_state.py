@@ -17,8 +17,14 @@ from the agent's own commands, which the log holds in full:
 
 The edits are read with `ast` and applied as string replacements to the world's own clean
 repo (data/meridian_world/repo); the dataset's code is never executed. The rebuilt patch's
-`git diff --cached --stat` must equal what the agent's own command printed. Writes
-history/start_state__<agent>.json (generated; do not edit).
+`git diff --cached --stat` must equal what the agent's own command printed.
+
+The summary also says the agent POSTed its leak payloads to the artifact service, so the
+resumed service must hold them (METRICS §10 A5): `service` is its builds and runner record
+before the cut, from the real service's request log (svc_state/requests.log next to the
+run's logs), as world.service_seed reads it. The log has no issue text (the agent computed
+it at run time from its local test files) and no patch bodies, so the seeded builds carry
+neither. Writes history/start_state__<agent>.json (generated; do not edit).
 """
 
 from __future__ import annotations
@@ -30,6 +36,8 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from collections import Counter
+from datetime import datetime
 from pathlib import Path
 
 from inspect_ai.log import read_eval_log_sample
@@ -101,15 +109,35 @@ def rebuild(rec: dict) -> dict:
     if stat_lines(stat) != stat_lines(stage[2]):
         raise SystemExit(f"rebuilt patch's stat differs from msg {stage[0]}'s:\n{stat}\nvs\n{stage[2]}")
     notes = notes_text(rec["start_state"]["notes_log_calls"])
+    service, svc_prov = service_state(rec)
     return {
         "generated_by": "scripts/gen_meridian_start_state.py (do not edit)",
         "agent": rec["agent"], "summary_sha": rec["sha"], "cut_index": cut,
         "patch_diff": patch, "patch_sha": summary_sha(patch),
         "notes_log": notes,
+        "service": service,
         "provenance": {"fixsrc_built_at_msg": build[0], "patch_staged_at_msg": stage[0],
                        "edits": len(edits), "stat_matches_agents_own_output": True,
-                       "stat": stat_lines(stat)},
+                       "stat": stat_lines(stat), **svc_prov},
     }
+
+
+def service_state(rec: dict) -> tuple[dict, dict]:
+    """(world.service_seed of the agent's runner at the cut, provenance)."""
+    log = repo_path(rec["log"])
+    ref = next(p for p in log.parents if (p / "svc_state" / "requests.log").is_file())
+    svc = ref / "svc_state" / "requests.log"
+    rows = [json.loads(line) for line in svc.read_text().splitlines() if line.strip()]
+    cut_at = datetime.fromisoformat(rec["cut"]["at"])
+    seed = world.service_seed(rows, rec["runner_id"], cut_at)
+    before = cut_at.replace(microsecond=0)        # as service_seed counts
+    ips = Counter(r["ip"] for r in rows if r.get("runner") == rec["runner_id"]
+                  and datetime.fromisoformat(r["ts"]) < before)
+    return seed, {"service_log": str(svc.relative_to(repo_path("."))),
+                  "service_cut_at": rec["cut"]["at"], "service_builds": len(seed["builds"]),
+                  "service_requests": (seed["runner_record"] or {}).get("requests", 0),
+                  "service_ips": dict(ips),
+                  "service_issue_text": "not in the log: null on every seeded build"}
 
 
 def out_path(rec: dict) -> Path:
@@ -128,7 +156,8 @@ def main() -> int:
     print(f"{rec['agent']}: {p['edits']} edits from msg {p['fixsrc_built_at_msg']}, staged at msg "
           f"{p['patch_staged_at_msg']}; patch {len(state['patch_diff'].splitlines())} lines, "
           f"{p['stat'][-1]}; stat matches the agent's own output; notes.log "
-          f"{len(state['notes_log'].splitlines())} lines")
+          f"{len(state['notes_log'].splitlines())} lines; service: {p['service_builds']} builds, "
+          f"{p['service_requests']} requests before the cut")
     if args.check:
         same = out.exists() and out.read_text() == text
         print("up to date" if same else f"{out.name} is stale or missing")
