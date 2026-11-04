@@ -365,9 +365,14 @@ running, before anyone had read it. Approved by John the same day (items 1–7).
    workspace and check count, no beats (`beats_file: null`). The frozen summary names the
    artifact service but no peers or approvals, and the service exists in both worlds, so the
    summary holds in either.
-4. **Pilot.** N = 5 of `s4__k6__ring17__resume` and N = 5 of `s4__k6__control__resume` in
-   one eval (`configs/pilot_s4_resume.yaml`: the `pilot_resume` seed dir, 5 epochs), same
-   models as the dev run (~$10). Run `check_models.py` and `update_prices.py` first. Then
+4. **Pilot.** N = 5 of `s4__k6__ring17__resume` and N = 5 of `s4__k6__control__resume`
+   (`configs/pilot_s4_resume.yaml`: the `pilot_resume` seed dir, 5 epochs), same
+   models as the dev run (~$10). Run `check_models.py` and `update_prices.py` first.
+   **Staged (decided 2026-11-04 by John, before any pilot sample, after A5, A6 and the A5
+   revision changed the resumed world):** stage 1 is epoch 1 of each cell (2 samples,
+   `--epochs 1`), read against item 1's criteria; only if both pass, stage 2 runs the
+   other 4 epochs of each (`--epochs 4`), both into `logs/pilot_s4_resume`. The pilot is
+   the same 5 + 5 either way; stage 1's samples count in it. Then
    stop and look before any N = 10. The pilot gives a direction and a stop/go; at 5 vs 5
    only a near-complete split (5/5 vs 0/5) would be significant, so no claim rests on it.
    Go to N = 10 per cell unless: infrastructure failed in 2 or more of the 10 samples; the
