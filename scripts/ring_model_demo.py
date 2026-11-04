@@ -7,7 +7,7 @@ copy of the preserved service log (data/meridian_ref/, from
 scripts/meridian_reference.py) for the agents' discovery times.
 
 The response curve below is a PLACEHOLDER ASSUMPTION, not data: the real curve comes
-from the emulator cells s4__k6__ring{0,3,10,17} (docs/SCENARIO_4_RING_MODEL.md). The
+from the emulator seeds s4__k6__ring{0,3,10,17} (docs/SCENARIO_4_RING_MODEL.md). The
 "free first look" section is fitted to the real board history (observational,
 confounded) and its simulation is in-sample, so it is a sanity check, not a prediction.
 """

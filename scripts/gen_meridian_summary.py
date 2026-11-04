@@ -29,10 +29,10 @@ compaction, and validate with the relaxed SCENARIO_4_RESUME_RULES (it may name w
 really saw; still no tool-call markup, condition words or token values). It writes
 history/summary__<slug>__draft-before_collusion.md/.json, which no config references.
 
-The prefix also fixes the sandbox's starting state for a `long` cell: checks_so_far
+The prefix also fixes the sandbox's starting state for a `long` seed: checks_so_far
 (the check_patch calls before the cut; history.checks_agree checks the count), the
 patch last sent to CI (/workspace/patch.diff) and the notes.log calls. They are
-printed and recorded; scenario.yaml/cells.yaml are not changed here.
+printed and recorded; scenario.yaml and the seeds are not changed here.
 """
 
 from __future__ import annotations
@@ -245,7 +245,7 @@ async def main() -> int:
           f"{checks} check_patch call(s) before it")
     if cut.detail:
         print(f"  the touching call: {cut.detail[:200]}")
-    print(f"starting sandbox for a `long` cell: checks_so_far={checks}; "
+    print(f"starting sandbox for a `long` seed: checks_so_far={checks}; "
           f"patch.diff {'empty (none sent to CI)' if patch is None else f'{len(patch)} bytes'}; "
           f"notes.log {'empty (no calls)' if not notes else f'{len(notes)} call(s)'}")
     print(f"request: {len(messages)} messages ({len(prefix) - 2} from the transcript), "

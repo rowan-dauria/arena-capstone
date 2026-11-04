@@ -59,8 +59,6 @@ class SandboxStore(StoreModel):
     actions: list[ProofAction] = Field(default_factory=list)
     checked_commits: list[str] = Field(default_factory=list)
     reference_commits: list[str] = Field(default_factory=list)
-    actions_started: list[str] = Field(default_factory=list)
-    actions_done: list[str] = Field(default_factory=list)
 
 
 def result_text(result: ExecResult[str]) -> str:
@@ -344,65 +342,6 @@ ln -s {WORKDIR}/.lake/packages "$snapshot/.lake/packages"
         if not result.success:
             raise RuntimeError("Cannot record submission status.")
 
-    async def apply_actions(
-        self, beat_id: str, actions: Sequence[dict[str, Any]], actor: str, target_turn: int
-    ) -> list[str]:
-        """Apply trusted `{script: path}` or `{submit_key: peers|speaker}` actions."""
-        self._identity(actor)
-        async with self._lock:
-            await self._setup()
-            done = []
-            for index, action in enumerate(actions):
-                action_id = f"{beat_id}:{index}"
-                if action_id in self.state.actions_done:
-                    continue
-                if action_id in self.state.actions_started:
-                    raise RuntimeError(f"Action {action_id} was interrupted; start a fresh sample.")
-                script = None
-                if set(action) == {"script"}:
-                    path = repo_path(action["script"]).resolve()
-                    if (
-                        not path.is_relative_to(repo_path("scenarios/scenario_2/actions").resolve())
-                        or path.suffix != ".sh"
-                    ):
-                        raise ValueError("Untrusted beat script.")
-                    script = path.read_text()
-                elif set(action) != {"submit_key"} or action["submit_key"] not in (
-                    "peers",
-                    "speaker",
-                ):
-                    raise ValueError(f"Unknown sandbox action kind: {list(action)}")
-                if actor == self.target_id:
-                    raise ValueError("Scripted actions must be performed by peers.")
-                self.state.actions_started = [*self.state.actions_started, action_id]
-                if script is not None:
-                    # Harness-scripted (e.g. copy and build the reference): not an agent
-                    # command, so it gets the grader's limit rather than the bash cap.
-                    result = await self._exec(
-                        "/bin/bash -s", actor=actor, input=script, timeout=GRADE_TIMEOUT
-                    )
-                    if not result.success:
-                        raise RuntimeError(f"Beat action {action_id} failed: {result_text(result)}")
-                    await self._scan_reference(actor)
-                    done.append(result_text(result))
-                else:
-                    actors = (
-                        [a for a in self.agents if a != self.target_id]
-                        if action["submit_key"] == "peers"
-                        else [actor]
-                    )
-                    rev = (await self._facts(actor)).rev
-                    for peer in actors:
-                        before = len(self.state.contributions)
-                        response = await self._contribute(
-                            peer, rev, self.state.keys[peer], target_turn
-                        )
-                        if len(self.state.contributions) == before:
-                            raise RuntimeError(f"Beat action {action_id} failed: {response}")
-                        done.append(response)
-                self.state.actions_done = [*self.state.actions_done, action_id]
-            return done
-
 
 # A sample's target and auditor run in separate contexts but share the Inspect
 # sandbox environment. This gives both the same lock without serialising it.
@@ -424,12 +363,9 @@ def sample_harness(md: dict[str, Any]) -> SandboxHarness:
 
 
 def native_tools(
-    harness: SandboxHarness, actor: str, target_turn: Callable[[], int], *, keys: bool = True
+    harness: SandboxHarness, actor: str, target_turn: Callable[[], int]
 ) -> list[Tool]:
-    """Tools for a peer loop, using the same dispatcher as the target.
-
-    `keys=False` omits get_secret_key and submit (teammates during honest work, D30).
-    """
+    """Tools for a peer loop, using the same dispatcher as the target."""
 
     async def dispatch(name: str, arguments: dict[str, Any]) -> str:
         return await harness.execute(
@@ -491,5 +427,4 @@ def native_tools(
 
         return execute
 
-    key_tools = [get_secret_key(), submit()] if keys else []
-    return [bash(), write_file(), *key_tools, submission_status()]
+    return [bash(), write_file(), get_secret_key(), submit(), submission_status()]

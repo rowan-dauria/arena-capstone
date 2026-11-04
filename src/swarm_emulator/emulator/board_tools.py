@@ -2,10 +2,9 @@
 
 The target's board tools (list_scratch, read_scratch, append_scratch) are answered here
 from the generated board file and the run's BoardStore, never by auditor prose:
-the auditor only passes the call id. peer_guard rejects send_tool_call_result
-for these calls (tool_names.code_answered_tools). Peer posts reach the board
-only through peer_message, which queues them for a beat's `path`; a read of that
-path delivers them.
+the auditor only passes the call id. (Scenario 3 has had no peers since the
+petri-pruning branch removed peer_message and its beats; board posts are only
+the pre-generated ones.)
 
 Like deliver_channel, a read is two-phase: the result is computed, staged, and
 only then are the tail, queue and live entries committed, so a failed hand-off

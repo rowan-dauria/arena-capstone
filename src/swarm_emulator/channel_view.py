@@ -1,11 +1,10 @@
 """A "message board" view of a scenario 2 sample, for Inspect's timeline dropdown.
 
 Built after a run from the sample's own events and store: kestrel-2's channel posts,
-teammates' posts (with what happened to each: delivered, sent back by the checker, or not
-posted), what kestrel-2 received when it read the channel, the auditor's instructions to
-teammates and beat releases. Each item becomes an `InfoEvent` stamped with the time of the
-original action, listed in time order in a `Timeline` named "message board", with a
-divider entry where each beat starts.
+teammates' posts (with what happened to each: delivered or not posted), what kestrel-2
+received when it read the channel, and the auditor's instructions to teammates. Each item
+becomes an `InfoEvent` stamped with the time of the original action, listed in time order
+in a `Timeline` named "message board".
 
 Pure: reads a finished sample, makes no model calls. `scripts/board_view.py` writes
 annotated copies of logs and serves them with `inspect view`.
@@ -35,7 +34,6 @@ from inspect_ai.event import (
 TIMELINE_NAME = "message board"
 SPAN_ID = "message-board"
 ATTACHMENT = re.compile(r"attachment://([0-9a-f]{32})")
-RELEASED = re.compile(r"Released (\w+)\.")
 PEER_STORE = "PeerAgentStore:messages"
 TEXT_REPLY = "Your reply was sent with post_message: "
 
@@ -45,13 +43,12 @@ class Entry:
     """One item on the board."""
 
     time: datetime
-    kind: str  # target_post | peer_post | received | instruction | release | bot_post
+    kind: str  # target_post | peer_post | received | instruction | bot_post
     actor: str
     body: str
     title: str
     notes: list[str] = field(default_factory=list)
     turn: int | None = None
-    beat: str = ""
 
 
 def _norm(text: str) -> str:
@@ -110,12 +107,8 @@ def _staged(result: str) -> list[dict]:
 def _peer_status(result: str) -> str:
     if result.startswith("Posted"):
         return "posted"
-    if "did not advance" in result:
-        return "sent back by the post checker"
     if "has posted since you last read" in result:
         return "not posted: kestrel-2 had posted since this teammate last read the channel"
-    if "event was logged" in result:
-        return "not posted: blocked by the reference filter"
     if "Unknown channel" in result:
         return "not posted: wrong channel name"
     return f"not posted: {_norm(result)[:160]}"
@@ -131,13 +124,11 @@ def board_entries(
     resolve = _resolver(attachments)
     peer_msgs: dict[str, list[dict]] = resolve(store.get(PEER_STORE) or {})
     peers = list(peer_msgs)
-    rejections = resolve(store.get("SwarmState:peer_rejections") or [])
     entries: list[Entry] = []
 
     # Peer model outputs carry the timestamps; store messages carry the conversation.
     msg_time: dict[str, datetime] = {}
     deliveries: list[tuple[datetime, list[dict]]] = []
-    releases: list[tuple[datetime, str]] = []
     turn = 0
     for e in events:
         if isinstance(e, ModelEvent) and e.role == "peer" and e.output and e.output.choices:
@@ -199,8 +190,6 @@ def board_entries(
                 notes.append(f"refused: {_norm(e.error.message)[:300]}")
             elif result:
                 notes.append(f"result: {_norm(result)[:300]}")
-            if args.get("release_beat"):
-                notes.insert(0, "asked to release the next beat")
             entries.append(
                 Entry(
                     time=t,
@@ -212,18 +201,6 @@ def board_entries(
                     turn=turn,
                 )
             )
-            if m := RELEASED.search(result):
-                releases.append((t, m.group(1)))
-                entries.append(
-                    Entry(
-                        time=t,
-                        kind="release",
-                        actor="harness",
-                        body="",
-                        title=f"━━━━━━━━━━  BEAT {m.group(1)} STARTS  ━━━━━━━━━━",
-                        turn=turn,
-                    )
-                )
 
     # Teammates' posts, reads of kestrel-2's posts, and what became of each post.
     target_posts = [x for x in entries if x.kind == "target_post"]
@@ -260,13 +237,7 @@ def board_entries(
                     result = results.get(call_id, "")
                     status = _peer_status(result) if result else "result not recorded"
                     notes = [status]
-                    if status.startswith("sent back"):
-                        for r in rejections:
-                            if r.get("speaker") == peer and _same_body(r.get("body", ""), body):
-                                label, reason = r.get("label"), _norm(r.get("reason", ""))
-                                notes = [f"✗ sent back by the post checker ({label}): {reason}"]
-                                break
-                    elif status == "posted":
+                    if status == "posted":
                         when = next(
                             (
                                 t
@@ -310,29 +281,18 @@ def board_entries(
             "read by " + ", ".join(read_by[idx]) if idx in read_by else "no teammate read it"
         ]
 
-    entries.sort(key=lambda x: (x.time, x.kind != "release"))
-    releases.sort()
-    for x in entries:
-        beat = "before h1"
-        for t, b in releases:
-            if x.time >= t:
-                beat = b
-        x.beat = beat
+    entries.sort(key=lambda x: x.time)
     return entries
 
 
 def _markdown(x: Entry) -> str:
-    if x.kind == "release":
-        return (
-            f"## ▶ Beat {x.beat} starts\n\n*{_hm(x.time)} · after kestrel-2 turn {x.turn}*\n\n---"
-        )
     labels = {
         "target_post": "Read by",
         "peer_post": "Status",
         "instruction": "Result",
         "bot_post": "Status",
     }
-    chips = [f"`{_hm(x.time)}`", f"`beat {x.beat}`"]
+    chips = [f"`{_hm(x.time)}`"]
     if x.turn:
         chips.insert(1, f"`kestrel-2 turn {x.turn}`")
     lines = [" · ".join(chips)]
@@ -350,8 +310,7 @@ def _markdown(x: Entry) -> str:
 def board_timeline(entries: Iterable[Entry]) -> tuple[list[Event], Timeline]:
     """Events to append to the sample (inside one span) and the timeline that lists them.
 
-    One continuous list in time order. Each beat starts with a divider entry, and every
-    other title carries its beat, e.g. "[b2] dune-5 → #p320".
+    One continuous list in time order, e.g. "dune-5 → #p320".
     """
     entries = list(entries)
     events: list[Event] = []
@@ -361,14 +320,13 @@ def board_timeline(entries: Iterable[Entry]) -> tuple[list[Event], Timeline]:
         SpanBeginEvent(id=SPAN_ID, name=TIMELINE_NAME, type="board", timestamp=begin_time)
     )
     for n, x in enumerate(entries):
-        title = x.title if x.kind == "release" else f"[{x.beat}] {x.title}"
         ev = InfoEvent(
             uuid=f"{SPAN_ID}-{n:05d}",
             span_id=SPAN_ID,
-            source=title,
+            source=x.title,
             data=_markdown(x),
             timestamp=x.time,
-            metadata={"board_kind": x.kind, "actor": x.actor, "beat": x.beat},
+            metadata={"board_kind": x.kind, "actor": x.actor},
         )
         events.append(ev)
         content.append(TimelineEvent(event=ev))

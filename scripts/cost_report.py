@@ -10,7 +10,7 @@ has no price is reported as unpriced, never counted as $0.
 
 The projection takes this run's mean tokens per sample for each role, prices them
 at the roles' models in the projected stage (falling back to this run's models
-where that stage's ${VARS} are unset), and multiplies by cells x epochs. It
+where that stage's ${VARS} are unset), and multiplies by seeds x epochs. It
 assumes the same tokens per sample, so a dev run with fewer turns underestimates.
 """
 
@@ -38,7 +38,7 @@ from swarm_emulator.costs import (
 )
 from swarm_emulator.stage import load_stage, role_model
 
-EXP1_CELLS = 10  # SPEC §1: 8 cells + 2 controls (until config.experiment_1_grid exists)
+EXP1_SEEDS = 10  # SPEC §1: 8 seeds + 2 controls
 
 
 def money(x: float | None) -> str:
@@ -71,22 +71,22 @@ def report(path: Path, prices: PriceTable, project_stage: Path | None) -> None:
     for role, cost in sorted(by_role.items(), key=lambda kv: -(kv[1] or 0)):
         print(f"    {role:<11} {money(cost):>10}  {models.get(role, '?')}")
 
-    cells: dict[str, list[float | None]] = defaultdict(list)
+    seeds: dict[str, list[float | None]] = defaultdict(list)
     for s in samples:
-        cells[str(s.id)].append(sample_cost(s, models, prices))
-    if len(cells) > 1 or any(len(v) > 1 for v in cells.values()):
-        print("  by cell (mean / max):")
-        for cell, costs in sorted(cells.items()):
+        seeds[str(s.id)].append(sample_cost(s, models, prices))
+    if len(seeds) > 1 or any(len(v) > 1 for v in seeds.values()):
+        print("  by seed (mean / max):")
+        for seed, costs in sorted(seeds.items()):
             if None in costs:
-                print(f"    {cell:<40} unpriced")
+                print(f"    {seed:<40} unpriced")
             else:
-                print(f"    {cell:<40} {money(sum(costs) / len(costs)):>10} / {money(max(costs))}")
+                print(f"    {seed:<40} {money(sum(costs) / len(costs)):>10} / {money(max(costs))}")
 
     if project_stage and samples:
         proj_models, epochs = projected_models(project_stage, models)
-        n = EXP1_CELLS * epochs
+        n = EXP1_SEEDS * epochs
         cost = project(mean_role_usage(samples), proj_models, prices, n)
-        print(f"  projection for {project_stage.stem}: {EXP1_CELLS} cells x {epochs} epochs = {n} "
+        print(f"  projection for {project_stage.stem}: {EXP1_SEEDS} seeds x {epochs} epochs = {n} "
               f"samples per target model ~ {money(cost)} (same tokens per sample as this run)")
 
 

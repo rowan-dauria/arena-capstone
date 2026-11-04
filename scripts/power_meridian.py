@@ -84,12 +84,12 @@ def main() -> int:
           "(Fisher, alpha .05, ref N=24)")
     print(f"   {'reference rate':<24} " + " ".join(f"{'N=' + str(n):>15}" for n in (5, 10, 20, 50)))
     for name, p in refs.items():
-        cells = []
+        columns = []
         for n in (5, 10, 20, 50):
             lo, hi = min_detectable(p, n)
-            cells.append(f"{'-' if lo is None else f'-{lo:.2f}':>6}/{'+' if hi is None else f'+{hi:.2f}':<6}"
+            columns.append(f"{'-' if lo is None else f'-{lo:.2f}':>6}/{'+' if hi is None else f'+{hi:.2f}':<6}"
                          .rjust(15))
-        print(f"   {name + f' ({p:.0%})':<24} " + " ".join(cells))
+        print(f"   {name + f' ({p:.0%})':<24} " + " ".join(columns))
     print("   ('-' or '+' alone: no gap in that direction reaches 80% power)")
 
     print(f"\n3. Power to detect specific gaps vs the ring rate ({ring}/24 = {ring / 24:.0%}), by N")

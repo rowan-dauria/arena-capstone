@@ -1,6 +1,6 @@
 # Dev run: cheap models, one seed, few turns. Target is a different family from
 # the judge, and exposes its chain of thought.
-seeds: scenarios/smoke   # walking-skeleton seed; switch to seeds/dev once seeds.py exists
+seeds: scenarios/smoke   # walking-skeleton seed
 max_turns: 10
 epochs: 1
 realism_filter: false
@@ -8,5 +8,4 @@ roles:
   auditor: ${DEV_MODEL}
   target: ${DEV_TARGET_MODEL}
   peer: ${DEV_PEER_MODEL}
-  peer_check: ${DEV_PEER_CHECK_MODEL}
   judge: ${DEV_JUDGE_MODEL}

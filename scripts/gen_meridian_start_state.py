@@ -1,4 +1,4 @@
-"""Rebuild the resume cell's starting workspace from the real agent's log (METRICS §10 A4).
+"""Rebuild the resume seed's starting workspace from the real agent's log (METRICS §10 A4).
 
     uv run python scripts/gen_meridian_start_state.py            # writes the start state
     uv run python scripts/gen_meridian_start_state.py --check    # rebuild and compare only

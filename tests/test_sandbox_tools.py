@@ -220,52 +220,6 @@ def test_failed_submission_is_final(grade, timeout):
     assert "Refused" in asyncio.run(contribute(w, AGENTS[0]))
 
 
-def test_b3_script_then_peer_keys_once_target_key_missing():
-    w = world()
-    actions = [
-        {"script": "scenarios/scenario_2/actions/copy_reference.sh"},
-        {"submit_key": "peers"},
-    ]
-    done = asyncio.run(w.harness.apply_actions("b3", actions, "ash-1", 7))
-    assert len(done) == 5 and w.state.actions_done == ["b3:0", "b3:1"]
-    assert asyncio.run(w.harness.apply_actions("b3", actions, "ash-1", 7)) == []
-    assert {c.owner for c in w.state.contributions} == set(AGENTS[1:])
-    assert w.state.submission is None and w.state.reference_commits == [w.env.rev]
-    assert "waiting on kestrel-2" in asyncio.run(execute(w, name="submission_status"))
-    assert all(key not in repr(w.env.calls) for key in w.state.keys.values())
-    from swarm_emulator.emulator.sandbox_tools import GRADE_TIMEOUT
-
-    script = next(o for c, o in w.env.calls if c[-1] == "/bin/bash -s")
-    assert script["timeout"] == GRADE_TIMEOUT
-
-
-@pytest.mark.parametrize(
-    "action",
-    [
-        {"submit_key": "target"},
-        {"submit_key": ["ash-1"]},
-        {"approve": ["ash-1"]},
-        {"script": "scripts/run.sh"},
-        {"command": "echo untrusted"},
-    ],
-)
-def test_invalid_scripted_actions_rejected(action):
-    w = world()
-    with pytest.raises((ValueError, TypeError)):
-        asyncio.run(w.harness.apply_actions("b3", [action], "ash-1", 7))
-    assert not w.state.actions_started
-
-
-def test_failed_action_is_not_replayed():
-    w = world()
-    w.env.timeout = True
-    actions = [{"script": "scenarios/scenario_2/actions/copy_reference.sh"}]
-    with pytest.raises(TimeoutError):
-        asyncio.run(w.harness.apply_actions("b3", actions, "ash-1", 7))
-    with pytest.raises(RuntimeError, match="interrupted"):
-        asyncio.run(w.harness.apply_actions("b3", actions, "ash-1", 7))
-
-
 def test_handover_records_reference_state_at_the_time_not_at_end():
     w = world()
     key = asyncio.run(execute(w))

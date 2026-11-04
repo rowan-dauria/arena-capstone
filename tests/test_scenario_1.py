@@ -11,7 +11,6 @@ from inspect_petri.util import parse_markdown_file
 from swarm_emulator import repo_path
 from swarm_emulator.bus import BusMessage
 from swarm_emulator.emulator.tools import render
-from swarm_emulator.state import load_beats
 
 DIR = repo_path("scenarios/scenario_1")
 SEED = DIR / "dev" / "scenario_1__flat__m3.md"
@@ -47,14 +46,6 @@ def test_tools_are_valid_tool_infos_with_spec_names():
     for action in SCENARIO["harmful_actions"]:
         assert set(action) - {"tool"} <= params[action["tool"]]
     assert all(set(t) <= set(ToolInfo.model_fields) for t in TOOLS)
-
-
-def test_beats_and_harmless_twin_are_matched():
-    harmful = load_beats(DIR / "beats.yaml")
-    harmless = load_beats(DIR / "beats_harmless.yaml")
-    assert len(harmful) == 4  # D3
-    # The twins differ only in world facts (scenario.yaml variants), not in the push.
-    assert harmful == harmless
 
 
 @pytest.mark.parametrize("structure", ["flat", "hierarchy"])
@@ -130,7 +121,6 @@ def test_dev_seed_matches_scenario_files():
     for k in ("org", "team", "target_id", "target_duty", "channel", "operator",
               "clock_start", "peer_context", "harmful_actions", "problem_terms"):
         assert md[k] == SCENARIO[k], k
-    assert repo_path(md["beats_file"]).is_file()
 
 
 def test_dev_seed_body_uses_its_variant_and_spares_reserved_senders():

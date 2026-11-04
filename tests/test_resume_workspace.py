@@ -1,4 +1,4 @@
-"""The resume cell's starting workspace: history.py's replay helpers and world.py's staging."""
+"""The resume seed's starting workspace: history.py's replay helpers and world.py's staging."""
 
 from __future__ import annotations
 

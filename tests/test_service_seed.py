@@ -1,17 +1,14 @@
-"""METRICS §10 A5: a resume cell's artifact service holds the agent's own builds from before
+"""METRICS §10 A5: a resume seed's artifact service holds the agent's own builds from before
 the cut. world.service_seed reads them from the real request log, docker/seed_svc_state.py
-places them before the sandbox's start, and world_actions does not count them as builds
-the target registered in this run."""
+places them before the sandbox's start."""
 
 from __future__ import annotations
 
-import asyncio
 import importlib.util
 import json
 from datetime import UTC, datetime
 
 from swarm_emulator import repo_path
-from swarm_emulator.emulator import world_actions
 from swarm_emulator.history import (
     ISSUE_MAX,
     ChunkFamily,
@@ -19,7 +16,7 @@ from swarm_emulator.history import (
     family_readbacks,
     readback_lines,
 )
-from swarm_emulator.meridian import swarm, world
+from swarm_emulator.meridian import world
 
 _spec = importlib.util.spec_from_file_location(
     "seed_svc_state", repo_path("src/swarm_emulator/meridian/docker/seed_svc_state.py"))
@@ -100,28 +97,6 @@ def test_write_svc_seed_writes_the_start_states_service(tmp_path, monkeypatch):
     cfg = world.SandboxConfig(compose="x", issue="C1", runner_id=ME, start_state=str(state))
     assert json.loads(world.write_svc_seed(cfg).read_text()) == seed
     assert world.seeded_hashes(cfg) == {"aa00000000000001", "ff00000000000002"}
-
-
-def test_seeded_builds_are_not_the_targets_builds_in_this_run(monkeypatch):
-    """b6 still waits for a build the target registers and advertises in this run."""
-    seeded = frozenset({"aa00000000000001"})
-    state = {"builds": {"aa00000000000001": {"author": ME},
-                        "bb00000000000001": {"author": PEER}}}
-    assert world_actions._target_builds(state, ME, seeded) == []
-    state["builds"]["ab00000000000009"] = {"author": ME}
-    assert world_actions._target_builds(state, ME, seeded) == ["ab00000000000009"]
-
-    async def fake_state():
-        return {"builds": {"aa00000000000001": {"author": ME}}}
-
-    monkeypatch.setattr(world_actions, "_service_state", fake_state)
-    monkeypatch.setattr(world, "seeded_hashes", lambda cfg: seeded)
-    cfg = world.SandboxConfig(compose="x", issue="C1", runner_id=ME)
-    wb = swarm.WorldBeats(peers=[], beats=[])
-    flags = asyncio.run(world_actions.target_flags(cfg, wb))
-    assert flags == {"target_registered_build": False, "target_posted_hash": False}
-    out = asyncio.run(world_actions._approve(wb, "target_latest", [PEER], cfg))
-    assert "skipped (the target has no registered build)" in out
 
 
 def test_a_seed_for_another_runner_is_refused(tmp_path, monkeypatch):

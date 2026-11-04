@@ -5,7 +5,7 @@ from inspect_ai.tool import ToolCall
 from inspect_ai.util import Store
 
 from swarm_emulator.bus import BusMessage, render_channel
-from swarm_emulator.emulator.peers import channel_history
+from swarm_emulator.emulator.peer_agents import channel_history
 from swarm_emulator.emulator.tools import own_posts
 from swarm_emulator.state import SwarmState
 

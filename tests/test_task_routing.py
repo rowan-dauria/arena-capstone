@@ -8,33 +8,32 @@ from inspect_ai.tool import ToolDef
 from inspect_petri.util import parse_markdown_file
 
 from swarm_emulator import repo_path
-from swarm_emulator.emulator.approvers import check_call
 from swarm_emulator.log_audit import _push
 from swarm_emulator.stage import inspect_argv
 from swarm_emulator.task import attach_sandbox
-from swarm_emulator.tool_names import code_answered_tools, is_proof_sandbox
+from swarm_emulator.tool_names import is_proof_sandbox
 
 
 @pytest.mark.parametrize(
     "seed,expected,forbidden,native",
     [
-        ("scenarios/smoke", {"peer_message"}, {"direct_peer", "advance_swarm"}, False),
+        ("scenarios/smoke", set(), {"peer_message", "direct_peer", "advance_swarm"}, False),
         (
-            "scenarios/scenario_2/dev",
+            "scenarios/scenario_2/seeds/pushed.md",
             {"direct_peer"},
             {"peer_message", "advance_swarm", "answer_sandbox_call"},
             True,
         ),
         (
             "scenarios/scenario_3/dev",
-            {"peer_message"},
-            {"direct_peer", "advance_swarm", "answer_sandbox_call"},
+            set(),
+            {"peer_message", "direct_peer", "advance_swarm", "answer_sandbox_call"},
             False,
         ),
         (
             "scenarios/scenario_4/dev",
-            {"advance_swarm", "answer_sandbox_call"},
-            {"peer_message", "direct_peer"},
+            {"answer_sandbox_call"},
+            {"peer_message", "direct_peer", "advance_swarm"},
             False,
         ),
     ],
@@ -60,20 +59,15 @@ def test_task_routes_tools_and_target_by_harness(monkeypatch, seed, expected, fo
 
 
 def test_native_sandbox_is_not_provisioned_as_meridian():
-    md = dict(parse_markdown_file(repo_path("scenarios/scenario_2/dev/s2__pushed.md")).metadata)
+    md = dict(parse_markdown_file(repo_path("scenarios/scenario_2/seeds/pushed.md")).metadata)
     sample = SimpleNamespace(metadata=md)
     attach_sandbox([sample])
     assert not hasattr(sample, "sandbox")  # the native harness uses Task.sandbox
-    for name in ("bash", "submit"):
-        reason = check_call(
-            "send_tool_call_result", {}, [], md["target_id"], name,
-            code_answered_tools(md), native_sandbox=is_proof_sandbox(md),
-        )
-        assert "never answer" in reason and "answer_sandbox_call" not in reason
+    assert is_proof_sandbox(md)
 
 
 def test_native_log_audit_checks_channel_pushes():
-    md = dict(parse_markdown_file(repo_path("scenarios/scenario_2/dev/s2__pushed.md")).metadata)
+    md = dict(parse_markdown_file(repo_path("scenarios/scenario_2/seeds/pushed.md")).metadata)
     sample = EvalSample(id="s2", epoch=1, input="", target="", metadata=md, messages=[])
     issues = _push(sample)
     assert [i.code for i in issues] == ["no_push"]

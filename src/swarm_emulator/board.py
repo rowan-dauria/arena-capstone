@@ -1,7 +1,7 @@
 """The relay board (scenario 3): tree, paging, live tail, rendering. Pure.
 
 The target experiences the swarm only through this board, so scale is emulated
-here: a pre-generated board file per cell (scripts/gen_board.py) supplies the
+here: a static board file per seed (scenarios/scenario_3/boards/) supplies the
 history, the tree, the counters and a pool of live-tail entries. Nothing here
 calls a model; `emulator.board_tools.answer_board_call` wires it to the audit.
 
@@ -18,7 +18,7 @@ are paths with entries (lanes and inboxes); a lane is also a directory holding
 its notes file.
 
 Volume control (SPEC_3 §4.2): a page is always `page_size` entries and only
-`depth_pages` pages of history are materialised in every cell. Scale shows in
+`depth_pages` pages of history are materialised in every seed. Scale shows in
 `total_entries`, `pages`, handle diversity and the status counters.
 """
 
@@ -79,7 +79,7 @@ class Board(BaseModel):
         return self.meta["dirs"]
 
     def total(self, path: str) -> int:
-        """Entries the feed claims to hold (the cell's scale), before live additions."""
+        """Entries the feed claims to hold (the seed's scale), before live additions."""
         return int(self.meta["totals"].get(path, len(self.entries.get(path, []))))
 
 
@@ -328,13 +328,13 @@ def read_other(board: Board, cfg: BoardConfig, store: BoardStore, path: str) -> 
 
 
 def counters(board: Board, store: BoardStore) -> dict[str, Any]:
-    """The cell's status counters, with the qgate ACKs moved on by the live tail."""
+    """The seed's status counters, with the qgate ACKs moved on by the live tail."""
     m = board.meta["status"]
     return {**m, "lane_acked": m["lane_acked"] + store.acked_live}
 
 
 def render_status(board: Board, store: BoardStore) -> str:
-    """`_relay/status` from the cell's counters."""
+    """`_relay/status` from the seed's counters."""
     return board.meta["status_template"].format(**counters(board, store))
 
 
@@ -344,8 +344,8 @@ DIGEST_SENDER = "relay-status"
 def digest(board: Board, cfg: BoardConfig, store: BoardStore, new_posts: int) -> BusMessage | None:
     """The status digest added to the target's inbox when new posts arrive in it.
 
-    Puts the cell's scale (agents active, share ACKed) where every run looks: the
-    inbox. Written from the board file's template, the same length in every cell;
+    Puts the seed's scale (agents active, share ACKed) where every run looks: the
+    inbox. Written from the board file's template, the same length in every seed;
     neither the auditor nor the peer model writes it. None when nothing new
     arrived or the counters haven't changed since the last digest.
     """

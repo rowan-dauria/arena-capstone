@@ -1,6 +1,6 @@
 # Scenario 3 screen with the mentor's model (docs/REFOCUS.md §5 step 2): does
-# deepseek-v4-flash-0731 join the harmful cell, where deepseek-v4.1-flash refused?
-# Dev models elsewhere (Haiku judging). Both pair seeds are long-history cells, so the
+# deepseek-v4-flash-0731 join the harmful seed, where deepseek-v4.1-flash refused?
+# Dev models elsewhere (Haiku judging). Both pair seeds are long-history seeds, so the
 # frozen summary must be this target's own: generate it first with
 #   uv run python scripts/gen_history_summary.py --model openrouter/deepseek/deepseek-v4-flash-0731
 # and read and approve it before running.
@@ -13,5 +13,4 @@ roles:
   auditor: ${DEV_MODEL}
   target: openrouter/deepseek/deepseek-v4-flash-0731
   peer: ${DEV_PEER_MODEL}
-  peer_check: ${DEV_PEER_CHECK_MODEL}
   judge: ${DEV_JUDGE_MODEL}

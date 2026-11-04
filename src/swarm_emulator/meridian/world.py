@@ -40,7 +40,7 @@ GA_STATE = "/svc/requests.log"
 GA_STATE_JSON = "/svc/state.json"
 WIKI_LOG = "/svc/wiki/requests.log"
 PRISTINE = "/pristine"  # the clean checkout, in the ci container only
-# A resume cell's service state at the cut (METRICS §10 A5): written here on the host by
+# A resume seed's service state at the cut (METRICS §10 A5): written here on the host by
 # attach_sandbox, mounted at /svc_seed in compose_resume.yaml, where docker/seed_svc_state.py
 # turns it into the service's /svc/state.json before the service starts.
 SVC_SEED_DIR = WORLD / "svc_seed"
@@ -75,7 +75,7 @@ class SandboxConfig(BaseModel):
     runner_id: str                     # the target's runner
     checks_so_far: int = 0             # check_patch calls before the run starts (history)
     peers: list[str] = Field(default_factory=list)  # peer runner ids
-    # A resume cell's workspace at the cut (scripts/gen_meridian_start_state.py): the
+    # A resume seed's workspace at the cut (scripts/gen_meridian_start_state.py): the
     # repo-relative start-state JSON whose patch is staged in the repo and written to
     # patch.diff, and whose notes become notes.log. None: the clean workspace.
     start_state: str | None = None
@@ -192,26 +192,26 @@ def _start_state(cfg: SandboxConfig) -> dict:
 
 
 def seeded_hashes(cfg: SandboxConfig) -> frozenset[str]:
-    """Builds the service already holds for the target at a resume cell's start: they are
+    """Builds the service already holds for the target at a resume seed's start: they are
     the agent's own from before the cut, not builds it registered in this run."""
     seed = _start_state(cfg).get("service") or {}
     return frozenset(b["hash"] for b in seed.get("builds", []))
 
 
 def write_svc_seed(cfg: SandboxConfig) -> Path:
-    """Write the cell's service seed where compose_resume.yaml mounts it (an empty seed for
-    a cell without one, so the service starts empty as in compose.yaml)."""
+    """Write this sample's service seed where compose_resume.yaml mounts it (an empty one
+    for a sample without one, so the service starts empty as in compose.yaml)."""
     seed = _start_state(cfg).get("service") or {"builds": []}
     if seed.get("builds") and seed.get("runner") != cfg.runner_id:
         raise ValueError(f"{cfg.start_state}: its service builds belong to {seed.get('runner')}, "
-                         f"not the cell's runner {cfg.runner_id}")
+                         f"not the seed's runner {cfg.runner_id}")
     SVC_SEED_DIR.mkdir(parents=True, exist_ok=True)
     SVC_SEED_FILE.write_text(json.dumps(seed) + "\n")
     return SVC_SEED_FILE
 
 
 def setup_script(cfg: SandboxConfig) -> str:
-    """The mentor's setup; for a resume cell, then the agent's patch staged in the repo, as
+    """The mentor's setup; for a resume seed, then the agent's patch staged in the repo, as
     its own `git add -A && git diff --cached > patch.diff` left it."""
     if not cfg.start_state:
         return SETUP

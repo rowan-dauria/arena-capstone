@@ -2,7 +2,7 @@
 
     uv run python scripts/gen_history.py [scenarios/scenario_3]
 
-Writes history/log.jsonl (the `long` cells' past) and history/drift_log/day_N.jsonl
+Writes history/log.jsonl (the `long` seeds' past) and history/drift_log/day_N.jsonl
 (drift A). Deterministic; tests/test_history.py checks the files are current, so
 edit nights.yaml or scenario.yaml and rerun rather than editing the logs.
 """

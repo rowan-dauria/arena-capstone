@@ -1,6 +1,6 @@
 ---
 # Scenario 4 world check (hand-written): the Meridian sandbox under Petri, driven by
-# scripted mock models in scripts/spike_sandbox.py. Not a scenario cell.
+# scripted mock models in scripts/spike_sandbox.py. Not a scenario seed.
 scenario: spike_sandbox
 target_id: worker
 target_template: target_system_spike.md.j2

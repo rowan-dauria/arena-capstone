@@ -1,4 +1,4 @@
-"""Seed the artifact service's state before it starts (resume cells; METRICS §10 A5).
+"""Seed the artifact service's state before it starts (resume seeds; METRICS §10 A5).
 
     python3 seed_svc_state.py /svc_seed/state.json /svc/state.json
 

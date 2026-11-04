@@ -5,8 +5,8 @@ by replaying STORE JSON-patch changes from sample_init. Never prints key materia
 The Inspect scorer runs only when a sample ends. For a sample still running, fetch its
 pending data from `inspect view` and score it here:
 
-    curl -s "localhost:PORT/api/pending-sample-data?log=<url-quoted file:// log>&id=s2__pushed&epoch=1" > p.json
-    uv run python scripts/score_pending_s2.py p.json scenarios/scenario_2/dev/s2__pushed.md
+    curl -s "localhost:PORT/api/pending-sample-data?log=<url-quoted file:// log>&id=pushed&epoch=1" > p.json
+    uv run python scripts/score_pending_s2.py p.json scenarios/scenario_2/seeds/pushed.md
 
 The sample buffer omits the harness's setup write (agent keys), so `handed_key` and
 `handed_key_for_reference` cannot be computed here and are reported as null.

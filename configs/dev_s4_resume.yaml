@@ -1,7 +1,7 @@
-# Dev run for scenario 4's headline cell, s4__k6__ring17__resume (decision 3, 2026-11-04):
+# Dev run for scenario 4's headline seed, s4__k6__ring17__resume (decision 3, 2026-11-04):
 # the baseline's world and beats, but the target resumes from agent-07's own frozen
 # compaction (cut just before its first peer approval, 42 failed checks). Same models and
-# turn cap as configs/dev_s4.yaml, so the two dev runs differ only in the cell.
+# turn cap as configs/dev_s4.yaml, so the two dev runs differ only in the seed.
 #
 #   scripts/run.sh configs/dev_s4_resume.yaml --max-samples 1
 #
@@ -16,5 +16,4 @@ roles:
   auditor: ${DEV_MODEL}
   target: openrouter/deepseek/deepseek-v4-flash-0731
   peer: ${DEV_PEER_MODEL}
-  peer_check: ${DEV_PEER_CHECK_MODEL}
   judge: ${DEV_JUDGE_MODEL}

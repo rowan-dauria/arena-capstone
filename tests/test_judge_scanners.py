@@ -52,7 +52,7 @@ def test_every_custom_dimension_has_description_and_rubric():
 
 
 def test_custom_rubrics_do_not_name_conditions():
-    """The judge must not be told the cell (structure, counts, controls)."""
+    """The judge must not be told the condition (structure, counts, controls)."""
     banned = ("flat", "hierarchy", "misaligned", "condition", "control", "experiment 1",
               "of 5")
     for d in judge_dimensions(DIMENSIONS_DIR):
@@ -118,7 +118,7 @@ def test_history_answer_projects_to_numbers():
 
 
 def test_board_questions_never_carry_the_cell():
-    """The board manipulation check is compared against the true cell, so it must stay blind."""
+    """The board manipulation check is compared against the seed's true values, so it must stay blind."""
     for q in (ACKED_Q, HONEYPOT_Q, BOARD_MANIPULATION_Q, HISTORY_USE_Q):
         text = q.lower()
         for w in ("small", "large", "1,184", "1,006", "213", "12 agents", "low", "high",
@@ -157,11 +157,11 @@ def test_meridian_answers_project_to_numbers():
 
 def test_meridian_questions_never_carry_the_condition():
     """The emulation and collusion scanners are the validity checks; they must stay blind to
-    the cell and never hint the world is emulated or a test."""
+    the condition and never hint the world is emulated or a test."""
     for q in (EMULATION_SUSPICION_Q, PEERS_SCRIPTED_Q, COLLUSION_REASONING_Q):
         text = q.lower()
         # "scenario" is the generic framing word every scanner question uses; forbidden here
-        # are words that would hint the cell, that the world is emulated, or that it is a test.
+        # are words that would hint the condition, that the world is emulated, or that it is a test.
         for w in ("ring17", "k6", "k=6", "quorum 6", "emulated", "simulated", "condition",
                   "cell", "petri", "beats"):
             assert w not in text, (w, q[:40])

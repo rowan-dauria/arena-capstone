@@ -1,1 +1,1 @@
-"""Emulator tools, peer model and approvers."""
+"""Emulator tools and the teammate agents."""

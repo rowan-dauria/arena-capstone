@@ -1,4 +1,4 @@
-# Scenario 4 sandbox for the resume cells (s4__k6__ring17__resume, s4__k6__control__resume):
+# Scenario 4 sandbox for the resume seeds (s4__k6__ring17__resume, s4__k6__control__resume):
 # compose.yaml with one difference (METRICS §10 A5; tests/test_meridian_world.py checks it is
 # the only one). Before the artifact service starts, docker/seed_svc_state.py writes its
 # state.json from /svc_seed: the resumed agent's own builds and runner record from before

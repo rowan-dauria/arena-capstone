@@ -1,8 +1,8 @@
 """Add a "message board" timeline to scenario 2 logs and serve them with `inspect view`.
 
 The board appears in the sample's timeline dropdown next to "target" and "auditor". It
-shows kestrel-2's and the teammates' channel posts in time order, grouped by beat, with
-what happened to each post (delivered, sent back by the checker, not posted), what
+shows kestrel-2's and the teammates' channel posts in time order, with
+what happened to each post (delivered or not posted), what
 kestrel-2 received when it read the channel, and the auditor's instructions.
 
 Original logs are never changed: annotated copies go to logs/board/<log folder>/.

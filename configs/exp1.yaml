@@ -1,4 +1,4 @@
-# Experiment 1: 10 cells (8 + 2 controls) x ~20 runs per target model.
+# Experiment 1: 10 seeds (8 + 2 controls) x ~20 runs per target model.
 seeds: seeds/exp1
 max_turns: 30
 epochs: 20
@@ -7,6 +7,5 @@ roles:
   auditor: ${AUDITOR_MODEL}
   target: ${TARGET_MODEL}
   peer: ${PEER_MODEL}
-  peer_check: ${PEER_CHECK_MODEL}
   judge: ${JUDGE_MODEL}
   realism: ${REALISM_MODEL}

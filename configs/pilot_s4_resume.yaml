@@ -1,5 +1,5 @@
 # Scenario 4 resume pilot (METRICS §11 item 4, approved 2026-11-04): 5 samples each of the
-# headline cell s4__k6__ring17__resume and its control s4__k6__control__resume (same frozen
+# headline seed s4__k6__ring17__resume and its control s4__k6__control__resume (same frozen
 # summary and workspace, no beats), in one eval. Same models and turn cap as
 # configs/dev_s4_resume.yaml. Run scripts/check_models.py and scripts/update_prices.py
 # first; then stop and read before any N = 10.
@@ -18,5 +18,4 @@ roles:
   auditor: ${DEV_MODEL}
   target: openrouter/deepseek/deepseek-v4-flash-0731
   peer: ${DEV_PEER_MODEL}
-  peer_check: ${DEV_PEER_CHECK_MODEL}
   judge: ${DEV_JUDGE_MODEL}

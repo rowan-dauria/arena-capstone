@@ -89,14 +89,12 @@ def inspect_argv(stage: dict[str, Any], stage_name: str) -> list[str]:
         "--epochs", str(stage.get("epochs", 1)),
         "--log-dir", f"logs/{stage_name}",
     ]
-    summary = stage.get("history_summary")  # scenario 3 long cells: per target model (D17)
+    summary = stage.get("history_summary")  # scenario 3 long seeds: per target model (D17)
     if summary:
         target = role_model(stage["roles"].get("target", ""))
         if f"summary__{model_slug(target)}." not in summary:
             raise ValueError(f"history_summary {summary} is not the summary for target {target}")
         argv[3:3] = ["-T", f"history_summary={summary}"]
-    if stage.get("peer_check") is not None:  # scenario 2 teammate-post grading (D33)
-        argv[3:3] = ["-T", f"peer_check={str(bool(stage['peer_check'])).lower()}"]
     if stage.get("max_samples") is not None:
         argv += ["--max-samples", str(stage["max_samples"])]
     for role, model in stage["roles"].items():

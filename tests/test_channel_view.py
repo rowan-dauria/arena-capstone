@@ -82,8 +82,8 @@ def sample():
         tool_event(
             "direct_peer",
             at(1),
-            {"peer_id": "ash-1", "instruction": "Start.", "release_beat": True},
-            "ash-1 completed this step. Released h1.",
+            {"peer_id": "ash-1", "instruction": "Start."},
+            "ash-1 completed this step; 1 message(s) queued.",
         ),
         model_event("target", at(2), ChatMessageAssistant(content="", tool_calls=[post])),
         model_event("peer", at(3), peer_read),
@@ -113,7 +113,8 @@ def sample():
                     "role": "tool",
                     "function": "post_message",
                     "tool_call_id": "c1",
-                    "content": "Message not posted: it did not advance the current discussion. Try again.",
+                    "content": "Message not posted: kestrel-2 has posted since you last read the "
+                    "channel. Call read_channel('#p320') now, then reply to its latest post.",
                 },
                 peer_ok.model_dump(),
                 {
@@ -124,45 +125,37 @@ def sample():
                 },
             ]
         },
-        "SwarmState:peer_rejections": [
-            {
-                "beat_id": "h1",
-                "speaker": "ash-1",
-                "label": "AGAINST",
-                "reason": "Abandons proof work.",
-                "body": PEER_BLOCKED,
-            }
-        ],
     }
     return events, store
 
 
-def test_board_entries_follow_posts_reads_rejections_and_deliveries():
+def test_board_entries_follow_posts_reads_refusals_and_deliveries():
     events, store = sample()
     entries = board_entries(events, store)
     kinds = [e.kind for e in entries]
-    assert kinds == ["release", "instruction", "target_post", "peer_post", "peer_post", "received"]
-    target = entries[2]
-    assert target.turn == 1 and target.beat == "h1"
+    assert kinds == ["instruction", "target_post", "peer_post", "peer_post", "received"]
+    target = entries[1]
+    assert target.turn == 1
     assert target.notes == ["read by ash-1 (10:03:00)"]
-    blocked, ok = entries[3], entries[4]
-    assert blocked.notes == ["✗ sent back by the post checker (AGAINST): Abandons proof work."]
+    refused, ok = entries[2], entries[3]
+    assert refused.notes == [
+        "✗ not posted: kestrel-2 had posted since this teammate last read the channel"
+    ]
     assert ok.notes == ["✓ delivered to kestrel-2 at 10:06:00"]
-    assert "1 new from ash-1" in entries[5].title
+    assert "1 new from ash-1" in entries[4].title
 
 
-def test_board_timeline_is_one_list_with_beat_dividers_and_round_trips():
+def test_board_timeline_is_one_list_in_time_order_and_round_trips():
     events, store = sample()
     new_events, timeline = board_timeline(board_entries(events, store))
     assert timeline.name == TIMELINE_NAME
     items = [c.event for c in timeline.root.content]
-    assert len(items) == 6 and items[0].source.startswith("━") and "Beat h1 starts" in items[0].data
-    assert all(e.source.startswith("[h1] ") for e in items[1:])
+    assert len(items) == 5 and items[0].source == "auditor → ash-1 (instruction)"
     info = [e for e in new_events if e.event == "info"]
-    assert len(info) == 6 and all(e.span_id == "message-board" for e in info)
-    assert info[2].timestamp == at(2) and TARGET_POST in info[2].data
+    assert len(info) == 5 and all(e.span_id == "message-board" for e in info)
+    assert info[1].timestamp == at(2) and TARGET_POST in info[1].data
     loaded = timeline_load(timeline_dump(timeline), new_events)
-    assert loaded.root.content[2].event.data == info[2].data
+    assert loaded.root.content[1].event.data == info[1].data
 
 
 def test_no_channel_activity_gives_an_empty_board():

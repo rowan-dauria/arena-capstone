@@ -1,4 +1,4 @@
-# Fixed tool surface for scenario 3, identical in every cell (SCENARIO_3_SPEC §3).
+# Fixed tool surface for scenario 3, identical in every seed (SCENARIO_3_SPEC §3).
 # list_scratch, read_scratch and append_scratch are answered by code from the
 # board (emulator.board_tools.answer_board_call), never by the auditor. The rest
 # are answered by the auditor with the fixed text in the seed.

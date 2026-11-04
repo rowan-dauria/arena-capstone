@@ -1,10 +1,10 @@
-"""@task swarm_audit: wires seeds, auditor tools, approvers and scorers (SPEC 4.1).
+"""@task swarm_audit: wires seeds, auditor tools and scorers (SPEC 4.1).
 
 Built from Petri 3.1.1's public pieces, mirroring `inspect_petri.audit()`, because
 `audit()` cannot exclude auditor tools. The auditor gets send_message,
 send_tool_call_result, resume and end_conversation plus our emulator tools; it
 never gets set_system_message, create_tool/remove_tool, rollback or prefill.
-Approval chain (peer_guard, realism): see emulator/approvers.py.
+Approval: Petri's own realism filter only (when realism is on).
 """
 
 from __future__ import annotations
@@ -25,14 +25,11 @@ from inspect_petri import (
 )
 
 from swarm_emulator import repo_path
-from swarm_emulator.emulator.approvers import swarm_approval_policies
 from swarm_emulator.emulator.board_tools import answer_board_call
 from swarm_emulator.emulator.meridian_tools import answer_sandbox_call
 from swarm_emulator.emulator.peer_agents import direct_peer
-from swarm_emulator.emulator.peers import peer_message
 from swarm_emulator.emulator.sandbox_target import sandbox_target
 from swarm_emulator.emulator.tools import deliver_channel, install_condition_prompt, swarm_state
-from swarm_emulator.emulator.world_actions import advance_swarm
 from swarm_emulator.history import summary_sha
 from swarm_emulator.meridian import world
 from swarm_emulator.scoring.actions_scorer import swarm_actions
@@ -68,7 +65,7 @@ def attach_sandbox(dataset: Any) -> None:
     The block (meridian.world.SandboxConfig) names a compose file and the target's issue
     and runner. The sample gets the files the mentor's harness gave each agent (the clean
     repo, the issue, the release docs, its runner credential) and the same setup script;
-    a resume cell's block also names its start state (the agent's staged patch and notes,
+    a resume seed's block also names its start state (the agent's staged patch and notes,
     and its own builds in the service, seeded by compose_resume.yaml).
     The world must be built first (scripts/rebuild_meridian_world.py). Native proving
     seeds use Task.sandbox instead; seeds without a sandbox block need no setup.
@@ -102,31 +99,33 @@ def swarm_audit(
     realism: bool = False,
     scanners: str = "auto",
     history_summary: str | None = None,
-    peer_check: bool = True,
 ) -> Task:
-    """Run the swarm emulator over a directory of seed .md files.
+    """Run the swarm emulator over Petri seed .md files.
 
     Args:
-        seeds: Directory of seed .md files (front matter = condition).
+        seeds: A directory of seed .md files, or one seed .md file (front matter =
+            the sample's metadata, body = the auditor's instructions).
         max_turns: Auditor turns per run.
         realism: Enable Petri's realism filter on auditor messages.
         scanners: Scanner set ("team", "board", "sandbox" or "meridian"); "auto"
             picks it from the seeds. Seeds of different kinds in one run fail.
         history_summary: The frozen compaction summary for this run's target model
-            (scenario 3 `long` cells, D17), e.g.
+            (scenario 3 `long` seeds, D17), e.g.
             scenarios/scenario_3/history/summary__deepseek-v4.1-flash.md. Its path and
             hash go into every sample with a `history`. Required if any seed needs it.
-        peer_check: Scenario 2 only: grade teammates' posts with the `peer_check`
-            role before they are posted. False posts them ungraded (D33).
     """
     # Inspect runs tasks with cwd = this file's folder, and Petri treats a string
     # that isn't an existing path as literal seed text. Resolve against the repo
     # root and fail loudly rather than auditing the string "scenarios/smoke".
-    seed_dir = repo_path(seeds)
-    if not seed_dir.is_dir() or not any(seed_dir.glob("*.md")):
-        raise FileNotFoundError(f"No seed .md files in {seed_dir}")
+    seed_path = repo_path(seeds)
+    one = seed_path.suffix == ".md"
+    seed_dir = seed_path.parent if one else seed_path
+    if (not seed_path.is_file()) if one else (not seed_dir.is_dir() or not any(seed_dir.glob("*.md"))):
+        raise FileNotFoundError(f"No seed .md files at {seed_path}")
 
     dataset = seeds_dataset(str(seed_dir))
+    if one:  # Petri reads a directory; keep only this seed (sample id = file stem)
+        dataset = dataset.filter(lambda s: s.id == seed_path.stem)
 
     def same_for_all(f: Callable[[dict], Any], what: str) -> Any:
         values = {f(s.metadata or {}) for s in dataset}
@@ -153,12 +152,14 @@ def swarm_audit(
     sandbox_config = same_for_all(
         lambda md: md["sandbox"]["compose"] if md.get("sandbox") else None, "sandbox compose"
     )
+    # Teammates exist only as direct_peer agents (scenario 2). Scenario 4 keeps its
+    # target-tool answering but no longer has a swarm; scenarios 1 and 3 have no peers.
     if is_native:
-        peer_tools = [direct_peer(grade=peer_check)]
+        peer_tools = [direct_peer()]
     elif is_meridian:
-        peer_tools = [answer_sandbox_call(), advance_swarm()]
+        peer_tools = [answer_sandbox_call()]
     else:
-        peer_tools = [peer_message()]
+        peer_tools = []
     dimensions = exp1_dimensions()
     tools = auditor_tools(
         prefill=False,
@@ -181,7 +182,6 @@ def swarm_audit(
                 max_turns=max_turns,
                 tools=tools,
                 realism_filter=realism,
-                approval=swarm_approval_policies(realism),
             ),
             target=sandbox_target() if is_native else target_agent(),
         ),

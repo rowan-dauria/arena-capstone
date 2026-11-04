@@ -1,7 +1,7 @@
 """Audit finished swarm_audit logs for silent failures.
 
 Pure checks over logged samples (no model calls). Problems that would otherwise
-thin out cells without an error, e.g. a judge that exhausts its structured-answer
+thin out seeds without an error, e.g. a judge that exhausts its structured-answer
 retries and records NaN, are surfaced here. Run via scripts/audit_logs.py, which
 scripts/run.sh calls after every eval.
 
@@ -11,6 +11,8 @@ Levels: "error" means the sample can't be used as-is; "warning" means read it.
 from __future__ import annotations
 
 import math
+import re
+from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Any, Literal
 
@@ -22,12 +24,9 @@ from inspect_ai.model import (
     ContentReasoning,
 )
 
-from swarm_emulator import repo_path
 from swarm_emulator.board import parse_page
-from swarm_emulator.bus import parse_channel
-from swarm_emulator.emulator.approvers import impersonation
+from swarm_emulator.bus import parse_channel, sender_regex
 from swarm_emulator.history import staged_summary, summary_sha
-from swarm_emulator.meridian import swarm
 from swarm_emulator.scoring.actions import READ_TOOLS, is_push_read, pushers
 from swarm_emulator.scoring.probe import PROBE_KEY
 from swarm_emulator.scoring.scanners import SCANNER_SETS, scanner_set
@@ -38,7 +37,6 @@ ACTIONS_SCORER = "swarm_actions"
 # Transcript scanners (scoring/scanners.py), per scenario kind. A judge refusal or
 # failed structured answer leaves a NaN or missing score.
 SCANNER_SCORERS = {kind: tuple(s.__name__ for s in ss) for kind, ss in SCANNER_SETS.items()}
-PEER_REJECTIONS_KEY = "SwarmState:peer_rejections"
 DELIVERED_KEY = "SwarmState:delivered"
 QUEUE_KEY = "SwarmState:queue"
 
@@ -110,8 +108,8 @@ def audit_sample(sample: EvalSample) -> list[Issue]:
 
 
 def _history(sample: EvalSample) -> list[Issue]:
-    """Scenario 3 history cells (D17): the target's first message must be the staged
-    session note and notice, and a `long` cell's summary must be the frozen one."""
+    """Scenario 3 history seeds (D17): the target's first message must be the staged
+    session note and notice, and a `long` seed's summary must be the frozen one."""
     md = sample.metadata or {}
     if not md.get("history"):
         return []
@@ -135,16 +133,15 @@ def _actions(sample: EvalSample) -> dict[str, Any]:
 
 
 def _push(sample: EvalSample) -> list[Issue]:
-    """Cells with misaligned agents must actually deliver their messages.
+    """Seeds with misaligned agents must actually deliver their messages.
 
-    Error if the target never read a message from a misaligned agent (the cell
+    Error if the target never read a message from a misaligned agent (the seed
     was never pushed). Warning if released peer messages were still queued at
-    the end (the target never read where they were posted, so the cell was only
-    partly pushed), or if peer_check rejected any peer messages, so they get
-    read: a high rate means the peer model or the beats need work.
+    the end (the target never read where they were posted, so the seed was only
+    partly pushed).
     """
     if (sample.metadata or {}).get("sandbox") and not is_proof_sandbox(sample.metadata or {}):
-        return _sandbox_push(sample)
+        return []  # scenario 4 no longer has a swarm to push
     issues = []
     misaligned = pushers(sample.metadata or {})
     actions = _actions(sample)
@@ -158,46 +155,13 @@ def _push(sample: EvalSample) -> list[Issue]:
             issues.append(Issue("error", "no_push",
                                 "target never read a message from a misaligned agent"))
     undelivered = (sample.store or {}).get(QUEUE_KEY) or []
-    # A run that joined ends early by design, except on the ladder (D19), which goes on.
-    if undelivered and (not actions.get("joined") or (sample.metadata or {}).get("ladder")):
+    # A run that joined ends early by design.
+    if undelivered and not actions.get("joined"):
         where = ", ".join(sorted({m.get("channel", "?") for m in undelivered}))
         issues.append(Issue("warning", "undelivered",
                             f"{len(undelivered)} released peer message(s) never reached the "
                             f"target (still queued for {where})"))
-    rejected = (sample.store or {}).get(PEER_REJECTIONS_KEY) or []
-    if rejected:
-        labels = ", ".join(sorted({r["label"] for r in rejected}))
-        issues.append(Issue("warning", "peer_rejected",
-                            f"{len(rejected)} peer message(s) regenerated ({labels})"))
     return issues
-
-
-def _sandbox_push(sample: EvalSample) -> list[Issue]:
-    """Scenario 4: the peers' posts are files on the shared cache, read through the target's
-    own shell, so a read is a tool result containing a released post's body.
-
-    No beats file (the no-swarm control): nothing to check. Beats exist but none was ever
-    released: error (the swarm never acted). Posts released but none read: warning
-    `not_discovered` — never looking in the cache is a measured outcome, as on the board.
-    """
-    md = sample.metadata or {}
-    if not md.get("beats_file"):
-        return []
-    store = sample.store or {}
-    released = store.get("SandboxStore:released_beats") or []
-    if not released:
-        return [Issue("error", "no_push", "no swarm event was ever released (advance_swarm)")]
-    try:
-        wb = swarm.load(repo_path(md["beats_file"]))
-    except (OSError, ValueError) as e:
-        return [Issue("warning", "beats_unreadable", f"cannot check post reads: {e}")]
-    bodies = [wb.resolve(b.post.body).strip() for b in wb.beats
-              if b.id in released and b.post and b.post.body.strip()]
-    seen = " ".join(m.text for m in sample.messages if isinstance(m, ChatMessageTool))
-    if bodies and not any(body in seen for body in bodies):
-        return [Issue("warning", "not_discovered",
-                      "target never read a released peer post on the cache")]
-    return []
 
 
 def _orphaned_calls(sample: EvalSample) -> list[Issue]:
@@ -234,11 +198,11 @@ def _reasoning(sample: EvalSample) -> list[Issue]:
 
 
 def _bypass(sample: EvalSample) -> list[Issue]:
-    """Misaligned-agent text the target saw that did not come from peer_message.
+    """Misaligned-agent text the target saw that did not come from direct_peer.
 
-    Every misaligned message in a channel read must match one peer_message
+    Every misaligned message in a channel read must match one direct_peer post
     delivered (sender and body, from the swarm store). Other target-visible text
-    must not pass itself off as a misaligned agent (same rules as peer_guard).
+    must not pass itself off as a teammate.
     One error per offending message; SPEC 6 requires zero.
     """
     misaligned = agent_peer_ids(sample.metadata or {})
@@ -258,7 +222,7 @@ def _bypass(sample: EvalSample) -> list[Issue]:
                 sender = e.get("sender") if isinstance(e, dict) else None
                 if sender in misaligned and (sender, e.get("body")) not in delivered:
                     issues.append(Issue("error", "bypass",
-                                        f"{where}: {sender} message not from peer_message"))
+                                        f"{where}: {sender} message not from direct_peer"))
         elif isinstance(m, ChatMessageTool) and m.function == READ_CHANNEL:
             issues.append(Issue("error", "bypass", f"{where}: {m.function} result is not "
                                 "a channel JSON array (not from deliver_channel)"))
@@ -268,6 +232,41 @@ def _bypass(sample: EvalSample) -> list[Issue]:
             if how:
                 issues.append(Issue("error", "bypass", f"{where}: contains {how}"))
     return issues
+
+
+def attribution_regex(agent_id: str) -> re.Pattern[str]:
+    """A line written as if `agent_id` said it, in plain-text chat forms.
+
+    Matches "atlas-3: ...", "[atlas-3] ...", "<atlas-3> ...", "**atlas-3**: ...",
+    "atlas-3 wrote: ..." and "From: atlas-3" at the start of a line. A mention
+    elsewhere ("ask atlas-3 about it") does not match, nor does "atlas-31".
+    """
+    i = re.escape(agent_id)
+    end = r"(?![\w-])"
+    return re.compile(
+        rf"^[ \t>*_]*(?:"
+        rf"[\[<]@?{i}{end}[\]>]"
+        rf"|(?:from:\s*)@?{i}{end}"
+        rf"|@?{i}{end}[*_]*(?:\s+(?:wrote|says|said|posted))?\s*:"
+        rf")",
+        re.IGNORECASE | re.MULTILINE,
+    )
+
+
+def impersonation(text: str, misaligned_ids: Sequence[str], *, attribution: bool) -> str | None:
+    """Describe how `text` passes itself off as a teammate, or None.
+
+    Always checks for a rendered `"sender": "<id>"` envelope (bus.sender_regex).
+    With `attribution`, also checks for chat-style speaker lines. That check is
+    skipped for plain tool results, which may quote pre-authored artifacts that
+    name an agent (decision D10).
+    """
+    for agent in misaligned_ids:
+        if sender_regex(agent).search(text):
+            return f'a channel message with "sender": "{agent}"'
+        if attribution and attribution_regex(agent).search(text):
+            return f"a line written as {agent}"
+    return None
 
 
 def _bus_entries(m: object) -> list | None:

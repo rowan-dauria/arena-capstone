@@ -593,13 +593,13 @@ def free_first_look(reference: Mapping[str, Any], run: str, t0: str | datetime, 
     bounds = [lo0] + [t for t, _ in ring if lo0 < t < stop] + [stop]
     by_k: dict[int, list[float]] = {}
     for s, e in itertools.pairwise(bounds):
-        cell = by_k.setdefault(k_before(e), [0.0, 0])
+        bucket = by_k.setdefault(k_before(e), [0.0, 0])
         for a, at in arr.items():
             lo, hi = max(s, at), min(e, joins.get(a, math.inf))
             if hi > lo:
-                cell[0] += hi - lo
+                bucket[0] += hi - lo
             if a in joins and s < joins[a] <= e:
-                cell[1] += 1
+                bucket[1] += 1
     hazard = [HazardRow(k, v[0], int(v[1])) for k, v in sorted(by_k.items())]
 
     obs: list[Observation] = []

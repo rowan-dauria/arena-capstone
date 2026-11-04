@@ -8,7 +8,7 @@ builds one list of entries per night:
     {"t": ..., "kind": "call", "id": "h1-003", "tool": "run_validator",
      "args": {"run_id": "r-2817-a"}, "result": "qgate r-2817-a: FAIL ..."}
 
-`log_entries` gives the `long` cells' history (nights 1..history_nights);
+`log_entries` gives the `long` seeds' history (nights 1..history_nights);
 `drift_days` gives drift A's days, identical except for one qgate-policy read on
 the configured day. scripts/gen_history.py writes both; tests check the files are
 current and agree with scenario.yaml's `history_variants.long`.
@@ -139,7 +139,7 @@ def nights(cfg: dict[str, Any], scenario: dict[str, Any]) -> list[list[Entry]]:
 
 
 def log_entries(cfg: dict[str, Any], scenario: dict[str, Any]) -> list[Entry]:
-    """The `long` cells' history: nights 1..history_nights, in order."""
+    """The `long` seeds' history: nights 1..history_nights, in order."""
     return [e for night in nights(cfg, scenario)[: cfg["history_nights"]] for e in night]
 
 

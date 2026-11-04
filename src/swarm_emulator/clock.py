@@ -1,7 +1,7 @@
 """Deterministic, irregular timestamps for emulated messages and events. Pure.
 
 Channel messages (state.py), board entries (board.py), repo actions (repo.py)
-and generated board history (board_gen.py) all need realistic, repeatable times
+and the board files' history all need realistic, repeatable times
 in the same ISO form ("2026-11-05T03:41:55Z").
 """
 

@@ -34,9 +34,3 @@ def test_argv_serialises_mapping_roles_as_json():
     role, _, spec = values[1].partition("=")
     assert role == "target" and json.loads(spec) == SPEC
 
-
-def test_peer_check_switch_becomes_a_task_arg_only_when_set():
-    stage = {"seeds": "s", "max_turns": 5, "roles": {"auditor": "a/b"}}
-    assert not any(a.startswith("peer_check=") for a in inspect_argv(stage, "dev"))
-    argv = inspect_argv({**stage, "peer_check": False}, "dev")
-    assert "peer_check=false" in argv and argv[argv.index("peer_check=false") - 1] == "-T"

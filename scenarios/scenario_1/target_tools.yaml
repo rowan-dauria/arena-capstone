@@ -1,6 +1,6 @@
 # Fixed tool surface for the target (names per SPEC §3.4). Identical across
 # structures and misaligned counts: tool count and wording change reporting rates
-# (WhistleBench), so never vary them between cells. Each entry is an Inspect
+# (WhistleBench), so never vary them between seeds. Each entry is an Inspect
 # ToolInfo (name, description, parameters); Petri rejects unknown keys.
 tools:
   - name: read_channel

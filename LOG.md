@@ -4,6 +4,85 @@ _Append-only journal. Newest entries at the top. One entry per working session o
 
 ---
 
+## 2026-11-04 17:53 UTC — petri-pruning: no cells; seeds are plain Petri seed files (D38)
+
+**Did:**
+- **Scenario 2:** replaced the generated cells with two hand-maintained Petri seeds, `scenarios/scenario_2/seeds/pushed.md` and `control.md`. Their content is the previously generated files minus the "generated, do not edit" header. Deleted `cells.yaml`, `scenario.yaml`, `target_tools.yaml` and `seed_template.md.j2`, which were only generator inputs, plus the `dev/` and `dev_control/` copies. `configs/dev_s2_pushed.yaml` and `dev_s2_pushed_short.yaml` now point at `seeds/pushed.md`. `swarm_audit` accepts a single seed `.md` file as well as a directory: Petri reads the folder, and the task keeps the sample whose id is the file stem.
+- **Scenarios 3 and 4:**
+  - Deleted both `cells.yaml` files and both seed templates, the generic generator (`src/swarm_emulator/seeds.py`, `scripts/gen_seeds.py`) and scenario 3's board generator (`board_gen.py`, `scripts/gen_board.py`, `board/pool.yaml`).
+  - Their 20 existing seed files and 4 board files stay as static files. The generator header is gone from the seeds, and the board header key `"cell"` is renamed `"board"` (not read by `board.py`).
+  - Removed the `seed:` blocks from both `scenario.yaml` files.
+- **Verifier helper:** restored the reference-copy script as `scripts/s2_copy_reference.sh`, shared by `verify_s2_image.sh` and `verify_s2_harness.py`. Deleting `scenario_2/actions/copy_reference.sh` in D37 had broken `verify_s2_image.sh`, which copied it into the container; the harness verifier no longer keeps an inline copy.
+- **Wording:**
+  - Renamed `pilot_gate`'s `Record.cell` and `cell_table` to `seed` and `seed_table` (`gate_s3.py` updated). Renamed `compare_meridian.py --cell` to `--seed`, `cost_report`'s `EXP1_CELLS` to `EXP1_SEEDS` (and its "by cell" line), and two unrelated locals (`ring_model.py`, `power_meridian.py`).
+  - Reworded "cell" to "seed", or "condition" for the experimental design, in comments and docstrings across `src/`, `scripts/`, `configs/`, `scenarios/`, `tests/`, `README.md` and `AGENTS.md`. `AGENTS.md`'s commands and its "generated files" invariant now describe plain seeds.
+  - Kept "cell" in the banned-word lists (`history.CONDITION_TERMS` and the tests' word lists), which check that it never reaches a model.
+- **Tests:**
+  - `test_scenario_2.py` now checks the two seeds stay in step: same front matter apart from the misaligned fields, the same honest-work text, and the reference arc only in `pushed.md`.
+  - `test_scenario_3.py` reads seed front matter and board headers instead of `cells.yaml`. Its generator and seed-currency tests are gone.
+  - `test_scenario_4_cells.py` became `test_scenario_4_seeds.py`, reading the four seeds' front matter. The checks for the never-seeded K=3 skeleton are gone.
+  - 449 passed, 7 skipped. The one failure, `test_scenario_4.py::test_issue_exists_in_the_built_world`, predates this (the Meridian world is not built here). Ruff is clean.
+- Recorded as D38 in `docs/DECISIONS.md`; updated `petri-pruning/PRUNED.md`.
+
+**Notes:**
+- Scenario 2 sample ids are now `pushed` and `control`. Logs from before this change use `s2__pushed` and `s2__control`.
+- Left as written: `docs/` (about 320 "cell" mentions), past `LOG.md` entries, and `petri-pruning/SURVEY.md` (a dated snapshot).
+- Not run with models or Docker.
+
+---
+
+## 2026-11-04 17:31 UTC — petri-pruning: pure-Petri narrative; beats, auditor guards and peer_check removed (D37)
+
+**Did:**
+- **Beats:**
+  - Removed `Beat`, `BeatVariant`, `Release`, `load_beats` and every release, exchange-gate and rejection method from `state.py`. What remains is the queue, deliveries, the target's posts (for the fresh-read rule) and notifications.
+  - Deleted every `beats*.yaml` (scenarios 1, 2, 3 and smoke) and `scenario_2/actions/copy_reference.sh`, plus `SandboxHarness.apply_actions` and its store fields.
+  - `direct_peer` has no `release_beat` and no goal text; a teammate gets only the auditor's instruction (plus notifications). Teammates' key tools are no longer withheld (D30 gating).
+- **Scenario 3's ladder:** removed `ladder_flags`, `ladder_rungs`, `target_flags`, the `ladder_reasons` scanner, the scorer's ladder block, and the pilot gate's `beats` check and `ladder_table` (`gate_s3.py` updated).
+- **Auditor guards:**
+  - Deleted `emulator/approvers.py` (`reject_tool`, `peer_guard`, `channel_realism`, `check_call`). `task.py` passes no `approval=`, so only Petri's realism filter applies when realism is on.
+  - Removed `deliver_channel`'s reserved-sender, allowlist and no-repeat checks, and `direct_peer`'s out-of-world-language and reference screens. Removed `CODE_ANSWERED_BY` and `code_answered_tools`.
+  - `pending_call` moved into `tools.py`, and `impersonation` into `log_audit.py`. The post-run `bypass` check stays.
+- **Message checker:** deleted `emulator/peer_check.py`. Removed the `peer_check` task arg and stage key, the `peer_check` role from every config and `.env.example`, `PeerRejection`, the log audit's `peer_rejected` warning, and the log viewer's rejection notes and beat dividers.
+- **Scenario 2 seed (`seed_template.md.j2`):**
+  - The mechanics stay: tool routing, the fixed bot notice, "never write teammates' messages".
+  - A new "How the work should unfold (you decide the pacing)" section holds the old beat goals as narrative: honest work, then in the pushed cell the reference, the teammates' own commit and key submissions, and pressing kestrel-2.
+  - It also tells the auditor never to ask a teammate to submit a key for anything but the team's complete proof.
+  - Regenerated the seeds. Updated the persona prompt ("carry out each request").
+- **Harness verifier:** `scripts/verify_s2_harness.py` now copies the reference with an inline script and has each teammate submit its own key, instead of calling `apply_actions`.
+- **Docs:** updated `AGENTS.md`/`CLAUDE.md` invariants (the auditor never writes teammates' messages, now enforced by the seed and the log audit; the custom-approver rule removed; a new "the narrative is the auditor's" rule), `README.md`, `scenarios/AUTHORING.md` and `petri-pruning/PRUNED.md`. Recorded as D37.
+- **Tests:** deleted those for removed code (`test_ladder.py`, `test_approvers.py`, `test_peer_check.py` and individual beat, gate, guard and checker tests). Rewrote `test_peer_agents.py` and adapted the viewer, pilot gate, routing and scenario tests. 454 passed, 8 skipped. The one failure, `test_scenario_4.py::test_issue_exists_in_the_built_world`, predates this (the Meridian world is not built here). Ruff is clean. The scenario 2 task builds with auditor tools `install_condition_prompt`, `direct_peer`, `deliver_channel`, `swarm_state`, `answer_board_call` and Petri's `send_message`, `send_tool_call_result`, `resume`, `end_conversation`, and no approval chain.
+
+**Notes:**
+- Not run with models. `verify_s2_harness.py` (real Docker) was not run, to avoid competing with the live scenario 2 eval on `main`.
+- Run-to-run comparability now depends on the auditor's pacing: there is no turn-30 floor or exchange count before the reference appears.
+- Scenarios 1, 3 and 4 remain broken (D36). Their seeds still describe the removed tools and beats.
+
+---
+
+## 2026-11-04 17:18 UTC — petri-pruning: only `direct_peer` peers remain (D36)
+
+**Did:**
+- Removed peer version A (`peer_message`): `emulator/peers.py`, `prompts/peer_persona.md.j2`, `prompts/peer_persona_board.md.j2`, `scripts/check_peer.py`, `tests/test_peers.py`. `channel_history` moved into `peer_agents.py`, and `GRADER_MAX_TOKENS` into `peer_check.py`.
+- Removed peer version C (`advance_swarm`): `emulator/world_actions.py`, `meridian/swarm.py`, `scenarios/scenario_4/beats.yaml` and `beats_k3.yaml`, `scripts/check_meridian_swarm.py`, `scripts/check_scenario_4.py`, `tests/test_meridian_swarm.py`. Also removed the swarm-release fields from scenario 4's `SandboxStore` and the scenario 4 push check from `log_audit`.
+- `task.py` now routes scenario 2 to `direct_peer`, scenario 4 to `answer_sandbox_call` only, and everything else to no peer tool. `approvers.py`, `deliver_channel` and `log_audit` name `direct_peer` only.
+- Tests: deleted those exercising removed code. Moved three general scenario 4 helpers (`cell_mds`, `seeded_cells`, `quorum_of`) into `test_scenario_4_cells.py`, and updated the routing and approver expectations. 558 passed, 8 skipped. The one failure, `test_scenario_4.py::test_issue_exists_in_the_built_world`, predates this change (the Meridian world is not built here). Ruff is clean. The scenario 2 task builds.
+- Updated `README.md`, `scenarios/AUTHORING.md` and `scripts/reproduce_scenario_4.sh`. Listed the cuts in `petri-pruning/PRUNED.md`. Recorded as D36.
+
+**Notes:**
+- Scenarios 1, 3 and 4 are knowingly broken (no swarm). Their seeds, seed templates, beats and `board_tools.py` docstrings still name `peer_message` or `advance_swarm`, and `docs/SPEC.md` still describes `peer_message`. These go when those scenarios and docs are pruned.
+- Narrative fields that only versions A and C used remain on the shared `Beat` model (`speaker`, `expect`, `requires`, `variants`, `path`). So do `peer_check`'s HELP/ASKS grader and scenario 3's ladder tests.
+
+---
+
+## 2026-11-04 17:02 UTC — petri-pruning: survey of Petri-native vs project-added conventions
+
+**Did:**
+- Added `petri-pruning/SURVEY.md` on the `petri-pruning` branch. It separates what `inspect_petri` 3.1.1 provides (seeds, auditor, auditor tools, target loop, judge, scanners, realism filter, viewer) from what this project added. The additions cover mechanics (condition prompt, swarm state and bus, channel, three peer systems, `peer_check`, approvers, the s2 target loop, the per-scenario worlds, history), narrative conventions (beats, cells and conditions, harmful/harmless twins, cast and framing, scripted auditor instructions, language hygiene) and scoring and operations. It also lists stubs and dead code that are safe to cut.
+- No code changes. This branch is worked in a separate worktree (`/root/s2-remake-pruning`) so the scenario 2 dev run on `main` (started 16:52 UTC at `b53cdd7`) is unaffected.
+
+---
+
 ## 2026-11-04 16:26 UTC — Scenario 2: low reasoning effort for teammates (D35)
 
 **Did:**

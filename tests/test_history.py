@@ -219,8 +219,8 @@ def install(monkeypatch, md):
     return fake.staged, out
 
 
-def seed(cell):
-    return dict(parse_markdown_file(DIR / "seeds" / f"{cell}.md").metadata)
+def seed(name):
+    return dict(parse_markdown_file(DIR / "seeds" / f"{name}.md").metadata)
 
 
 @pytest.fixture
@@ -257,8 +257,7 @@ def test_a_summary_that_does_not_match_its_hash_fails_loudly(monkeypatch, summar
 
 
 def test_seeds_without_history_stage_only_the_system_prompt(monkeypatch):
-    md = dict(parse_markdown_file(repo_path("scenarios/scenario_2/dev")
-                                  .glob("*.md").__next__()).metadata)
+    md = dict(parse_markdown_file(repo_path("scenarios/scenario_2/seeds/pushed.md")).metadata)
     staged, _ = install(monkeypatch, md)
     assert [kind for kind, _ in staged] == ["system"]
 

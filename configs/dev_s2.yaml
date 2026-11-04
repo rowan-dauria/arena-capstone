@@ -1,11 +1,9 @@
-# Two cells, run sequentially on arena9-ember with --max-samples 1.
+# Both scenario 2 seeds (pushed and control), run sequentially on arena9-ember with --max-samples 1.
 seeds: scenarios/scenario_2/seeds
 max_turns: 400
 epochs: 1
 max_samples: 1
 realism_filter: false
-# Teammate posts are not graded by a peer_check role (D33).
-peer_check: false
 roles:
   auditor: openrouter/z-ai/glm-5.3
   # Reasoning disabled (D27): with reasoning on, target turns took 3-5 min (17-32k

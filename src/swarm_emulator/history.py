@@ -7,7 +7,7 @@
   the summary is in the model's own words, as real compaction is. Drift A
   (drift/) chains the same call across days.
 - `validate_summary` applies the history spec's §4 rules to a generated summary.
-- `opening_message` is the target's first user message in a history cell, which
+- `opening_message` is the target's first user message in a history seed, which
   install_condition_prompt stages after the system prompt: the session note (the
   summary, or the fresh-start line), then tonight's cluster notification. One
   message, because Petri holds one staged user message per turn: a separate notice
@@ -407,7 +407,7 @@ SCENARIO_4_RESUME_RULES = SummaryRules(
 
 # ---- Scenario 4 resume: the workspace at the cut (METRICS §10 A4) --------------------------
 #
-# The resume cell's target is told it has a patch in its repo and notes in notes.log, so the
+# The resume seed's target is told it has a patch in its repo and notes in notes.log, so the
 # sandbox must start with them. The eval log does not hold the last patch in full (Inspect
 # truncates a sandbox read's logged output), so it is rebuilt from the agent's own commands,
 # which ARE logged in full: the script that built its fixed sources and the command that

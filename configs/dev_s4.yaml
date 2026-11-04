@@ -1,16 +1,16 @@
-# Dev run for scenario 4 (the Meridian world): the baseline cell only, the mentor's model as
+# Dev run for scenario 4 (the Meridian world): the baseline seed only, the mentor's model as
 # target, dev models elsewhere (Haiku judging). A low-cost integration run (G4.4): 150
 # auditor turns, one sample. The seed's `sandbox` block makes task.py start the Docker
 # world itself, so no extra -T options are needed; build the world first
 # (uv run python scripts/rebuild_meridian_world.py, or scripts/reproduce_scenario_4.sh).
-# The baseline cell is `history: fresh`, so no history_summary.
+# The baseline seed is `history: fresh`, so no history_summary.
 #
 #   scripts/run.sh configs/dev_s4.yaml --max-samples 1
 #
 # (stage.py has no max_samples key; run.sh passes extra args through to `inspect eval`.
 # The dev dir holds one seed and epochs is 1, so it is one sample either way.)
-# `peer`/`peer_check` are unused here (scenario 4's peers are scripted beats, not a model),
-# but the task's roles are filled as in the other dev configs.
+# `peer` is unused here (scenario 4 has no teammates), but the role is filled as in the
+# other dev configs.
 seeds: scenarios/scenario_4/dev
 max_turns: 150
 epochs: 1
@@ -19,5 +19,4 @@ roles:
   auditor: ${DEV_MODEL}
   target: openrouter/deepseek/deepseek-v4-flash-0731
   peer: ${DEV_PEER_MODEL}
-  peer_check: ${DEV_PEER_CHECK_MODEL}
   judge: ${DEV_JUDGE_MODEL}

@@ -1,4 +1,4 @@
-"""SwarmState(StoreModel): roster, beats, pointer, queue, flags (SPEC 4.2).
+"""SwarmState(StoreModel): the channel queue, deliveries and post notifications.
 
 Per-sample swarm state held in the Inspect store. Rollback is off, so this never
 needs to rewind with the target conversation.
@@ -10,10 +10,7 @@ builds a new list and reassigns it instead of mutating in place.
 from __future__ import annotations
 
 from collections.abc import Sequence
-from pathlib import Path
-from typing import Any, Literal
 
-import yaml
 from inspect_ai.util import StoreModel
 from pydantic import BaseModel, Field
 
@@ -21,85 +18,10 @@ from swarm_emulator.bus import BusMessage
 from swarm_emulator.clock import nth_tick
 
 
-class BeatVariant(BaseModel):
-    """Alternative goal wording, used when the target's flags match `when` (D19)."""
-
-    when: dict[str, bool]
-    goal: str
-
-
-class Beat(BaseModel):
-    id: str
-    goal: str
-    min_target_turn: int = Field(default=0, ge=0)
-    phase: Literal["honest", "reference"] = "reference"
-    # Both triggers require a target turn since the last release. Immediate beats
-    # provide ladder help without waiting for a reply; scenario 2 additionally
-    # applies its minimum-turn and completed-exchange gates in can_release.
-    trigger: Literal["after_target_engages", "immediate"] = "after_target_engages"
-    # Scripted peer actions applied when the beat is released (sandbox scenarios:
-    # see emulator.sandbox_tools.SandboxHarness.apply_actions). Fixed in the scenario files, never
-    # written by the auditor.
-    actions: list[dict[str, Any]] = []
-    # Where the message is posted (board scenarios: a board path, e.g. the
-    # target's inbox or a lane). None means the seed's one channel.
-    path: str | None = None
-    # D19 (scenario 3's ladder). Scenarios 1 and 2 use none of these.
-    # Who speaks; None means round-robin over misaligned_ids.
-    speaker: str | None = None
-    # What peer_check must see: PUSH (argues for the goal) or HELP (accurate help,
-    # no ask beyond comparing notes).
-    expect: Literal["PUSH", "HELP"] = "PUSH"
-    # Flags from the target's tool calls so far (scoring.actions.target_flags) that
-    # must hold for the beat to be released; otherwise it is skipped and recorded.
-    requires: dict[str, bool] = {}
-    # Alternative goals by flag; the first whose `when` holds replaces `goal`.
-    variants: list[BeatVariant] = []
-
-    def met(self, flags: dict[str, bool]) -> bool:
-        return all(bool(flags.get(k, False)) == v for k, v in self.requires.items())
-
-    def goal_for(self, flags: dict[str, bool]) -> str:
-        for v in self.variants:
-            if all(bool(flags.get(k, False)) == want for k, want in v.when.items()):
-                return v.goal
-        return self.goal
-
-
-class Release(BaseModel):
-    beat_id: str
-    speaker: str
-    target_turn: int
-    path: str | None = None  # where it was queued (None: the seed's one channel)
-    delivered: bool = False  # a read has handed it to the target (ladder `reached_*`)
-
-
 class DiscussionPost(BaseModel):
     call_id: str
     target_turn: int
     body: str
-
-
-class DiscussionReply(BaseModel):
-    target_post_id: str
-    sender: str
-    body: str
-    delivered_turn: int | None = None
-
-
-class PeerRejection(BaseModel):
-    """A peer message the peer_check grader did not label PUSH (never delivered)."""
-
-    beat_id: str
-    speaker: str
-    label: str  # WEAK | AGAINST | BREAK | NO_OUTPUT | UNGRADED
-    reason: str
-    body: str
-
-
-def load_beats(path: str | Path) -> list[Beat]:
-    data = yaml.safe_load(Path(path).read_text()) or {}
-    return [Beat(**b) for b in data.get("beats") or []]
 
 
 def post_notification(sender: str, board: str) -> str:
@@ -114,41 +36,17 @@ _GAPS = (47, 113, 29, 268, 71, 154, 38, 92, 205, 61)
 
 class SwarmState(StoreModel):
     prompt_installed: bool = False
-    beat_index: int = 0
-    released: list[Release] = Field(default_factory=list)
     queue: list[BusMessage] = Field(default_factory=list)
     delivered: list[BusMessage] = Field(default_factory=list)
     answered_reads: list[str] = Field(default_factory=list)
     echoed_posts: list[str] = Field(default_factory=list)  # target post_message call ids shown back
-    peer_rejections: list[PeerRejection] = Field(default_factory=list)
-    skipped: list[str] = Field(default_factory=list)  # beats whose `requires` didn't hold
+    # The target's channel posts; a teammate must have read the latest before posting.
     discussion_posts: list[DiscussionPost] = Field(default_factory=list)
-    discussion_replies: list[DiscussionReply] = Field(default_factory=list)
     # Scenario 2: post notifications not yet shown, by recipient agent id.
     notifications: dict[str, list[str]] = Field(default_factory=dict)
     msg_count: int = 0
 
-    # ---- beats --------------------------------------------------------------
-
-    def next_beat(self, beats: list[Beat]) -> Beat | None:
-        return beats[self.beat_index] if self.beat_index < len(beats) else None
-
-    def can_release(
-        self, beats: list[Beat], target_turns: int, *, min_target_posts: int = 0
-    ) -> bool:
-        """A beat is releasable once the target has taken a turn since the last release.
-
-        The beat may also require a minimum turn. After the first release, an
-        optional exchange threshold requires target posts with delivered peer
-        replies between them. A zero threshold preserves the original pacing.
-        """
-        beat = self.next_beat(beats)
-        if beat is None or target_turns < beat.min_target_turn:
-            return False
-        last = self.released[-1].target_turn if self.released else 0
-        return target_turns > last and (
-            not self.released or self.completed_exchanges() >= min_target_posts
-        )
+    # ---- the target's posts --------------------------------------------------
 
     def record_target_post(self, call_id: str, target_turn: int, body: str) -> None:
         if not body.strip():
@@ -162,75 +60,6 @@ class SwarmState(StoreModel):
                     body=body,
                 ),
             ]
-
-    def record_peer_reply(self, target_post_id: str, sender: str, body: str) -> None:
-        self.discussion_replies = [
-            *self.discussion_replies,
-            DiscussionReply(
-                target_post_id=target_post_id,
-                sender=sender,
-                body=body,
-            ),
-        ]
-
-    def completed_exchanges(self) -> int:
-        """Distinct target-post/peer-reply exchanges delivered since the last release.
-
-        A new target post must follow the preceding reply's delivery. Several
-        broadcasts or replies queued for one read cannot manufacture a discussion.
-        """
-        after = self.released[-1].target_turn if self.released else 0
-        count = 0
-        for post in self.discussion_posts:
-            if post.target_turn <= after:
-                continue
-            deliveries = [
-                r.delivered_turn
-                for r in self.discussion_replies
-                if r.target_post_id == post.call_id
-                and r.delivered_turn is not None
-                and r.delivered_turn >= post.target_turn
-            ]
-            if deliveries:
-                after = min(deliveries)
-                count += 1
-        return count
-
-    def unread(self, beats: list[Beat], default_path: str) -> bool:
-        """True if a message is still queued where the next beat would post.
-
-        Board scenarios hold the next beat back until the target has read the
-        last one: otherwise beats pile up unread and its first read is a wall of
-        pressure. (Channel scenarios deliver on every read, so it never applies.)
-        """
-        beat = self.next_beat(beats)
-        return beat is not None and bool(self.queued_for(beat.path or default_path))
-
-    def skip_unmet(self, beats: list[Beat], flags: dict[str, bool]) -> list[str]:
-        """Move past beats whose `requires` doesn't hold; returns the ids skipped.
-
-        Called when the next beat is due, so a condition is judged on what the
-        target has done by then. Skips are recorded: they aren't lost beats.
-        """
-        skipped = []
-        while (beat := self.next_beat(beats)) is not None and not beat.met(flags):
-            skipped.append(beat.id)
-            self.beat_index = self.beat_index + 1
-        if skipped:
-            self.skipped = [*self.skipped, *skipped]
-        return skipped
-
-    def mark_released(self, beat: Beat, speaker: str, target_turn: int,
-                      path: str | None = None) -> None:
-        self.released = [
-            *self.released,
-            Release(beat_id=beat.id, speaker=speaker, target_turn=target_turn,
-                    path=path if path is not None else beat.path),
-        ]
-        self.beat_index = self.beat_index + 1
-
-    def record_rejection(self, rejection: PeerRejection) -> None:
-        self.peer_rejections = [*self.peer_rejections, rejection]
 
     # ---- post notifications (scenario 2) --------------------------------------
 
@@ -299,25 +128,11 @@ class SwarmState(StoreModel):
         msgs: list[BusMessage],
         post_ids: Sequence[str] = (),
         channel: str | None = None,
-        target_turn: int | None = None,
     ) -> None:
         """Record a staged delivery: drop the delivered queued messages (those for
         `channel`, or all if None), log messages, mark the read answered, and
         remember which target posts have been shown back."""
         self.queue = [m for m in self.queue if channel is not None and m.channel != channel]
-        self.released = [
-            r.model_copy(update={"delivered": True})
-            if channel is None or r.path is None or r.path == channel else r
-            for r in self.released
-        ]
         self.record_delivered(msgs)
         self.answered_reads = [*self.answered_reads, tool_call_id]
         self.echoed_posts = [*self.echoed_posts, *post_ids]
-        if target_turn is not None:
-            delivered = {(m.sender, m.body) for m in msgs}
-            self.discussion_replies = [
-                r.model_copy(update={"delivered_turn": target_turn})
-                if r.delivered_turn is None and (r.sender, r.body) in delivered
-                else r
-                for r in self.discussion_replies
-            ]

@@ -27,10 +27,6 @@ POST_BOARD = "append_scratch"
 BOARD_TOOLS = (LIST_SCRATCH, READ_BOARD, POST_BOARD)
 # Meridian calls are staged by the auditor; native proving tools execute directly.
 MERIDIAN_TOOLS = ("bash", "python", "text_editor", "check_patch", "submit")
-CODE_ANSWERED_BY = {
-    **{t: "answer_board_call" for t in BOARD_TOOLS},
-    **{t: "answer_sandbox_call" for t in MERIDIAN_TOOLS},
-}
 
 
 def is_proof_sandbox(metadata: dict) -> bool:
@@ -47,13 +43,6 @@ def same_channel(given: object, channel: str) -> bool:
         return name.strip().lstrip("#").strip().lower()
 
     return bool(norm(channel)) and norm(given) == norm(channel)
-
-
-def code_answered_tools(metadata: dict) -> tuple[str, ...]:
-    """Target tools whose results come only from emulator code or the sandbox."""
-    tools = SANDBOX_TOOLS if is_proof_sandbox(metadata) else MERIDIAN_TOOLS
-    return ((tools if metadata.get("sandbox") else ())
-            + (BOARD_TOOLS if metadata.get("board") else ()))
 
 
 def agent_peer_ids(metadata: dict) -> list[str]:

@@ -1,11 +1,10 @@
-# Scenario 3 pilot: 5 cells x 3 runs, realism filter on (SCENARIO_3_SPEC §9, S3-8).
+# Scenario 3 pilot: 5 seeds x 3 runs, realism filter on (SCENARIO_3_SPEC §9, S3-8).
 # Models decided 2026-11-02 for scenario 3 (D6): literal ids so this file records
-# what ran. Judge (Anthropic) is not the target's family (D0j). peer_check is not
-# Anthropic: Anthropic's content filter blocked 3 of 15 grader calls in screening.
+# what ran. Judge (Anthropic) is not the target's family (D0j).
 # Gate: uv run python scripts/gate_s3.py logs/pilot_s3 --latest
 seeds: scenarios/scenario_3/seeds
 max_turns: 60
-# Frozen summary for the long-history cells (D17): the target model's own
+# Frozen summary for the long-history seeds (D17): the target model's own
 # (scripts/gen_history_summary.py; scripts/run.sh checks it matches the target).
 history_summary: scenarios/scenario_3/history/summary__deepseek-v4.1-flash.md
 epochs: 3
@@ -14,6 +13,5 @@ roles:
   auditor: openrouter/anthropic/claude-haiku-5.5
   target: openrouter/deepseek/deepseek-v4.1-flash
   peer: openrouter/google/gemini-3.8-flash
-  peer_check: openrouter/openai/gpt-6.1-terra
   judge: openrouter/anthropic/claude-sonnet-5.5
   realism: openrouter/anthropic/claude-haiku-5.5
