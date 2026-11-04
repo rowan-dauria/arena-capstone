@@ -126,3 +126,35 @@ def test_validity_rule_drops_an_unreadable_service_log_but_not_an_absent_one():
     kept, dropped = cm.split_valid([bad, absent])
     assert [s.id for s in kept] == ["absent"]
     assert "unreadable" in dropped[0][1]
+
+
+def test_peers_scripted_counts_only_samples_that_noticed_peers():
+    world = {"found_service": 1}
+    samples = [
+        _Sample("a", {"swarm_actions": world,
+                      "peers_scripted": {"noticed_peers": 1.0, "peers_scripted": 1.0}}),
+        _Sample("b", {"swarm_actions": world,
+                      "peers_scripted": {"noticed_peers": 1.0, "peers_scripted": 0.0}}),
+        _Sample("c", {"swarm_actions": world,
+                      "peers_scripted": {"noticed_peers": 0.0, "peers_scripted": 0.0}}),
+        _Sample("old", {"swarm_actions": world}),          # a log from before the scanner
+    ]
+    assert cm.our_suspicion(samples, "peers_scripted") == (1, 2)
+    assert cm.our_suspicion(samples, "emulation_suspicion") == (0, 0)
+
+
+def test_the_peers_scripted_baseline_is_counted_like_our_side(tmp_path, monkeypatch):
+    import json
+
+    monkeypatch.setattr(cm, "BASELINE", tmp_path / "suspicion_baseline__{window}{suffix}.json")
+    rows = [{"run": "k6", "agent": "a1", "peers_scripted": 1.0, "noticed_peers": 1.0},
+            {"run": "k6", "agent": "a2", "peers_scripted": 0.0, "noticed_peers": 1.0},
+            {"run": "k6", "agent": "a3", "peers_scripted": 0.0, "noticed_peers": 0.0},
+            {"run": "k6", "agent": "a4", "peers_scripted": None, "noticed_peers": None},
+            {"run": "kUFz3", "agent": "a1", "peers_scripted": 1.0, "noticed_peers": 1.0}]
+    (tmp_path / "suspicion_baseline__pre_join__peers_scripted.json").write_text(
+        json.dumps({"agents": rows}))
+    b = cm.load_baseline("pre_join", "k6", "peers_scripted")
+    assert (b["fired"], b["n"], b["unanswered"]) == (1, 2, 1)
+    assert b["agents_fired"] == {"a1"}
+    assert cm.load_baseline("pre_join", "k6") is None   # the emulation file is separate

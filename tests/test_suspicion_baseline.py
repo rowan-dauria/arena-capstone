@@ -72,3 +72,10 @@ def test_the_question_is_the_scanners_with_scenario_4s_context():
     q = sb.judge_question()
     assert q.startswith("The assistant (the target) is one autonomous software-engineering")
     assert q.endswith(EMULATION_SUSPICION_Q.split("{context}")[1])
+
+
+def test_each_question_has_its_own_text_and_file():
+    assert sb.judge_question("peers_scripted") != sb.judge_question()
+    assert sb.out_path("pre_join", "emulation_suspicion").name == "suspicion_baseline__pre_join.json"
+    assert sb.out_path("pre_join", "peers_scripted").name == (
+        "suspicion_baseline__pre_join__peers_scripted.json")

@@ -3,6 +3,7 @@
     uv run python scripts/suspicion_baseline.py                  # dry run: windows + cost, free
     uv run python scripts/suspicion_baseline.py --run            # ask the judge (paid)
     uv run python scripts/suspicion_baseline.py --window pre_join --run
+    uv run python scripts/suspicion_baseline.py --question peers_scripted --window pre_join --run
 
 The exclusion rule drops any of OUR samples where `emulation_suspicion` fires. Real agents
 also called the swarm "planted" (realism sweep: 14 of 20 transcripts), so a rule applied to
@@ -21,8 +22,11 @@ longer than anything we run):
   first approve request (agents that never approved are left out). Matched to the resume
   cell, whose target starts just before agent-07's first approval.
 
-Writes scenarios/scenario_4/suspicion_baseline__<window>.json (generated; do not edit) and
-prints the rate with a Wilson interval. No caching (the default).
+Questions: `emulation_suspicion` (A3; the default) and `peers_scripted` (METRICS §11 item 7:
+did it doubt the other agents were real; counted among windows where it noticed them).
+
+Writes scenarios/scenario_4/suspicion_baseline__<window>[__peers_scripted].json (generated;
+do not edit) and prints the rate with a Wilson interval. No caching (the default).
 """
 
 from __future__ import annotations
@@ -39,20 +43,29 @@ from dotenv import load_dotenv
 from inspect_ai.model import ChatMessage, ChatMessageAssistant, get_model
 
 sys.path.insert(0, str(Path(__file__).parent))
-from compare_meridian import wilson
+from compare_meridian import BASELINE, SUSPICION, wilson
 from meridian_reference import DATA, K6_EVAL, KU_EVAL
 
 from swarm_emulator import repo_path
 from swarm_emulator.scoring.scanners import (
     EMULATION_SUSPICION_Q,
+    PEERS_SCRIPTED_Q,
     EmulationSuspicionAnswer,
+    PeersScriptedAnswer,
     emulation_suspicion_value,
+    peers_scripted_value,
 )
 
 EVALS = {"k6": K6_EVAL, "kUFz3": KU_EVAL}
 SCENARIO = repo_path("scenarios/scenario_4/scenario.yaml")
 PRICES = repo_path("configs/prices.yaml")
-OUT = repo_path("scenarios/scenario_4")
+# question -> (template, answer schema, projection); which value fires, which gates the
+# denominator and the file suffix are compare_meridian.SUSPICION, so both sides agree.
+QUESTIONS = {
+    "emulation_suspicion": (EMULATION_SUSPICION_Q, EmulationSuspicionAnswer,
+                            emulation_suspicion_value),
+    "peers_scripted": (PEERS_SCRIPTED_Q, PeersScriptedAnswer, peers_scripted_value),
+}
 DEFAULT_TURNS = 55
 OUTPUT_TOKENS = 300   # a boolean and a short quote
 
@@ -86,15 +99,19 @@ def window(messages: list[ChatMessage], kind: str, turns: int) -> list[ChatMessa
     raise ValueError(kind)
 
 
-def judge_question() -> str:
+def judge_question(question: str = "emulation_suspicion") -> str:
     """The scanner's question exactly as our samples get it (scenario 4's context)."""
     context = yaml.safe_load(SCENARIO.read_text())["scanner_context"]
-    return EMULATION_SUSPICION_Q.format(context=context)
+    return QUESTIONS[question][0].format(context=context)
+
+
+def out_path(window: str, question: str) -> Path:
+    return Path(str(BASELINE).format(window=window, suffix=SUSPICION[question][2]))
 
 
 # ---- the run ----------------------------------------------------------------------
 
-async def prompt_for(msgs: list[ChatMessage]) -> str:
+async def prompt_for(msgs: list[ChatMessage], question: str = "emulation_suspicion") -> str:
     from inspect_scout import (
         AnswerStructured,
         MessagesPreprocessor,
@@ -103,8 +120,8 @@ async def prompt_for(msgs: list[ChatMessage]) -> str:
     )
 
     as_str, _ = message_numbering(MessagesPreprocessor(exclude_system=False))
-    return scanner_prompt(messages=await as_str(msgs), question=judge_question(),
-                          answer=AnswerStructured(EmulationSuspicionAnswer))
+    return scanner_prompt(messages=await as_str(msgs), question=judge_question(question),
+                          answer=AnswerStructured(QUESTIONS[question][1]))
 
 
 def price(model: str) -> tuple[float, float] | None:
@@ -116,19 +133,22 @@ async def main_async(args) -> int:
     from inspect_ai.log import read_eval_log_samples
     from inspect_scout import AnswerStructured, RefusalError, generate_answer
 
+    _, schema, project = QUESTIONS[args.question]
+    fired_key, eligible_key, _ = SUSPICION[args.question]
     rows = []
     for run, ev in EVALS.items():
         for s in read_eval_log_samples(str(DATA / ev), all_samples_required=False):
             w = window(list(s.messages), args.window, args.turns)
             if w is not None:
-                rows.append({"run": run, "agent": str(s.id), "prompt": await prompt_for(w),
+                rows.append({"run": run, "agent": str(s.id),
+                             "prompt": await prompt_for(w, args.question),
                              "assistant_turns": sum(isinstance(m, ChatMessageAssistant)
                                                     for m in w)})
     tokens = sum(len(r["prompt"]) / 4 for r in rows)
     model = args.model or os.environ.get("DEV_JUDGE_MODEL", "")
     p = price(model)
     cost = (tokens * p[0] + len(rows) * OUTPUT_TOKENS * p[1]) / 1e6 if p else None
-    print(f"window {args.window}, {args.turns} turns: {len(rows)} transcripts "
+    print(f"{args.question}, window {args.window}, {args.turns} turns: {len(rows)} transcripts "
           f"({sum(r['run'] == 'k6' for r in rows)} k6, {sum(r['run'] == 'kUFz3' for r in rows)} "
           f"09-17), ~{tokens / 1e6:.2f}M input tokens (chars/4), max "
           f"{max(len(r['prompt']) for r in rows) / 4 / 1e3:.0f}k per call")
@@ -150,30 +170,37 @@ async def main_async(args) -> int:
         refused = None
         async with sem:
             try:
-                res = await generate_answer(
-                    r["prompt"], answer=AnswerStructured(EmulationSuspicionAnswer), model=judge)
+                res = await generate_answer(r["prompt"], answer=AnswerStructured(schema),
+                                            model=judge)
             except RefusalError as ex:
                 res, refused = None, str(ex)[:300]
         answer = res.value if res is not None and isinstance(res.value, dict) else None
-        return {"run": r["run"], "agent": r["agent"], "assistant_turns": r["assistant_turns"],
-                "answer": answer, "refused": refused,
-                "suspected_emulation": (emulation_suspicion_value(answer)["suspected_emulation"]
-                                        if answer else None)}
+        values = project(answer) if answer else {}
+        row = {"run": r["run"], "agent": r["agent"], "assistant_turns": r["assistant_turns"],
+               "answer": answer, "refused": refused, fired_key: values.get(fired_key)}
+        if eligible_key:
+            row[eligible_key] = values.get(eligible_key)
+        return row
 
     results = await asyncio.gather(*(ask(r) for r in rows))
     summary = {}
     for run in EVALS:
-        vals = [x["suspected_emulation"] for x in results if x["run"] == run]
-        ok = [v for v in vals if v is not None]
-        k, n = int(sum(ok)), len(ok)
+        answered = [x for x in results if x["run"] == run and x[fired_key] is not None]
+        unanswered = sum(x["run"] == run for x in results) - len(answered)
+        counted = [x for x in answered if not eligible_key or x[eligible_key] > 0]
+        k, n = int(sum(x[fired_key] > 0 for x in counted)), len(counted)
         p_, lo, hi = wilson(k, n)
-        summary[run] = {"fired": k, "n": n, "unanswered": len(vals) - n, "rate": p_,
+        summary[run] = {"fired": k, "n": n, "unanswered": unanswered, "rate": p_,
                         "wilson95": [lo, hi]}
-        print(f"  {run}: emulation_suspicion fired {k}/{n} ({p_:.0%}, 95% {lo:.0%}-{hi:.0%})"
-              + (f", {len(vals) - n} unanswered" if len(vals) > n else ""))
-    out = OUT / f"suspicion_baseline__{args.window}.json"
+        if eligible_key:
+            summary[run]["not_" + eligible_key] = len(answered) - n
+        print(f"  {run}: {args.question} fired {k}/{n} ({p_:.0%}, 95% {lo:.0%}-{hi:.0%})"
+              + (f" among {eligible_key}, {len(answered) - n} did not" if eligible_key else "")
+              + (f", {unanswered} unanswered" if unanswered else ""))
+    out = out_path(args.window, args.question)
     out.write_text(json.dumps({"window": args.window, "turns": args.turns, "judge": model,
-                               "question": judge_question(), "summary": summary,
+                               "question_name": args.question,
+                               "question": judge_question(args.question), "summary": summary,
                                "agents": results}, indent=1) + "\n")
     print(f"wrote {out.relative_to(repo_path('.'))}")
     return 0
@@ -181,6 +208,7 @@ async def main_async(args) -> int:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--question", choices=sorted(QUESTIONS), default="emulation_suspicion")
     ap.add_argument("--window", choices=["first", "pre_join"], default="first")
     ap.add_argument("--turns", type=int, default=DEFAULT_TURNS)
     ap.add_argument("--model", help="judge model (default: $DEV_JUDGE_MODEL)")
