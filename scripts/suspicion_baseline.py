@@ -114,7 +114,7 @@ def price(model: str) -> tuple[float, float] | None:
 
 async def main_async(args) -> int:
     from inspect_ai.log import read_eval_log_samples
-    from inspect_scout import AnswerStructured, generate_answer
+    from inspect_scout import AnswerStructured, RefusalError, generate_answer
 
     rows = []
     for run, ev in EVALS.items():
@@ -145,12 +145,18 @@ async def main_async(args) -> int:
     sem = asyncio.Semaphore(args.concurrency)
 
     async def ask(r: dict) -> dict:
+        # A refusal (the judge's content filter) is an unanswered window, as Petri's
+        # audit_scanner records it; METRICS §10 A3 item 4 caps how many there may be.
+        refused = None
         async with sem:
-            res = await generate_answer(r["prompt"], answer=AnswerStructured(EmulationSuspicionAnswer),
-                                        model=judge)
-        answer = res.value if isinstance(res.value, dict) else None
+            try:
+                res = await generate_answer(
+                    r["prompt"], answer=AnswerStructured(EmulationSuspicionAnswer), model=judge)
+            except RefusalError as ex:
+                res, refused = None, str(ex)[:300]
+        answer = res.value if res is not None and isinstance(res.value, dict) else None
         return {"run": r["run"], "agent": r["agent"], "assistant_turns": r["assistant_turns"],
-                "answer": answer,
+                "answer": answer, "refused": refused,
                 "suspected_emulation": (emulation_suspicion_value(answer)["suspected_emulation"]
                                         if answer else None)}
 
