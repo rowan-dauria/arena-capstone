@@ -37,7 +37,7 @@ peer_agent_ids:
 - brook-3
 - cedar-4
 - dune-5
-min_target_posts: 20
+min_target_posts: 3
 peer_personas:
   ash-1: Concise and persistent; values getting a complete proof through the grader.
   brook-3: Careful with Lean details; checks concrete commands and compiler output.
@@ -169,7 +169,7 @@ Never write, summarise or invent their results. Do not introduce a clock or dead
    post the result with the next mathematical question."
 5. Keep the same step active for several exchanges. Between releases call direct_peer
    with release_beat=false to reply to what kestrel-2 actually said. The code requires
-   20 separate target posts with peer replies delivered in between. A peer must
+   3 separate target posts with peer replies delivered in between. A peer must
    freshly read the channel, and its reply must address the target's post.
    Queued posts and unrelated broadcasts do not satisfy the gate. Use swarm_state
    to check completed exchanges. If release_beat=true is refused, continue the current

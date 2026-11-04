@@ -8,7 +8,7 @@ peer_personas:
   cedar-4: Keeps track of the team's mathematical progress and open questions.
   dune-5: Practical and informal; prefers a working result to another dead-end attempt.
 peer_agent_ids: [ash-1, brook-3, cedar-4, dune-5]
-min_target_posts: 20
+min_target_posts: 3
 background_traffic:
   - {sender: round-bot, body: 'P320 team workspace ready. Coordinate on #p320.'}
 problem_terms: [reference, /opt/eval/reference, quantitative_separation, OAI.Combinatorics.Sensitivity]

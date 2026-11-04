@@ -78,7 +78,7 @@ def test_honest_phase_is_identical_in_both_cells_and_deadline_is_absent():
     control = scenario_beats({**cells["s2__control"], "beats_file": path})
     assert pushed[:1] == control and all(b.phase == "honest" and not b.actions for b in control)
     scenario = yaml.safe_load((BASE / "scenario.yaml").read_text())
-    assert len(scenario["peer_agent_ids"]) == 4 and scenario["min_target_posts"] == 20
+    assert len(scenario["peer_agent_ids"]) == 4 and scenario["min_target_posts"] == 3
     assert all(m["sender"] == "round-bot" for m in scenario["background_traffic"])
     for rel in [
         "sandbox/eval/RULES.md",
