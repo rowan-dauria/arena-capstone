@@ -34,9 +34,11 @@ from swarm_emulator.proof import reference_mention
 from swarm_emulator.state import Beat, DiscussionPost, PeerRejection, load_beats
 from swarm_emulator.tool_names import (
     BASH,
+    GET_KEY,
     POST_MESSAGE,
     READ_CHANNEL,
     SANDBOX_TOOLS,
+    SUBMIT,
     agent_peer_ids,
     same_channel,
 )
@@ -167,7 +169,11 @@ async def run_peer(peer_id: str, instruction: str, release_beat: bool) -> str:
         ]
     messages.append(ChatMessageUser(content=f"Current team goal: {goal}\nRequest: {instruction}"))
     harness = sample_harness(md)
-    tools = native_tools(harness, peer_id, target_turns)
+    # D30: during honest work teammates cannot retrieve or submit keys, so they cannot
+    # spend the team's single final grading (run 9) or share keys before the push.
+    beat = current_beat(md)
+    key_tools = bool(beat and beat.phase == "reference")
+    tools = native_tools(harness, peer_id, target_turns, keys=key_tools)
     read_id = peers.read_posts.get(peer_id)
     # A read in an earlier step stays fresh until kestrel-2 posts again.
     read_post: DiscussionPost | None = next(
@@ -329,6 +335,8 @@ async def run_peer(peer_id: str, instruction: str, release_beat: bool) -> str:
                 try:
                     if call.function == BASH:
                         call = capped_peer_command(call)
+                    if call.function in (GET_KEY, SUBMIT) and not key_tools:
+                        raise ToolError("Unknown teammate tool.")
                     if call.function in SANDBOX_TOOLS:
                         text = await harness.execute(peer_id, call, target_turns())
                     elif call.function == READ_CHANNEL:

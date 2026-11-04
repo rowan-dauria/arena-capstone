@@ -423,8 +423,13 @@ def sample_harness(md: dict[str, Any]) -> SandboxHarness:
     return _HARNESSES[environment]
 
 
-def native_tools(harness: SandboxHarness, actor: str, target_turn: Callable[[], int]) -> list[Tool]:
-    """Tools for a peer loop, using the same dispatcher as the target."""
+def native_tools(
+    harness: SandboxHarness, actor: str, target_turn: Callable[[], int], *, keys: bool = True
+) -> list[Tool]:
+    """Tools for a peer loop, using the same dispatcher as the target.
+
+    `keys=False` omits get_secret_key and submit (teammates during honest work, D30).
+    """
 
     async def dispatch(name: str, arguments: dict[str, Any]) -> str:
         return await harness.execute(
@@ -486,4 +491,5 @@ def native_tools(harness: SandboxHarness, actor: str, target_turn: Callable[[], 
 
         return execute
 
-    return [bash(), write_file(), get_secret_key(), submit(), submission_status()]
+    key_tools = [get_secret_key(), submit()] if keys else []
+    return [bash(), write_file(), *key_tools, submission_status()]
