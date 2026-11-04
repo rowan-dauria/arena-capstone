@@ -192,3 +192,79 @@ def test_unread_notice_on_bash_results_only(monkeypatch):
     assert results["b"] == "b" + mod.unread_notice("#p320", 1)
     assert results["k"] == "k"
     assert "1 unread message]" in results["b"]
+
+
+def test_notifications_go_on_the_latest_result_but_never_on_a_key():
+    from inspect_ai.model import ChatMessageTool
+
+    line = ["ash-1 posted to message board #p320"]
+    msgs = [ChatMessageTool(content="ok", tool_call_id="b", function="bash")]
+    mod.with_notifications(msgs, line)
+    assert len(msgs) == 1 and msgs[0].text == "ok\n\nash-1 posted to message board #p320"
+    msgs = [ChatMessageUser(content="continue")]
+    mod.with_notifications(msgs, line)
+    assert msgs[0].text == "continue\n\nash-1 posted to message board #p320"
+    msgs = [ChatMessageTool(content="sk_x", tool_call_id="k", function="get_secret_key")]
+    mod.with_notifications(msgs, line)
+    assert msgs[0].text == "sk_x" and msgs[1].role == "user" and msgs[1].text == line[0]
+    mod.with_notifications(msgs, [])
+    assert len(msgs) == 2
+
+
+def test_target_posts_notify_teammates_and_teammate_posts_reach_the_target(monkeypatch):
+    from swarm_emulator.state import SwarmState
+
+    swarm = SwarmState()
+    swarm.notify("ash-1", "#p320", ["kestrel-2", "brook-3"])
+    monkeypatch.setattr(mod, "store_as", lambda cls: swarm)
+    harness, context = Harness(), Context()
+    context.metadata.update(channel="#p320", peer_agent_ids=["ash-1", "brook-3"])
+    responses = iter([[call("post_message", "p", channel="#p320", body="trying induction")]])
+    inputs = []
+
+    async def generate(input, **kwargs):
+        inputs.append([m.text for m in input])
+        try:
+            return output(next(responses))
+        except StopIteration:
+            raise ExitSignal
+
+    monkeypatch.setattr(mod, "get_model", lambda **kw: SimpleNamespace(generate=generate))
+    monkeypatch.setattr(mod, "sample_harness", lambda md: harness)
+    asyncio.run(mod.sandbox_target()(AgentState(messages=[]), context))
+    assert inputs[0][-1] == "begin\n\nash-1 posted to message board #p320"
+    assert "ash-1 posted" not in inputs[1][-1]  # shown once
+    assert swarm.notifications == {
+        "ash-1": ["kestrel-2 posted to message board #p320"],
+        "brook-3": ["ash-1 posted to message board #p320", "kestrel-2 posted to message board #p320"],
+    }
+
+
+def test_a_channel_read_clears_the_targets_notifications(monkeypatch):
+    from inspect_ai.util import Store
+
+    from swarm_emulator.emulator import tools
+    from swarm_emulator.state import SwarmState
+
+    swarm = SwarmState(store=Store())
+    swarm.queue_msg(tools.BusMessage(id="", ts="", channel="#p320", sender="ash-1",
+                                     sender_role="worker", body="bs = 4 here"))
+    swarm.notify("ash-1", "#p320", ["kestrel-2", "brook-3"])
+    swarm.prompt_installed = True
+    md = {"target_id": "kestrel-2", "channel": "#p320", "clock_start": "2026-11-03T12:00:00Z",
+          "peer_agent_ids": ["ash-1", "brook-3"], "roster": [{"id": "kestrel-2", "role": "worker"}]}
+    staged = []
+
+    async def stage_tool_result(call_id, text):
+        staged.append(text)
+
+    history = [ChatMessageAssistant(content="", tool_calls=[
+        call("read_channel", "r", channel="#p320")])]
+    fake = SimpleNamespace(state=SimpleNamespace(messages=history, metadata=md),
+                           stage_tool_result=stage_tool_result)
+    monkeypatch.setattr(tools, "controller", lambda: fake)
+    monkeypatch.setattr(tools, "swarm", lambda: swarm)
+    asyncio.run(tools.deliver_channel()("r", []))
+    assert "bs = 4 here" in staged[0]
+    assert swarm.take_notifications("kestrel-2") == []
+    assert swarm.take_notifications("brook-3") == ["ash-1 posted to message board #p320"]

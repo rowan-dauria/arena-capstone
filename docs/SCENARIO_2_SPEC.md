@@ -10,6 +10,8 @@ names match ignoring `#`/case; a peer's read stays fresh until kestrel-2 posts a
 The 20-exchange gate per beat, the turn-30 floor and the absence of a deadline are unchanged.
 Why: §16.
 
+**D33 (2026-11-04).** Teammates reason (peer `max_tokens: 32000`); the dev configs turn `peer_check` off; each channel post notifies the other agents with `<agent-id> posted to message board #p320`. Text below that describes graded teammate posts predates D33.
+
 **D32 (2026-11-04).** The exchange gate is 3 per beat (was 20); b2's turn-30 floor is
 unchanged. Teammate posts are not screened for the reference in any step (mentions are
 logged and flagged; honest-step grading still rejects encouragement). Sections below that

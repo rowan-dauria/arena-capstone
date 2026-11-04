@@ -6,14 +6,31 @@ from collections import Counter
 from collections.abc import Sequence
 
 from inspect_ai.agent import Agent, AgentState, agent
-from inspect_ai.model import ChatMessageAssistant, ChatMessageTool, ModelOutput, get_model
+from inspect_ai.model import (
+    ChatMessage,
+    ChatMessageAssistant,
+    ChatMessageTool,
+    ChatMessageUser,
+    ModelOutput,
+    get_model,
+)
 from inspect_ai.tool import ToolCall, ToolError
 from inspect_ai.util import store_as
 from inspect_petri.target import TOOL_RESULT, ExitSignal, TargetContext
 
 from swarm_emulator.emulator.sandbox_tools import sample_harness
 from swarm_emulator.state import SwarmState
-from swarm_emulator.tool_names import BASH, POST_MESSAGE, SANDBOX_TOOLS, WRITE_FILE, same_channel
+from swarm_emulator.tool_names import (
+    BASH,
+    GET_KEY,
+    POST_MESSAGE,
+    SANDBOX_TOOLS,
+    SUBMISSION_STATUS,
+    SUBMIT,
+    WRITE_FILE,
+    agent_peer_ids,
+    same_channel,
+)
 
 MAX_NATIVE_TURNS = 3
 
@@ -39,6 +56,24 @@ def activity_summary(calls: Sequence[ToolCall]) -> str:
 def unread_notice(channel: str, unread: int) -> str:
     """Code-generated status line, like a chat client's unread badge (no message content)."""
     return f"\n\n[{channel}: {unread} unread message{'s' if unread != 1 else ''}]"
+
+
+def with_notifications(messages: list[ChatMessage], lines: Sequence[str]) -> None:
+    """Show post notifications at the end of the target's next input.
+
+    They go on the latest tool result or user message, like a chat client's
+    notification; never on key or submission results (the notice must not alter a
+    key), where they come as their own user message instead.
+    """
+    if not lines:
+        return
+    text = "\n".join(lines)
+    last = messages[-1] if messages else None
+    keyed = isinstance(last, ChatMessageTool) and last.function in (GET_KEY, SUBMIT, SUBMISSION_STATUS)
+    if isinstance(last, (ChatMessageTool, ChatMessageUser)) and not keyed:
+        messages[-1] = last.model_copy(update={"content": f"{last.text}\n\n{text}"})
+    else:
+        messages.append(ChatMessageUser(content=text))
 
 
 def auditor_output(
@@ -68,6 +103,7 @@ def sandbox_target() -> Agent:
             system, user = await context.system_message(), await context.user_message()
             state.messages[:] = [system, user]
             while True:
+                with_notifications(state.messages, store_as(SwarmState).take_notifications(actor))
                 state.output = await generate(
                     input=state.messages, tools=context.tools, cache=False
                 )
@@ -105,6 +141,11 @@ def sandbox_target() -> Agent:
                                 call.id,
                                 turn,
                                 str(call.arguments.get("body", "")),
+                            )
+                            store_as(SwarmState).notify(
+                                actor,
+                                context.metadata["channel"],
+                                agent_peer_ids(context.metadata),
                             )
                 channel = context.metadata.get("channel")
                 if native and channel:

@@ -218,6 +218,8 @@ def deliver_channel() -> Tool:
             channel=md["channel"],
             target_turn=target_turns(),
         )
+        # The read shows every post so far: its notifications are no longer news.
+        state.take_notifications(target)
         return (
             f"Staged {len(own)} own post(s) + {len(msgs)} background + {n_queued} queued "
             "message(s). "

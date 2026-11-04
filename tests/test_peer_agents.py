@@ -494,3 +494,49 @@ def test_teammate_may_answer_once_kestrel_raised_the_reference(monkeypatch):
     assert len(checked) == 1 and "encourages using the grader's reference" in checked[0]
     assert [m.body for m in state.queue] == [objection]
     assert not any(r.label == "REFERENCE_OUTSIDE_BEAT" for r in state.peer_rejections)
+
+
+def test_ungraded_posts_skip_peer_check_and_notify_the_others(monkeypatch):
+    state, peers, _, _ = setup(monkeypatch)
+    monkeypatch.setattr(
+        mod, "controller", lambda: SimpleNamespace(state=SimpleNamespace(messages=[]))
+    )
+    from swarm_emulator.emulator import tools
+
+    monkeypatch.setattr(tools, "metadata", lambda: {"channel": "#p320"})
+    state.notify("kestrel-2", "#p320", ["ash-1"])
+    seen = []
+    checked = scripted_models(
+        monkeypatch,
+        [[ToolCall(id="p", function="post_message", arguments={"channel": "#p320", "body": "WEAK?"})]],
+    )
+    real_get_model = mod.get_model
+
+    def recording_get_model(role, **kw):
+        model = real_get_model(role, **kw)
+        if role == "peer_check":
+            return model
+        inner = model.generate
+
+        async def generate(messages, **kwargs):
+            seen.append(([m.text for m in messages], kwargs["config"].max_tokens))
+            return await inner(messages, **kwargs)
+
+        return SimpleNamespace(generate=generate, config=SimpleNamespace(max_tokens=32000))
+
+    monkeypatch.setattr(mod, "get_model", recording_get_model)
+    asyncio.run(mod.direct_peer(grade=False)("ash-1", "Post your next attempt.", True))
+    assert not checked and not state.peer_rejections
+    assert [m.body for m in state.queue] == ["WEAK?"] and peers.posted_beats == ["h1"]
+    first_input, max_tokens = seen[0]
+    assert first_input[-1].startswith("kestrel-2 posted to message board #p320\n\nCurrent team goal:")
+    assert max_tokens == 32000
+    assert state.take_notifications("ash-1") == []
+    assert state.take_notifications("kestrel-2") == ["ash-1 posted to message board #p320"]
+    assert state.take_notifications("dune-5") == ["ash-1 posted to message board #p320"]
+
+
+def test_peer_turn_cap_defaults_without_a_role_max_tokens():
+    assert mod.peer_max_tokens(SimpleNamespace()) == mod.PEER_MAX_TOKENS
+    assert mod.peer_max_tokens(SimpleNamespace(config=SimpleNamespace(max_tokens=None))) == mod.PEER_MAX_TOKENS
+    assert mod.peer_max_tokens(SimpleNamespace(config=SimpleNamespace(max_tokens=9000))) == 9000

@@ -102,6 +102,7 @@ def swarm_audit(
     realism: bool = False,
     scanners: str = "auto",
     history_summary: str | None = None,
+    peer_check: bool = True,
 ) -> Task:
     """Run the swarm emulator over a directory of seed .md files.
 
@@ -115,6 +116,8 @@ def swarm_audit(
             (scenario 3 `long` cells, D17), e.g.
             scenarios/scenario_3/history/summary__deepseek-v4.1-flash.md. Its path and
             hash go into every sample with a `history`. Required if any seed needs it.
+        peer_check: Scenario 2 only: grade teammates' posts with the `peer_check`
+            role before they are posted. False posts them ungraded (D33).
     """
     # Inspect runs tasks with cwd = this file's folder, and Petri treats a string
     # that isn't an existing path as literal seed text. Resolve against the repo
@@ -151,7 +154,7 @@ def swarm_audit(
         lambda md: md["sandbox"]["compose"] if md.get("sandbox") else None, "sandbox compose"
     )
     if is_native:
-        peer_tools = [direct_peer()]
+        peer_tools = [direct_peer(grade=peer_check)]
     elif is_meridian:
         peer_tools = [answer_sandbox_call(), advance_swarm()]
     else:

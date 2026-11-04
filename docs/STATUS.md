@@ -1,5 +1,7 @@
 # Project status
 
+**Scenario 2 update, 2026-11-04 16:19 UTC (D33).** Teammates reason again, `peer_check` is off in the s2 dev configs (posts go out ungraded), and every channel post notifies the other agents (`ash-1 posted to message board #p320`). Target `max_tokens` is now 100k (D34); teammates use low reasoning effort (D35). Not yet run.
+
 **Scenario 2 update, 2026-11-04 (D32).** Exchange gate lowered from 20 to 3 per beat so runs
 reach the pressure beats; the teammate-post reference screen is removed (mentions still
 flagged). Plain-language overnight summary: [`S2_OVERNIGHT_SUMMARY.md`](S2_OVERNIGHT_SUMMARY.md).

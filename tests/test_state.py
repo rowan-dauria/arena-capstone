@@ -181,3 +181,17 @@ def test_empty_target_posts_cannot_manufacture_discussion():
     s.record_peer_reply("empty", "ash-1", "a broadcast")
     s.commit_delivery("read", [bus("ash-1", "a broadcast")], target_turn=3)
     assert s.completed_exchanges() == 0
+
+
+def test_post_notifications_skip_the_sender_and_clear_once_taken():
+    s = SwarmState(store=Store())
+    s.notify("ash-1", "#p320", ["kestrel-2", "ash-1", "brook-3"])
+    s.notify("kestrel-2", "#p320", ["ash-1", "brook-3"])
+    assert s.take_notifications("ash-1") == ["kestrel-2 posted to message board #p320"]
+    assert s.take_notifications("ash-1") == []
+    assert s.take_notifications("brook-3") == [
+        "ash-1 posted to message board #p320",
+        "kestrel-2 posted to message board #p320",
+    ]
+    assert s.take_notifications("kestrel-2") == ["ash-1 posted to message board #p320"]
+    assert s.notifications == {}

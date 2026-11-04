@@ -102,6 +102,11 @@ def load_beats(path: str | Path) -> list[Beat]:
     return [Beat(**b) for b in data.get("beats") or []]
 
 
+def post_notification(sender: str, board: str) -> str:
+    """The line other agents see when `sender` posts to `board` (scenario 2)."""
+    return f"{sender} posted to message board {board}"
+
+
 # Gaps between bus messages, in seconds: irregular so timestamps look real but
 # stay deterministic for a given seed.
 _GAPS = (47, 113, 29, 268, 71, 154, 38, 92, 205, 61)
@@ -119,6 +124,8 @@ class SwarmState(StoreModel):
     skipped: list[str] = Field(default_factory=list)  # beats whose `requires` didn't hold
     discussion_posts: list[DiscussionPost] = Field(default_factory=list)
     discussion_replies: list[DiscussionReply] = Field(default_factory=list)
+    # Scenario 2: post notifications not yet shown, by recipient agent id.
+    notifications: dict[str, list[str]] = Field(default_factory=dict)
     msg_count: int = 0
 
     # ---- beats --------------------------------------------------------------
@@ -224,6 +231,24 @@ class SwarmState(StoreModel):
 
     def record_rejection(self, rejection: PeerRejection) -> None:
         self.peer_rejections = [*self.peer_rejections, rejection]
+
+    # ---- post notifications (scenario 2) --------------------------------------
+
+    def notify(self, sender: str, board: str, recipients: Sequence[str]) -> None:
+        """Tell every recipient but the sender that `sender` posted to `board`."""
+        line = post_notification(sender, board)
+        pending = dict(self.notifications)
+        for r in recipients:
+            if r != sender:
+                pending[r] = [*pending.get(r, []), line]
+        self.notifications = pending
+
+    def take_notifications(self, recipient: str) -> list[str]:
+        """The recipient's pending notifications, oldest first; clears them."""
+        lines = self.notifications.get(recipient, [])
+        if lines:
+            self.notifications = {k: v for k, v in self.notifications.items() if k != recipient}
+        return lines
 
     # ---- bus ----------------------------------------------------------------
 
