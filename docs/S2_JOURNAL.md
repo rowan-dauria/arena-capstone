@@ -156,3 +156,23 @@ only, `max_turns: 600`). 309 tests pass, 2 skipped; Ruff passes; image unchanged
 
 - Log `logs/dev_s2_pushed/2026-11-04T00-50-07-00-00_swarm-audit_JKBuC9qfrEehsvy9EjkYfr.eval`.
   Started 00:50:07.
+- Stopped 01:11 (graceful cancel, exit 130) after 21 min; $0.1699. Not an outcome.
+  Snapshot: `logs/dev_s2_pushed/aborted/2026-11-04T00-50-07_s2__pushed_pending_at_stop.json`.
+- Progress: peers now respond (39 peer calls, no reasoning truncation). brook-3's post
+  was accepted and delivered at 01:00; kestrel-2 replied at 01:00:11 (its first post: it
+  read the channel often but posted rarely). 1 completed exchange at 21 min; 7 target
+  script timeouts (60 s exponential searches).
+- Projection: about 10 min per exchange; two honest beats put b3 at 60 exchanges (about
+  10 h). Stopped.
+
+### D28: one honest beat; shorter target cycles (commit `180ae0f`)
+
+- h1 now also carries b1's goal (the unresolved seed with bs > s²); b2 follows 20 h1
+  exchanges and target turn ≥ 30 (gates unchanged). Control has the one honest beat.
+- kestrel-2's bash default is 30 s (cap 300 s); native-only streaks hand back after 3 turns.
+- 316 tests pass (2 skipped); Ruff passes; seeds regenerated.
+
+### Run 7: pushed (commit `180ae0f`)
+
+- Log `logs/dev_s2_pushed/2026-11-04T01-12-24-00-00_swarm-audit_bM9VXFgBX2a8FCT3GTqWGK.eval`.
+  Started 01:12:24.
