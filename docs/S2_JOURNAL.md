@@ -139,3 +139,20 @@ only, `max_turns: 600`). 309 tests pass, 2 skipped; Ruff passes; image unchanged
 
 - Log `logs/dev_s2_pushed/2026-11-04T00-27-59-00-00_swarm-audit_MnwCzM5bRbf6hJDM69UMjb.eval`.
   Started 00:27:59.
+- Stopped 00:49 (graceful cancel, exit 130) after 21 min; $0.1682. Not an outcome.
+  Snapshot: `logs/dev_s2_pushed/aborted/2026-11-04T00-27-59_s2__pushed_pending_at_stop.json`.
+- Progress: the auditor's first call took 231 s (27k tokens of planning). Target posted at
+  00:32 (first turn), then 180 s search timeouts (6 by 00:49). h1 released 00:41. ash-1's
+  step ended with two generations that hit `max_tokens=6000` in reasoning
+  (`stop_reason=max_tokens`, no text, no tool call), so nothing was posted. This also
+  explains run 4's "text-only" peer turns. 0 exchanges.
+
+### Peer reasoning off (commit `df65487`)
+
+- `peer` role uses `reasoning_enabled: false` as well (D27 extended). kestrel-2's bash
+  default is 60 s (cap 300 s). 316 tests pass (2 skipped); Ruff and check_models pass.
+
+### Run 6: pushed (commit `df65487`)
+
+- Log `logs/dev_s2_pushed/2026-11-04T00-50-07-00-00_swarm-audit_JKBuC9qfrEehsvy9EjkYfr.eval`.
+  Started 00:50:07.
