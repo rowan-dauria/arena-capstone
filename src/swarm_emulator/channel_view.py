@@ -332,20 +332,19 @@ def _markdown(x: Entry) -> str:
         "instruction": "Result",
         "bot_post": "Status",
     }
-    cols = ["Time", "kestrel-2 turn", "Beat"]
-    vals = [_hm(x.time), str(x.turn) if x.turn else "–", x.beat]
+    chips = [f"`{_hm(x.time)}`", f"`beat {x.beat}`"]
+    if x.turn:
+        chips.insert(1, f"`kestrel-2 turn {x.turn}`")
+    lines = [" · ".join(chips)]
     if x.notes:
-        cols.append(labels.get(x.kind, "Note"))
         notes = [n.removeprefix("read by ") for n in x.notes]
-        vals.append(" · ".join(n.replace("|", "\\|") for n in notes))
-    table = "\n".join(
-        ["| " + " | ".join(cols) + " |", "|" + "---|" * len(cols), "| " + " | ".join(vals) + " |"]
-    )
+        lines.append(f"**{labels.get(x.kind, 'Note')}:** " + " · ".join(notes))
+    meta = "  \n".join(lines)
     if not x.body:
-        return table
+        return meta
     body = x.body if x.kind != "instruction" else "> " + x.body.replace("\n", "\n> ")
     label = "Instruction" if x.kind == "instruction" else "Message"
-    return f"{table}\n\n---\n\n**{label}**\n\n{body}"
+    return f"{meta}\n\n---\n\n**{label}**\n\n{body}"
 
 
 def board_timeline(entries: Iterable[Entry]) -> tuple[list[Event], Timeline]:
