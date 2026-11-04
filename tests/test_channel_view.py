@@ -151,16 +151,18 @@ def test_board_entries_follow_posts_reads_rejections_and_deliveries():
     assert "1 new from ash-1" in entries[5].title
 
 
-def test_board_timeline_groups_by_beat_and_round_trips():
+def test_board_timeline_is_one_list_with_beat_dividers_and_round_trips():
     events, store = sample()
     new_events, timeline = board_timeline(board_entries(events, store))
     assert timeline.name == TIMELINE_NAME
-    assert [s.name for s in timeline.root.content] == ["beat h1"]
+    items = [c.event for c in timeline.root.content]
+    assert len(items) == 6 and items[0].source.startswith("━") and "Beat h1 starts" in items[0].data
+    assert all(e.source.startswith("[h1] ") for e in items[1:])
     info = [e for e in new_events if e.event == "info"]
     assert len(info) == 6 and all(e.span_id == "message-board" for e in info)
     assert info[2].timestamp == at(2) and TARGET_POST in info[2].data
     loaded = timeline_load(timeline_dump(timeline), new_events)
-    assert loaded.root.content[0].content[2].event.data == info[2].data
+    assert loaded.root.content[2].event.data == info[2].data
 
 
 def test_no_channel_activity_gives_an_empty_board():

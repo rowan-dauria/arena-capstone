@@ -4,7 +4,8 @@ Built after a run from the sample's own events and store: kestrel-2's channel po
 teammates' posts (with what happened to each: delivered, sent back by the checker, or not
 posted), what kestrel-2 received when it read the channel, the auditor's instructions to
 teammates and beat releases. Each item becomes an `InfoEvent` stamped with the time of the
-original action, grouped by beat into a `Timeline` named "message board".
+original action, listed in time order in a `Timeline` named "message board", with a
+divider entry where each beat starts.
 
 Pure: reads a finished sample, makes no model calls. `scripts/board_view.py` writes
 annotated copies of logs and serves them with `inspect view`.
@@ -219,7 +220,7 @@ def board_entries(
                         kind="release",
                         actor="harness",
                         body="",
-                        title=f"▶ beat {m.group(1)} released (after {target_id} turn {turn})",
+                        title=f"━━━━━━━━━━  BEAT {m.group(1)} STARTS  ━━━━━━━━━━",
                         turn=turn,
                     )
                 )
@@ -321,6 +322,10 @@ def board_entries(
 
 
 def _markdown(x: Entry) -> str:
+    if x.kind == "release":
+        return (
+            f"## ▶ Beat {x.beat} starts\n\n*{_hm(x.time)} · after kestrel-2 turn {x.turn}*\n\n---"
+        )
     head = [_hm(x.time)]
     if x.turn:
         head.append(f"kestrel-2 turn {x.turn}")
@@ -335,39 +340,35 @@ def _markdown(x: Entry) -> str:
 
 
 def board_timeline(entries: Iterable[Entry]) -> tuple[list[Event], Timeline]:
-    """Events to append to the sample (inside one span) and the timeline that groups them."""
+    """Events to append to the sample (inside one span) and the timeline that lists them.
+
+    One continuous list in time order. Each beat starts with a divider entry, and every
+    other title carries its beat, e.g. "[b2] dune-5 → #p320".
+    """
     entries = list(entries)
     events: list[Event] = []
-    spans: dict[str, TimelineSpan] = {}
+    content: list[TimelineEvent] = []
     begin_time = entries[0].time if entries else datetime.now().astimezone()
     events.append(
         SpanBeginEvent(id=SPAN_ID, name=TIMELINE_NAME, type="board", timestamp=begin_time)
     )
     for n, x in enumerate(entries):
+        title = x.title if x.kind == "release" else f"[{x.beat}] {x.title}"
         ev = InfoEvent(
             uuid=f"{SPAN_ID}-{n:05d}",
             span_id=SPAN_ID,
-            source=x.title,
+            source=title,
             data=_markdown(x),
             timestamp=x.time,
             metadata={"board_kind": x.kind, "actor": x.actor, "beat": x.beat},
         )
         events.append(ev)
-        span = spans.get(x.beat)
-        if span is None:
-            span = spans[x.beat] = TimelineSpan(
-                id=f"{SPAN_ID}-{x.beat}",
-                name=f"beat {x.beat}" if x.beat != "before h1" else "before h1",
-                span_type="agent",
-            )
-        span.content.append(TimelineEvent(event=ev))
+        content.append(TimelineEvent(event=ev))
     events.append(SpanEndEvent(id=SPAN_ID, timestamp=entries[-1].time if entries else begin_time))
-    root = TimelineSpan(
-        id=SPAN_ID, name=TIMELINE_NAME, span_type="agent", content=list(spans.values())
-    )
+    root = TimelineSpan(id=SPAN_ID, name=TIMELINE_NAME, span_type="agent", content=content)
     return events, Timeline(
         name=TIMELINE_NAME,
-        description="Channel posts between kestrel-2 and its teammates, by beat",
+        description="Channel posts between kestrel-2 and its teammates, in time order",
         root=root,
     )
 
