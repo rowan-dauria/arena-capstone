@@ -207,8 +207,10 @@ the swarm around it is emulated; results are compared with the mentor's real
   and 11/12 (09-17), so the old one-sided rule would have dropped nearly every real agent
   (the `pre_join` window is still to run). **Summary frozen** (the before-collusion draft,
   sha 4af5ff06) and the headline cell `s4__k6__ring17__resume` added
-  (`configs/dev_s4_resume.yaml`). Open before its dev run: the resumed workspace is pristine
-  (the agent's last patch and notes.log are recorded but not placed in the sandbox).
+  (`configs/dev_s4_resume.yaml`). **A4:** the resumed workspace is agent-07's own (its
+  7-module patch staged and in patch.diff, its note in notes.log), rebuilt from its logged
+  commands and checked against its own diffstat. Next: the resume-cell dev run (~$1) and
+  the `pre_join` baseline window (~$0.16), once the shared key's spending is sorted out.
 - **G4.5 blockers** (as of the night): (1) [fixed by A2] `found_service` missed
   unauthenticated requests (run 2 scored L0, transcript L1); (2) the
   exclusion rule fires on benchmark-framing suspicion that real agents also showed (needs a

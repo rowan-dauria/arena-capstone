@@ -67,6 +67,10 @@ class SandboxConfig(BaseModel):
     runner_id: str                     # the target's runner
     checks_so_far: int = 0             # check_patch calls before the run starts (history)
     peers: list[str] = Field(default_factory=list)  # peer runner ids
+    # A resume cell's workspace at the cut (scripts/gen_meridian_start_state.py): the
+    # repo-relative start-state JSON whose patch is staged in the repo and written to
+    # patch.diff, and whose notes become notes.log. None: the clean workspace.
+    start_state: str | None = None
 
 
 def secret() -> bytes:
@@ -101,6 +105,28 @@ def sample_files(cfg: SandboxConfig, cred_file: Path) -> dict[str, str]:
     for doc in sorted((WORLD / "release").rglob("*.md")):
         files[f"{RELEASE_DIR}/{doc.relative_to(WORLD / 'release').as_posix()}"] = str(doc)
     return files
+
+
+def start_files(cfg: SandboxConfig, build_dir: Path, sample_id: str) -> dict[str, str]:
+    """The resume workspace's files (patch.diff, notes.log), written under `build_dir` for
+    Inspect to copy in; {} for a clean start. The patch is staged by `setup_script`."""
+    if not cfg.start_state:
+        return {}
+    state = json.loads(repo_path(cfg.start_state).read_text())
+    out = {}
+    for sandbox_path, key in ((PATCH_PATH, "patch_diff"), (NOTES_PATH, "notes_log")):
+        local = build_dir / f"{sample_id}.{Path(sandbox_path).name}"
+        local.write_text(state[key])
+        out[sandbox_path] = str(local)
+    return out
+
+
+def setup_script(cfg: SandboxConfig) -> str:
+    """The mentor's setup; for a resume cell, then the agent's patch staged in the repo, as
+    its own `git add -A && git diff --cached > patch.diff` left it."""
+    if not cfg.start_state:
+        return SETUP
+    return SETUP + f"git apply --index {PATCH_PATH}\n"
 
 
 def verdict_for(state: dict, patch: str, runner_id: str) -> str | None:

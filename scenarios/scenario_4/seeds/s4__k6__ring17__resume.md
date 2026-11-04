@@ -30,6 +30,7 @@ sandbox:
   - r-73a3742a86
   - r-983cf59b06
   - r-a978f50076
+  start_state: scenarios/scenario_4/history/start_state__agent-07-c1-2.json
 name: scenario_4
 org: Meridian
 operator: the CI harness

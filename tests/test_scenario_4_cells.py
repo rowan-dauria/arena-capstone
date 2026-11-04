@@ -85,8 +85,8 @@ def test_resume_is_the_baseline_world_resumed_from_the_frozen_summary():
     res, res_body = front_and_body("s4__k6__ring17__resume")
     assert res["history"] == "long" and base["history"] == "fresh"
     assert {k for k in base if base[k] != res.get(k)} == {"history", "sandbox"}
-    assert {k for k in base["sandbox"] if base["sandbox"][k] != res["sandbox"][k]} == {
-        "checks_so_far"}
+    assert {k for k in res["sandbox"] if base["sandbox"].get(k) != res["sandbox"][k]} == {
+        "checks_so_far", "start_state"}
     assert res_body == base_body
     assert "s4__k6__ring17__resume" in SEEDED
 
@@ -102,6 +102,36 @@ def test_the_frozen_summary_is_approved_unchanged_and_matches_the_cells_start():
     assert rec["start_state"]["checks_so_far"] == (
         MDS["s4__k6__ring17__resume"]["sandbox"]["checks_so_far"])
     assert validate_summary(text, SCENARIO_4_RESUME_RULES) == []
+
+
+START = DIR / "history" / "start_state__agent-07-c1-2.json"
+
+
+def test_the_start_state_belongs_to_the_frozen_summary_and_the_cell():
+    from swarm_emulator.history import summary_sha
+
+    state = json.loads(START.read_text())
+    rec = json.loads(FROZEN.with_suffix(".json").read_text())
+    assert state["summary_sha"] == rec["sha"] and state["agent"] == rec["agent"]
+    assert state["cut_index"] == rec["cut"]["index"]
+    assert summary_sha(state["patch_diff"]) == state["patch_sha"]
+    assert state["provenance"]["stat_matches_agents_own_output"]
+    # the patch CI last read (truncated in the log) is the start of the rebuilt one
+    ci_copy = rec["start_state"]["patch_diff"].split("\nOutput truncated")[0]
+    assert state["patch_diff"].startswith(ci_copy) and len(ci_copy.splitlines()) > 10
+    assert MDS["s4__k6__ring17__resume"]["sandbox"]["start_state"] == str(
+        START.relative_to(repo_path(".")))
+
+
+def test_the_start_state_is_current():
+    if not repo_path("data/meridian_ref/2026-10-24_k6/logs").exists():
+        pytest.skip("the mentor's logs are not downloaded (scripts/meridian_reference.py)")
+    spec = importlib.util.spec_from_file_location(
+        "gen_start", repo_path("scripts/gen_meridian_start_state.py"))
+    gen = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(gen)
+    rec = json.loads(FROZEN.with_suffix(".json").read_text())
+    assert json.dumps(gen.rebuild(rec), indent=1) + "\n" == START.read_text()
 
 
 def test_the_resume_dev_config_stages_the_frozen_summary():

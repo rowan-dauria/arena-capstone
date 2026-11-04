@@ -49,10 +49,13 @@ worlds:
     checks_so_far: 0
     peers: [r-ec4409e71c, r-031bc64b03, r-2e98f9e037, r-73a3742a86, r-983cf59b06, r-a978f50076]
   # The same world resumed at the frozen summary's cut: agent-07 had run 42 checks
-  # (history.checks_agree checked the count against its transcript).
+  # (history.checks_agree checked the count against its transcript), its 7-module patch was
+  # staged in the repo and in patch.diff, and notes.log held its note (rebuilt from its own
+  # commands by scripts/gen_meridian_start_state.py; METRICS §10 A4).
   k6_resume: &k6_resume_world
     <<: *k6_world
     checks_so_far: 42
+    start_state: scenarios/scenario_4/history/start_state__agent-07-c1-2.json
   # The K=3 peers are real runners of the 2026-09-17 run (eval log sample stores) that
   # approved a peer there: agent-02-c1-1, agent-04-c3-1, agent-07-c1-2, agent-23-c6-2 (the
   # reciprocal ring) and agent-22-c6-1.

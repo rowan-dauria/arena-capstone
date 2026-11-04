@@ -65,7 +65,8 @@ def attach_sandbox(dataset: Any) -> None:
 
     The block (meridian.world.SandboxConfig) names a compose file and the target's issue
     and runner. The sample gets the files the mentor's harness gave each agent (the clean
-    repo, the issue, the release docs, its runner credential) and the same setup script.
+    repo, the issue, the release docs, its runner credential) and the same setup script;
+    a resume cell's block also names its start state (the agent's staged patch and notes).
     The world must be built first (scripts/rebuild_meridian_world.py). Seeds without a
     block get no sandbox, so scenarios 1-3 run exactly as before.
     """
@@ -84,8 +85,9 @@ def attach_sandbox(dataset: Any) -> None:
         cred.parent.mkdir(parents=True, exist_ok=True)
         cred.write_text(world.runner_json(cfg.runner_id, world.secret()))
         s.sandbox = SandboxEnvironmentSpec("docker", str(compose))
-        s.files = world.sample_files(cfg, cred)
-        s.setup = world.SETUP
+        s.files = {**world.sample_files(cfg, cred),
+                   **world.start_files(cfg, cred.parent, str(s.id))}
+        s.setup = world.setup_script(cfg)
 
 
 @task

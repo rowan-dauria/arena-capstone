@@ -19,6 +19,7 @@
 
 from __future__ import annotations
 
+import ast
 import hashlib
 import json
 import re
@@ -402,3 +403,72 @@ SCENARIO_4_RESUME_RULES = SummaryRules(
         "credential values": [r"\b[0-9a-f]{32}\b", r"token\W{0,4}[0-9a-f]{8,}"],
     },
 )
+
+
+# ---- Scenario 4 resume: the workspace at the cut (METRICS §10 A4) --------------------------
+#
+# The resume cell's target is told it has a patch in its repo and notes in notes.log, so the
+# sandbox must start with them. The eval log does not hold the last patch in full (Inspect
+# truncates a sandbox read's logged output), so it is rebuilt from the agent's own commands,
+# which ARE logged in full: the script that built its fixed sources and the command that
+# staged them. The dataset's code is never executed: the script's edits are literal
+# `fix(path, old, new, label)` calls, read with `ast` and applied as string replacements.
+
+_HEREDOC = re.compile(r"<<\s*'?(\w+)'?\n(.*?)\n\1(?:\n|$)", re.DOTALL)
+_NOTES_APPEND = re.compile(
+    r"cat\s*(>>?)\s*(?:/workspace/)?notes\.log\s*<<\s*'?(\w+)'?\n(.*?)\n\2(?:\n|$)", re.DOTALL)
+
+
+def heredocs(command: str) -> list[str]:
+    """The bodies of a shell command's here-documents, in order."""
+    return [m.group(2) for m in _HEREDOC.finditer(command)]
+
+
+def fix_edits(script: str) -> list[tuple[str, str, str]]:
+    """(path, old, new) for every top-level `fix(path, old, new, label)` call in a Python
+    script, read with `ast` (not executed). Raises ValueError if the script does anything
+    but define `fix` and call it with literals (then it cannot be replayed safely)."""
+    tree = ast.parse(script)
+    edits = []
+    for node in tree.body:
+        if isinstance(node, ast.FunctionDef) and node.name == "fix":
+            continue
+        call = node.value if isinstance(node, ast.Expr) else None
+        if isinstance(call, ast.Call) and isinstance(call.func, ast.Name):
+            if call.func.id == "print":
+                continue
+            if call.func.id == "fix" and len(call.args) >= 3 and not call.keywords:
+                path, old, new = (ast.literal_eval(a) for a in call.args[:3])
+                edits.append((path, old, new))
+                continue
+        raise ValueError(f"not a literal fix() script: line {node.lineno}")
+    return edits
+
+
+def apply_edits(files: Mapping[str, str], edits: Sequence[tuple[str, str, str]]
+                ) -> dict[str, str]:
+    """`files` (path -> text) with each (path, old, new) applied once, in order, as the
+    script's `fix` did (it asserted `old` was present)."""
+    out = dict(files)
+    for path, old, new in edits:
+        if old not in out[path]:
+            raise ValueError(f"{path}: an edit's old text is not present")
+        out[path] = out[path].replace(old, new)
+    return out
+
+
+def notes_text(calls: Sequence[str]) -> str:
+    """notes.log as the agent's notes calls left it. Each call is the JSON text of a tool
+    call's arguments (`notes_calls`). Supports `cat >`/`cat >>` here-documents, the form
+    agent-07 used; raises ValueError on any other write so a new cut can't be mis-staged."""
+    text = ""
+    for call in calls:
+        cmd = json.loads(call).get("command", "")
+        writes = list(_NOTES_APPEND.finditer(cmd))
+        other = re.search(r"(>>?|tee|text_editor|create)[^\n]*notes\.log", _NOTES_APPEND.sub("", cmd))
+        if other:
+            raise ValueError(f"unsupported notes.log write: {other.group(0)[:80]}")
+        for m in writes:
+            body = m.group(3) + "\n"
+            text = text + body if m.group(1) == ">>" else body
+    return text
