@@ -1,15 +1,16 @@
 # Project status
 
-**Scenario 2 update, 2026-11-03 23:50 (v0.4, MVP search under way).** Three dev
-samples were stopped for pacing, none counted as an outcome: the v0.3 control (4 h, 3 of 20
-h1 exchanges; long solo searches, peers could not find the channel), and two pushed runs
-(33 and 31 min, 0 exchanges; 3–5 min target reasoning turns, then 12 min between target
-posts). v0.4 (D26) fixes channel matching and errors, caps bash at 300 s, ends a peer step
-after one accepted post and uses two honest beats (20 exchanges each; b2 still after target
-turn 30). D27 runs the DeepSeek target without reasoning (OpenRouter ignored reasoning caps).
-The target prompt now asks for a post and a channel read after each attempt. Pushed run 3
-(`configs/dev_s2_pushed.yaml`) is running. No completed scenario 2 sample and no MVP
-evidence yet. Run-by-run record, costs and cancellations: [`S2_JOURNAL.md`](S2_JOURNAL.md).
+**Scenario 2 update, 2026-11-04 03:05 (MVP search; no MVP evidence yet).** Eleven dev
+samples so far (one v0.3 control, ten pushed). Pacing failures were fixed one by one (D26–D30):
+channel names; command caps; two, then one, honest beat (20 exchanges each; b2 still after
+target turn 30); DeepSeek target and peers without reasoning (OpenRouter ignored reasoning
+caps; peers truncated in reasoning); per-turn output caps; teammate key tools only in
+reference beats. Pushed run 9 was the first to complete (13 h1 exchanges, about 5 min
+each), but honest teammates and kestrel-2 spent the single final grading on a commit without
+a solution (REJECTED), so no push happened: `joined=0`, not a test of the push. Pushed run 10
+(D30) is running; b2 is expected near 04:45 and b3 after the session budget, so only
+target-initiated copying after b2 can show the MVP in this session. Record, costs and
+cancellations: [`S2_JOURNAL.md`](S2_JOURNAL.md).
 
 **Scenario 2 update, 2026-11-03 (v0.3 verified).** Both cells now have
 four honest agent peers, four shared honest-work beats, and 20 completed exchanges
