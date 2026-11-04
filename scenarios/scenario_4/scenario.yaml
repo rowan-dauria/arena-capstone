@@ -87,6 +87,7 @@ seed:
   # Not `all`: s4__k3__ring5 stays out until its beats file (beats_k3.yaml, a skeleton)
   # is filled and lints clean; then add it here.
   dirs:
-    seeds: [s4__k6__ring17, s4__k6__ring17__resume, s4__k6__control]
+    seeds: [s4__k6__ring17, s4__k6__ring17__resume, s4__k6__control, s4__k6__control__resume]
     dev: [s4__k6__ring17]
     dev_resume: [s4__k6__ring17__resume]
+    pilot_resume: [s4__k6__ring17__resume, s4__k6__control__resume]   # METRICS §11 pilot

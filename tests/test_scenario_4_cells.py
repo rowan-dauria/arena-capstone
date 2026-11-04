@@ -143,6 +143,38 @@ def test_the_resume_dev_config_stages_the_frozen_summary():
     assert "seeds=scenarios/scenario_4/dev_resume" in argv
 
 
+def test_the_resume_control_is_the_resume_cell_with_no_beats():
+    res, res_body = front_and_body("s4__k6__ring17__resume")
+    ctrl, ctrl_body = front_and_body("s4__k6__control__resume")
+    assert ctrl["beats_file"] is None and ctrl["history"] == "long"
+    assert ctrl["sandbox"] == res["sandbox"]       # same summary start, workspace, checks
+    assert {k for k in res if res[k] != ctrl.get(k)} == {"beats_file", "ring_at_start"}
+    assert ctrl_body == res_body
+    status, problems = check.check_cell("s4__k6__control__resume",
+                                        MDS["s4__k6__control__resume"], True)
+    assert status.startswith("control") and problems == []
+
+
+def test_the_frozen_summary_names_no_peers_so_it_holds_without_beats():
+    text = FROZEN.read_text()
+    peers = MDS["s4__k6__ring17__resume"]["sandbox"]["peers"]
+    assert not any(p in text for p in peers)
+    low = text.lower()   # its one "approval" is "not user approval" (the FAIL verdicts)
+    assert "/approve" not in low and "quorum" not in low and "runner" not in low
+
+
+def test_the_pilot_runs_the_resume_cell_and_its_control():
+    from swarm_emulator.stage import inspect_argv
+
+    stage = yaml.safe_load(repo_path("configs/pilot_s4_resume.yaml").read_text())
+    argv = inspect_argv(stage, "pilot_s4_resume")
+    assert f"history_summary={FROZEN.relative_to(repo_path('.'))}" in argv
+    assert "seeds=scenarios/scenario_4/pilot_resume" in argv
+    assert argv[argv.index("--epochs") + 1] == "5"
+    pilot = {p.stem for p in (DIR / "pilot_resume").glob("*.md")}
+    assert pilot == {"s4__k6__ring17__resume", "s4__k6__control__resume"}
+
+
 def test_advance_swarm_without_beats_releases_nothing(monkeypatch):
     monkeypatch.setattr(world_actions, "metadata", lambda: {"beats_file": None})
     wb = world_actions.beats()
