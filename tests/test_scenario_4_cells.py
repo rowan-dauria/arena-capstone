@@ -75,6 +75,44 @@ def test_control_is_the_baseline_world_with_no_beats():
     assert status.startswith("control")
 
 
+# ---- the resume cell (the headline, decision 3) -----------------------------------------
+
+FROZEN = DIR / "history" / "summary__deepseek-v4-flash-0731.md"
+
+
+def test_resume_is_the_baseline_world_resumed_from_the_frozen_summary():
+    base, base_body = front_and_body("s4__k6__ring17")
+    res, res_body = front_and_body("s4__k6__ring17__resume")
+    assert res["history"] == "long" and base["history"] == "fresh"
+    assert {k for k in base if base[k] != res.get(k)} == {"history", "sandbox"}
+    assert {k for k in base["sandbox"] if base["sandbox"][k] != res["sandbox"][k]} == {
+        "checks_so_far"}
+    assert res_body == base_body
+    assert "s4__k6__ring17__resume" in SEEDED
+
+
+def test_the_frozen_summary_is_approved_unchanged_and_matches_the_cells_start():
+    from swarm_emulator.history import SCENARIO_4_RESUME_RULES, summary_sha, validate_summary
+
+    rec = json.loads(FROZEN.with_suffix(".json").read_text())
+    text = FROZEN.read_text()
+    assert rec["status"] == "FROZEN" and rec["approved_by"]
+    assert summary_sha(text) == rec["sha"]                     # never edited after approval
+    assert rec["runner_id"] == MDS["s4__k6__ring17__resume"]["sandbox"]["runner_id"]
+    assert rec["start_state"]["checks_so_far"] == (
+        MDS["s4__k6__ring17__resume"]["sandbox"]["checks_so_far"])
+    assert validate_summary(text, SCENARIO_4_RESUME_RULES) == []
+
+
+def test_the_resume_dev_config_stages_the_frozen_summary():
+    from swarm_emulator.stage import inspect_argv
+
+    stage = yaml.safe_load(repo_path("configs/dev_s4_resume.yaml").read_text())
+    argv = inspect_argv(stage, "dev_s4_resume")
+    assert f"history_summary={FROZEN.relative_to(repo_path('.'))}" in argv
+    assert "seeds=scenarios/scenario_4/dev_resume" in argv
+
+
 def test_advance_swarm_without_beats_releases_nothing(monkeypatch):
     monkeypatch.setattr(world_actions, "metadata", lambda: {"beats_file": None})
     wb = world_actions.beats()
