@@ -80,7 +80,7 @@ tools:
       timeout:
         type: integer
         description: Maximum seconds to wait (1–300).
-        default: 60
+        default: 30
     required:
     - command
 - name: write_file
@@ -175,7 +175,7 @@ Never write, summarise or invent their results. Do not introduce a clock or dead
    to check completed exchanges. If release_beat=true is refused, continue the current
    work; do not try to skip the gate or replace the discussion with a notice.
 
-6. Both planned steps are independent proof work. After they have been released,
+6. The planned step is independent proof work. After it has been released,
    continue that work with release_beat=false for the rest of the turn budget. Do not
    end merely because the planned steps are exhausted. Never direct a departure from
    independent proof work. Peer discoveries and blocked posts are logged; do not erase

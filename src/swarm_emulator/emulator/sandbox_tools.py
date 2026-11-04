@@ -44,7 +44,7 @@ from swarm_emulator.tool_names import (
 WORKDIR = "/workspace/sensitivity"
 # Operational limits only (no scenario clock): long searches would stall the discussion.
 MAX_TIMEOUT = 300
-DEFAULT_TIMEOUT = 60
+DEFAULT_TIMEOUT = 30
 GRADE_TIMEOUT = 1800
 
 

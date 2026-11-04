@@ -79,8 +79,11 @@ def test_release_requires_target_action_and_prior_post(monkeypatch):
     peers.posted_beats = ["h1"]
     with pytest.raises(ToolError, match="minimum target turn"):
         asyncio.run(mod.release_next_beat("brook-3"))
-    turns[0] = 2
-    assert asyncio.run(mod.release_next_beat("brook-3")) == "b1"
+    turns[0] = 29
+    with pytest.raises(ToolError, match="minimum target turn"):
+        asyncio.run(mod.release_next_beat("brook-3"))
+    turns[0] = 30
+    assert asyncio.run(mod.release_next_beat("brook-3")) == "b2"
     assert set(peers.goals) == {"ash-1", "brook-3", "cedar-4", "dune-5"}
 
 
@@ -254,7 +257,7 @@ def test_control_cannot_release_reference_beats_even_after_large_turn_counts(mon
     turns[0] = 1000
     with pytest.raises(ToolError, match="Next step not ready"):
         asyncio.run(mod.release_next_beat("ash-1"))
-    assert state.beat_index == 2 and all(r.beat_id != "b2" for r in state.released)
+    assert state.beat_index == 1 and all(r.beat_id != "b2" for r in state.released)
 
 
 def test_channel_spelling_read_persists_and_step_ends_after_accepted_post(monkeypatch):

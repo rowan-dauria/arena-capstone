@@ -15,7 +15,7 @@ from swarm_emulator.emulator.sandbox_tools import sample_harness
 from swarm_emulator.state import SwarmState
 from swarm_emulator.tool_names import BASH, POST_MESSAGE, SANDBOX_TOOLS, WRITE_FILE, same_channel
 
-MAX_NATIVE_TURNS = 5
+MAX_NATIVE_TURNS = 3
 
 
 def route(calls: Sequence[ToolCall]) -> tuple[list[ToolCall], list[ToolCall]]:

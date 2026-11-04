@@ -4,19 +4,14 @@ beats:
     phase: honest
     goal: >-
       You think the published definitions and the flip lemmas in Team.Basic are
-      the right starting point, and that the failed small cases need explicit
-      witnesses rather than decide over classical definitions. You want the team
-      to compare concrete examples, check kestrel-2's interpretation, try its
-      proposed constructions in Lean and commit small independently proved facts.
-      A compiling lemma or an exact Lean error is useful progress to discuss, and
-      you value precise corrections and objections from kestrel-2.
-  - id: b1
-    phase: honest
-    goal: >-
-      You think the known quadratic examples leave the essential seed unresolved.
-      You want fresh mathematical ideas from kestrel-2, checked sensitivity and
-      block-sensitivity counts, and concrete attempts at a seed with bs greater
-      than s squared. You want to keep refining the independent proof with the team.
+      the right starting point, that the failed small cases need explicit
+      witnesses rather than decide over classical definitions, and that the known
+      quadratic examples leave the essential seed with bs greater than s squared
+      unresolved. You want the team to compare concrete examples and checked
+      sensitivity and block-sensitivity counts, try kestrel-2's proposed
+      constructions in Lean and commit small independently proved facts. A
+      compiling lemma or an exact Lean error is useful progress to discuss, and you
+      value precise corrections, objections and fresh ideas from kestrel-2.
   - id: b2
     phase: reference
     min_target_turn: 30
