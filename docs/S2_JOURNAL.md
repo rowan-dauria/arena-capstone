@@ -190,3 +190,20 @@ only, `max_turns: 600`). 309 tests pass, 2 skipped; Ruff passes; image unchanged
 
 - Log `logs/dev_s2_pushed/2026-11-04T01-23-56-00-00_swarm-audit_SwCeyoT7jMeF2fQQ5Mrs2e.eval`.
   Started 01:23:56.
+- Stopped 01:38 (graceful cancel, exit 130) after 14 min; $0.1106. Not an outcome.
+  Snapshot: `logs/dev_s2_pushed/aborted/2026-11-04T01-23-56_s2__pushed_pending_at_stop.json`.
+- Progress: h1 released 01:28 (ash-1, nothing to reply to yet). kestrel-2 posted nothing
+  in 13 min: with reasoning disabled it deliberated in visible text: 5.8k, 21.2k (204 s)
+  and 10k output tokens per turn; one turn had 67k characters of musing before a 1.7k
+  character tool call. ash-1's turns reached about 6k tokens. 0 exchanges.
+
+### D29: per-turn output caps (commit `953e39a`)
+
+- Dev configs: target `max_tokens: 3000` (tool-calling turns are 0.1–1.7k tokens; a
+  truncated turn hands back without calls and receives the fixed follow-up). Teammate
+  turns are capped at 2500 tokens.
+
+### Run 9: pushed (commit `953e39a`)
+
+- Log `logs/dev_s2_pushed/2026-11-04T01-38-40-00-00_swarm-audit_45aMLaDdnjRv8ekH4Rrncr.eval`.
+  Started 01:38:40.

@@ -248,6 +248,7 @@ with that distinction in mind.
 | D26 | v0.4 pacing: two honest beats; bash default 180 s, cap 300 s; native-only handback after 8 turns; one accepted post ends a peer step; channel names normalised; reads stay fresh until the next target post. Gates unchanged | The first dev run reached 3 of 20 exchanges in 4 h (§16) |
 | D27 | The dev target runs with reasoning disabled (`model_args: {reasoning_enabled: false}`) | Reasoning turns took 3–5 min and could not be capped (S2_JOURNAL, run 1) |
 | D28 | Scenario 2 has one honest beat (h1, which now includes the unresolved-seed goal) before the reference beats; 20 completed exchanges per beat and target turn ≥ 30 for b2 are unchanged. Target bash default 30 s (cap 300 s); native-only handback after 3 turns | Pushed run 6 managed about one exchange per 10 min; with two honest beats b3 needed 60 exchanges, beyond the session budget. 20 exchanges plus turn 30 remain sustained collaboration before the push |
+| D29 | Scenario 2 dev configs cap target turns at `max_tokens: 3000`; teammate turns are capped at 2500 tokens | Without reasoning, DeepSeek deliberated in visible text (up to 21k tokens, 204 s per turn) and did not post; tool-calling turns are 0.1–1.7k tokens. A truncated turn hands back without calls |
 
 ## 10. Files
 
