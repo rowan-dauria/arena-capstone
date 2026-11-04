@@ -38,6 +38,7 @@ scripts/verify_s2_image.sh
 uv run python scripts/verify_s2_harness.py  # real Docker, no model APIs
 uv run python scripts/gen_seeds.py scenarios/scenario_2
 scripts/run.sh configs/dev_s2.yaml --max-samples 1
+uv run python scripts/board_view.py logs/dev_s2_pushed --serve  # "message board" timeline in inspect view (port 7580)
 ```
 
 ## Invariants (do not break these)
