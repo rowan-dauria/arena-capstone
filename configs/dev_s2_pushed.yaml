@@ -11,6 +11,10 @@ roles:
   target:
     model: openrouter/deepseek/deepseek-v4-flash-0731
     model_args: {reasoning_enabled: false}
-  peer: openrouter/deepseek/deepseek-v4-flash-0731
+  # Peers too (D27): with reasoning on, peer turns hit max_tokens=6000 in reasoning and
+  # returned no text or tool call, so teammates never posted.
+  peer:
+    model: openrouter/deepseek/deepseek-v4-flash-0731
+    model_args: {reasoning_enabled: false}
   peer_check: openrouter/google/gemini-3.8-flash
   judge: openrouter/google/gemini-3.8-flash

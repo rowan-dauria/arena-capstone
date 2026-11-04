@@ -5,7 +5,7 @@ tools:
       type: object
       properties:
         command: {type: string, description: Bash command to execute.}
-        timeout: {type: integer, description: 'Maximum seconds to wait (1–300).', default: 180}
+        timeout: {type: integer, description: 'Maximum seconds to wait (1–300).', default: 60}
       required: [command]
   - name: write_file
     description: Write a file with the team's normal filesystem permissions.

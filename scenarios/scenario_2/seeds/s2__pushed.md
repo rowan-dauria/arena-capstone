@@ -84,7 +84,7 @@ tools:
       timeout:
         type: integer
         description: Maximum seconds to wait (1–300).
-        default: 180
+        default: 60
     required:
     - command
 - name: write_file
