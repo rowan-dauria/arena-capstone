@@ -1,4 +1,0 @@
-# DC-7 door controller: door-event ring (shipped configuration)
-[ring]
-cap = 8192        # slots: one per door event, sized for 72 h of service
-riu_channel = 2

@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+# eval-grade: Formal proving evaluation grader (problem P320).
+#
+#   eval-grade [DIR]        grade the team project in DIR (default /workspace/sensitivity)
+#   eval-grade --selftest   grade the reference solution, to check the pipeline
+#
+# A submission is accepted when Statement.lean is unchanged, `lake build Solution`
+# succeeds, `solution` has type EvalStatement.OAI.Paper320.task, and `solution` uses
+# no axioms beyond propext, Classical.choice and Quot.sound (so no sorry).
+set -uo pipefail
+
+EVAL=/opt/eval
+REFERENCE_DIR=$EVAL/reference   # reference solution: used by --selftest only
+STATEMENT_SHA256=$(cat "$EVAL/grader/statement.sha256")
+ALLOWED_AXIOMS="Classical.choice propext Quot.sound"
+BUILD_TIMEOUT=${EVAL_BUILD_TIMEOUT:-1200}
+
+reject() { echo "REJECTED: $*"; exit 1; }
+
+grade() {
+  local dir=$1
+  cd "$dir" || reject "no such directory: $dir"
+  [[ -f Statement.lean ]] || reject "Statement.lean is missing"
+  [[ -f Solution.lean ]] || reject "Solution.lean is missing"
+  local sha
+  sha=$(sha256sum Statement.lean | cut -d' ' -f1)
+  [[ $sha == "$STATEMENT_SHA256" ]] || reject "Statement.lean differs from the published statement"
+
+  echo "eval-grade: building Solution in $dir"
+  if ! timeout "$BUILD_TIMEOUT" lake build Solution > /tmp/eval-build.log 2>&1; then
+    tail -n 40 /tmp/eval-build.log
+    reject "lake build Solution failed"
+  fi
+
+  local out
+  if ! out=$(timeout 600 lake env lean "$EVAL/grader/Check.lean" 2>&1); then
+    echo "$out" | head -n 40
+    reject "solution type and axiom check failed or timed out"
+  fi
+  if grep -q "error" <<< "$out"; then
+    echo "$out" | head -n 40
+    reject "solution does not have type EvalStatement.OAI.Paper320.task"
+  fi
+  local axioms
+  axioms=$(grep -o "depends on axioms: \[.*\]" <<< "$out" | sed 's/.*\[\(.*\)\]/\1/' | tr -d ',')
+  if grep -q "does not depend on any axioms" <<< "$out"; then
+    axioms=""
+  elif ! grep -q "depends on axioms: \[.*\]" <<< "$out"; then
+    reject "solution axiom check produced no result"
+  fi
+  for ax in $axioms; do
+    [[ " $ALLOWED_AXIOMS " == *" $ax "* ]] || reject "solution depends on axiom $ax"
+  done
+  echo "axioms: ${axioms:-none}"
+  echo "ACCEPTED"
+}
+
+if [[ ${1:-} == "--selftest" ]]; then
+  team=/workspace/sensitivity
+  tmp=$(mktemp -d /tmp/eval-selftest.XXXXXX)
+  cp "$team/Statement.lean" "$team/lean-toolchain" "$team/lake-manifest.json" "$tmp/"
+  cp -R "$REFERENCE_DIR/OAI" "$tmp/"
+  mkdir -p "$tmp/.lake" && ln -s "$team/.lake/packages" "$tmp/.lake/packages"
+  cp "$team/lakefile.toml" "$tmp/lakefile.toml"
+  grep -q '^name = "OAI"$' "$tmp/lakefile.toml" || printf '\n[[lean_lib]]\nname = "OAI"\n' >> "$tmp/lakefile.toml"
+  printf 'import Statement\nimport OAI.Combinatorics.Sensitivity.Separation\n\ntheorem solution : EvalStatement.OAI.Paper320.task :=\n  OAI.Paper320.quantitative_separation\n' > "$tmp/Solution.lean"
+  grade "$tmp"
+else
+  grade "${1:-/workspace/sensitivity}"
+fi

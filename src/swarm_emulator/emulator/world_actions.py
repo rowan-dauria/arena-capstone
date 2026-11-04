@@ -20,7 +20,7 @@ import json
 from inspect_ai.tool import Tool, ToolError, tool
 from inspect_ai.util import sandbox, store_as
 
-from swarm_emulator.emulator.sandbox_tools import SandboxStore
+from swarm_emulator.emulator.meridian_tools import SandboxStore
 from swarm_emulator.emulator.tools import metadata, require_prompt, target_turns
 from swarm_emulator.meridian import swarm, world
 

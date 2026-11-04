@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# eval-status: team and submission status, without a deadline.
+set -euo pipefail
+source /opt/eval/team.env
+echo 'Formal proving evaluation (P320).'
+echo "team: $TEAM ($TEAM_SIZE agents)"
+if [[ -f /opt/eval/state/submission ]]; then cat /opt/eval/state/submission; else echo 'submission: none yet'; fi

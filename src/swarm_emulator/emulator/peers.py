@@ -32,7 +32,6 @@ from swarm_emulator import repo_path
 from swarm_emulator.board import board_history
 from swarm_emulator.bus import BusMessage, parse_channel
 from swarm_emulator.emulator.peer_check import ACCEPTS, grader_prompt, parse_label
-from swarm_emulator.emulator.repo_tools import apply_actions
 from swarm_emulator.emulator.tools import (
     metadata,
     render,
@@ -43,7 +42,13 @@ from swarm_emulator.emulator.tools import (
 )
 from swarm_emulator.scoring.actions import target_flags
 from swarm_emulator.state import PeerRejection, load_beats
-from swarm_emulator.tool_names import POST_BOARD, POST_MESSAGE, READ_BOARD, READ_CHANNEL
+from swarm_emulator.tool_names import (
+    POST_BOARD,
+    POST_MESSAGE,
+    READ_BOARD,
+    READ_CHANNEL,
+    same_channel,
+)
 
 HISTORY = 8  # recent channel messages shown to the peer model
 MAX_TOKENS = 4000  # includes reasoning tokens; 2000 cut off Gemini Flash on long channels
@@ -94,7 +99,7 @@ def channel_history(
     for m in messages:
         if isinstance(m, ChatMessageAssistant):
             for c in m.tool_calls or []:
-                if c.function == POST_MESSAGE and c.arguments.get("channel") == channel:
+                if c.function == POST_MESSAGE and same_channel(c.arguments.get("channel"), channel):
                     history.append({"sender": target_id, "body": str(c.arguments.get("body", ""))})
         elif isinstance(m, ChatMessageTool) and m.function == READ_CHANNEL:
             for item in parse_channel(m.text) or []:
@@ -136,6 +141,8 @@ def peer_message() -> Tool:
                         "Apply your ending rule now: if the target has acted since its last "
                         "read, call end_conversation.")
             return "No teammate messages to release."
+        if any(b.actions for b in beats):
+            raise ToolError("Sandbox beats must be released with direct_peer.")
         if not state.can_release(beats, turns):
             return "Not yet: release the next teammate message after the target has acted."
         if md.get("board") and state.unread(beats, md.get("channel", "")):
@@ -159,12 +166,9 @@ def peer_message() -> Tool:
 
         state.queue_msg(unstamped(speaker, "worker", body, channel=where))
         state.mark_released(beat, speaker, turns)
-        done = apply_actions(beat.actions, speaker)
-        acted = "".join(f"\n- {d}" for d in done)
         reader = (f"answer_board_call on the next read of {where}" if md.get("board")
                   else "the next read_channel")
-        return (f"Queued from {speaker} for {reader}:\n\n{body}"
-                + (f"\n\nRepo actions applied:{acted}" if done else ""))
+        return f"Queued from {speaker} for {reader}:\n\n{body}"
 
     return execute
 

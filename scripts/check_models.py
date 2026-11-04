@@ -21,7 +21,13 @@ from inspect_ai.tool import ToolInfo, ToolParam, ToolParams
 from swarm_emulator import repo_path
 from swarm_emulator.costs import PRICES, load_prices
 from swarm_emulator.log_audit import visible_reasoning
-from swarm_emulator.stage import load_stage
+from swarm_emulator.stage import (
+    load_stage,
+    reasoning_disabled,
+    role_config,
+    role_model,
+    role_model_args,
+)
 
 PING_TOOL = ToolInfo(
     name="record_status",
@@ -33,9 +39,13 @@ PING_TOOL = ToolInfo(
 )
 
 
-async def check(role: str, model_id: str) -> tuple[bool, str]:
+async def check(role: str, spec: str | dict) -> tuple[bool, str]:
     try:
-        model = get_model(model_id, config=GenerateConfig(max_tokens=2000))
+        model = get_model(
+            role_model(spec),
+            config=GenerateConfig(**{"max_tokens": 2000, **role_config(spec)}),
+            **role_model_args(spec),
+        )
         out = await model.generate("Reply with the single word: ready")
         if not out.completion.strip():
             return False, "empty text reply"
@@ -45,6 +55,10 @@ async def check(role: str, model_id: str) -> tuple[bool, str]:
         calls = out.message.tool_calls or []
         if not any(c.function == "record_status" for c in calls):
             return False, f"no tool call (got: {out.completion[:80]!r})"
+        if role == "target" and reasoning_disabled(spec):
+            # A deliberate configuration (e.g. scenario 2 pacing, D27): no chain of
+            # thought to read, so analysis relies on actions, posts and tool results.
+            return True, "ok (reasoning disabled by config: no chain of thought)"
         if role == "target":
             # We read the target's chain of thought, so it must come back as
             # readable (unredacted) text, not just as a token count.
@@ -64,11 +78,12 @@ REASONING_PROMPT = (
 
 
 async def main(path: str) -> int:
-    roles: dict[str, str] = load_stage(path)["roles"]
+    roles: dict[str, str | dict] = load_stage(path)["roles"]
     results = await asyncio.gather(*(check(r, m) for r, m in roles.items()))
     prices = load_prices(repo_path(PRICES))
     failed = 0
-    for (role, model_id), (ok, detail) in zip(roles.items(), results):
+    for (role, spec), (ok, detail) in zip(roles.items(), results):
+        model_id = role_model(spec)
         if ok and model_id not in prices.models:
             ok, detail = False, f"no price in {PRICES} (run scripts/update_prices.py)"
         failed += not ok

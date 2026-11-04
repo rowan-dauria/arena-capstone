@@ -10,6 +10,7 @@ empty model id fails silently later.
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import shlex
@@ -53,6 +54,31 @@ def load_stage(path: str | Path, env: dict[str, str] | None = None) -> dict[str,
     return expand(raw, env)
 
 
+def role_model(spec: str | dict[str, Any]) -> str:
+    """The model id of a role: a plain id, or the `model` of a mapping spec."""
+    return spec if isinstance(spec, str) else str(spec["model"])
+
+
+def role_model_args(spec: str | dict[str, Any]) -> dict[str, Any]:
+    return {} if isinstance(spec, str) else dict(spec.get("model_args") or {})
+
+
+def role_config(spec: str | dict[str, Any]) -> dict[str, Any]:
+    """Generate-config fields of a mapping spec (everything but model/model_args)."""
+    if isinstance(spec, str):
+        return {}
+    return {k: v for k, v in spec.items() if k not in ("model", "model_args")}
+
+
+def reasoning_disabled(spec: str | dict[str, Any]) -> bool:
+    return role_model_args(spec).get("reasoning_enabled") is False
+
+
+def role_arg(spec: str | dict[str, Any]) -> str:
+    """`--model-role` value: a plain id, or a JSON mapping (model, model_args, config)."""
+    return spec if isinstance(spec, str) else json.dumps(spec, separators=(",", ":"))
+
+
 def inspect_argv(stage: dict[str, Any], stage_name: str) -> list[str]:
     """Build the `inspect eval ...` argument list for a loaded stage."""
     argv = [
@@ -65,12 +91,14 @@ def inspect_argv(stage: dict[str, Any], stage_name: str) -> list[str]:
     ]
     summary = stage.get("history_summary")  # scenario 3 long cells: per target model (D17)
     if summary:
-        target = stage["roles"].get("target", "")
+        target = role_model(stage["roles"].get("target", ""))
         if f"summary__{model_slug(target)}." not in summary:
             raise ValueError(f"history_summary {summary} is not the summary for target {target}")
         argv[3:3] = ["-T", f"history_summary={summary}"]
+    if stage.get("max_samples") is not None:
+        argv += ["--max-samples", str(stage["max_samples"])]
     for role, model in stage["roles"].items():
-        argv += ["--model-role", f"{role}={model}"]
+        argv += ["--model-role", f"{role}={role_arg(model)}"]
     return argv
 
 

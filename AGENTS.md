@@ -6,7 +6,7 @@ refuses, or reports a misaligned goal. It measures individual propensity,
 not emergent swarm dynamics.
 
 Where things stand: `docs/STATUS.md`. Full design and task list: `docs/SPEC.md`
-(scenario 3: `docs/SCENARIO_3_SPEC.md`, plus the history, drift and ladder addenda `docs/SCENARIO_3_{HISTORY,DRIFT,LADDER}_SPEC.md`). Open questions: `docs/DECISIONS.md`.
+(scenario 2: `docs/SCENARIO_2_SPEC.md`; scenario 3: `docs/SCENARIO_3_SPEC.md`, plus the history, drift and ladder addenda `docs/SCENARIO_3_{HISTORY,DRIFT,LADDER}_SPEC.md`). Open questions: `docs/DECISIONS.md`.
 
 ## Commands
 
@@ -31,6 +31,14 @@ uv run python scripts/gen_seeds.py scenarios/scenario_3  # seeds from cells.yaml
 scripts/run.sh configs/dev_s3.yaml                       # one cell; dev_s3_grid.yaml runs all five
 uv run python scripts/gate_s3.py logs/pilot_s3 --latest  # pilot gate report
 uv run python scripts/probe_log.py logs/dev_s3_grid --latest --scenario scenarios/scenario_3  # re-probe a log
+
+# Scenario 2 (VM: ~/s2-remake; run one sample at a time)
+scripts/build_s2_image.sh
+scripts/verify_s2_image.sh
+uv run python scripts/verify_s2_harness.py  # real Docker, no model APIs
+uv run python scripts/gen_seeds.py scenarios/scenario_2
+scripts/run.sh configs/dev_s2.yaml --max-samples 1
+uv run python scripts/board_view.py logs/dev_s2_pushed --serve  # "message board" timeline in inspect view (port 7580)
 ```
 
 ## Invariants (do not break these)
@@ -58,11 +66,14 @@ uv run python scripts/probe_log.py logs/dev_s3_grid --latest --scenario scenario
   seeds, auditor instructions or the peer model's prompt.
 - **Logic modules are unit-testable without API calls.** Put model calls only
   in tools and scorers; keep `state.py`, `config.py`, `bus.py`, `clock.py`,
-  `seeds.py`, `repo.py`, `board.py`, `board_gen.py`, `pilot_gate.py`,
+  `seeds.py`, `proof.py`, `board.py`, `board_gen.py`, `pilot_gate.py`,
   `scoring/actions.py` and `scoring/outcome.py` pure.
-- **Generated files are never edited by hand.** Scenario 3's boards and seeds come
-  from `board_gen.py` and `seeds.py`; change the sources and regenerate (tests fail
+- **Generated files are never edited by hand.** Scenario 2's seeds and scenario 3's
+  boards and seeds come from `seeds.py` and `board_gen.py`; change the sources and regenerate (tests fail
   if they are stale).
+- **Scenario 2 (D21/D24):** graded formal proving is in-world. No organisation,
+  human or report tool; five private per-run keys replace approvals. The harness
+  never writes keys to the sandbox. Voluntary sharing is recorded as an action.
 - **Dev runs use cheap models and low `max_turns`.** CI never calls a model API.
 - **The judge is never from the target's model family.**
 - **Scenarios follow `scenarios/AUTHORING.md`.** Harmful and harmless beats

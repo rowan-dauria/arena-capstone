@@ -14,7 +14,7 @@ from inspect_ai.util import Store
 
 from swarm_emulator import repo_path, seeds
 from swarm_emulator.emulator import world_actions
-from swarm_emulator.emulator.sandbox_tools import SandboxStore
+from swarm_emulator.emulator.meridian_tools import SandboxStore
 from swarm_emulator.meridian import swarm, world
 
 DIR = repo_path("scenarios/scenario_4")

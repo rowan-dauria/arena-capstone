@@ -16,8 +16,12 @@ BEATS = [Beat(id="b1", goal="g1"), Beat(id="b2", goal="g2"), Beat(id="b3", goal=
 
 def bus(sender: str, body: str) -> BusMessage:
     return BusMessage(
-        id="msg_1", ts="2026-10-28T09:14:54Z", channel="#c",
-        sender=sender, sender_role="worker", body=body,
+        id="msg_1",
+        ts="2026-10-28T09:14:54Z",
+        channel="#c",
+        sender=sender,
+        sender_role="worker",
+        body=body,
     )
 
 
@@ -98,3 +102,82 @@ def test_load_beats(tmp_path):
     assert load_beats(p) == [Beat(id="b1", goal="do x")]
     p.write_text("beats: []\n")
     assert load_beats(p) == []
+
+
+def exchange(state, post_turn, delivery_turn, ident):
+    state.record_target_post(ident, post_turn, f"idea {ident}")
+    state.record_peer_reply(ident, "ash-1", f"reply {ident}")
+    state.commit_delivery(
+        f"read-{ident}", [bus("ash-1", f"reply {ident}")], target_turn=delivery_turn
+    )
+
+
+def test_reference_gate_needs_both_turn_30_and_three_delivered_exchanges():
+    beats = [Beat(id="honest", goal="work"), Beat(id="ref", goal="use", min_target_turn=30)]
+    s = fresh()
+    s.mark_released(beats[0], "ash-1", 1)
+    for n in range(3):
+        exchange(s, 2 + n * 2, 3 + n * 2, str(n))
+    assert s.completed_exchanges() == 3
+    assert not s.can_release(beats, 29, min_target_posts=3)
+    assert s.can_release(beats, 30, min_target_posts=3)
+    s.mark_released(beats[1], "brook-3", 30)
+    assert s.completed_exchanges() == 0
+
+
+def test_queued_replies_and_many_posts_without_delivery_do_not_bypass_gate():
+    s = fresh()
+    s.mark_released(BEATS[0], "ash-1", 1)
+    for n in range(3):
+        s.record_target_post(str(n), n + 2, "idea")
+        s.record_peer_reply(str(n), "ash-1", f"reply {n}")
+    assert not s.can_release(BEATS, 30, min_target_posts=3)
+    s.commit_delivery("batch", [bus("ash-1", f"reply {n}") for n in range(3)], target_turn=6)
+    assert s.completed_exchanges() == 1
+    assert not s.can_release(BEATS, 30, min_target_posts=3)
+
+
+def test_broadcasts_repeated_replies_and_parallel_target_posts_count_once():
+    s = fresh()
+    s.mark_released(BEATS[0], "ash-1", 1)
+    s.record_target_post("a", 2, "idea")
+    s.record_target_post("b", 2, "another idea in the same turn")
+    for ident in ("a", "a", "b", "unrelated"):
+        s.record_peer_reply(ident, "ash-1", "same reply")
+    s.commit_delivery("read", [bus("ash-1", "same reply")], target_turn=3)
+    assert s.completed_exchanges() == 1
+
+
+def test_exchange_journal_persists_in_the_store():
+    backing = Store()
+    s = SwarmState(store=backing)
+    s.mark_released(BEATS[0], "ash-1", 1)
+    exchange(s, 2, 3, "a")
+    assert SwarmState(store=backing).completed_exchanges() == 1
+
+
+def test_negative_minimum_target_turn_is_invalid():
+    with pytest.raises(ValidationError):
+        Beat(id="x", goal="g", min_target_turn=-1)
+
+
+def test_twenty_exchange_boundary_and_reset_for_the_following_beat():
+    s = fresh()
+    s.mark_released(BEATS[0], "ash-1", 1)
+    for n in range(19):
+        exchange(s, 2 + n * 2, 3 + n * 2, str(n))
+    assert s.completed_exchanges() == 19
+    assert not s.can_release(BEATS, 100, min_target_posts=20)
+    exchange(s, 40, 41, "20")
+    assert s.can_release(BEATS, 100, min_target_posts=20)
+    s.mark_released(BEATS[1], "ash-1", 100)
+    assert not s.can_release(BEATS, 101, min_target_posts=20)
+
+
+def test_empty_target_posts_cannot_manufacture_discussion():
+    s = fresh()
+    s.mark_released(BEATS[0], "ash-1", 1)
+    s.record_target_post("empty", 2, " \n")
+    s.record_peer_reply("empty", "ash-1", "a broadcast")
+    s.commit_delivery("read", [bus("ash-1", "a broadcast")], target_turn=3)
+    assert s.completed_exchanges() == 0

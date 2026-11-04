@@ -31,14 +31,14 @@ class BeatVariant(BaseModel):
 class Beat(BaseModel):
     id: str
     goal: str
-    # When the beat may be released (SwarmState.can_release). Both values need a
-    # target turn since the previous release, and board scenarios also hold a beat
-    # until the last one on its path has been read. `immediate` marks beats that
-    # don't depend on the target's reply (the ladder's help beats, D19);
-    # `after_target_engages` beats follow up on it. Other values fail at load.
+    min_target_turn: int = Field(default=0, ge=0)
+    phase: Literal["honest", "reference"] = "reference"
+    # Both triggers require a target turn since the last release. Immediate beats
+    # provide ladder help without waiting for a reply; scenario 2 additionally
+    # applies its minimum-turn and completed-exchange gates in can_release.
     trigger: Literal["after_target_engages", "immediate"] = "after_target_engages"
-    # Scripted peer actions applied when the beat is released (repo scenarios:
-    # see emulator.repo_tools.apply_actions). Fixed in the scenario files, never
+    # Scripted peer actions applied when the beat is released (sandbox scenarios:
+    # see emulator.sandbox_tools.SandboxHarness.apply_actions). Fixed in the scenario files, never
     # written by the auditor.
     actions: list[dict[str, Any]] = []
     # Where the message is posted (board scenarios: a board path, e.g. the
@@ -74,6 +74,19 @@ class Release(BaseModel):
     delivered: bool = False  # a read has handed it to the target (ladder `reached_*`)
 
 
+class DiscussionPost(BaseModel):
+    call_id: str
+    target_turn: int
+    body: str
+
+
+class DiscussionReply(BaseModel):
+    target_post_id: str
+    sender: str
+    body: str
+    delivered_turn: int | None = None
+
+
 class PeerRejection(BaseModel):
     """A peer message the peer_check grader did not label PUSH (never delivered)."""
 
@@ -104,6 +117,8 @@ class SwarmState(StoreModel):
     echoed_posts: list[str] = Field(default_factory=list)  # target post_message call ids shown back
     peer_rejections: list[PeerRejection] = Field(default_factory=list)
     skipped: list[str] = Field(default_factory=list)  # beats whose `requires` didn't hold
+    discussion_posts: list[DiscussionPost] = Field(default_factory=list)
+    discussion_replies: list[DiscussionReply] = Field(default_factory=list)
     msg_count: int = 0
 
     # ---- beats --------------------------------------------------------------
@@ -111,16 +126,68 @@ class SwarmState(StoreModel):
     def next_beat(self, beats: list[Beat]) -> Beat | None:
         return beats[self.beat_index] if self.beat_index < len(beats) else None
 
-    def can_release(self, beats: list[Beat], target_turns: int) -> bool:
+    def can_release(
+        self, beats: list[Beat], target_turns: int, *, min_target_posts: int = 0
+    ) -> bool:
         """A beat is releasable once the target has taken a turn since the last release.
 
-        So the first beat needs at least one target turn, and no two beats can be
-        released back-to-back without the target acting in between.
+        The beat may also require a minimum turn. After the first release, an
+        optional exchange threshold requires target posts with delivered peer
+        replies between them. A zero threshold preserves the original pacing.
         """
-        if self.next_beat(beats) is None:
+        beat = self.next_beat(beats)
+        if beat is None or target_turns < beat.min_target_turn:
             return False
         last = self.released[-1].target_turn if self.released else 0
-        return target_turns > last
+        return target_turns > last and (
+            not self.released or self.completed_exchanges() >= min_target_posts
+        )
+
+    def record_target_post(self, call_id: str, target_turn: int, body: str) -> None:
+        if not body.strip():
+            return
+        if not any(p.call_id == call_id for p in self.discussion_posts):
+            self.discussion_posts = [
+                *self.discussion_posts,
+                DiscussionPost(
+                    call_id=call_id,
+                    target_turn=target_turn,
+                    body=body,
+                ),
+            ]
+
+    def record_peer_reply(self, target_post_id: str, sender: str, body: str) -> None:
+        self.discussion_replies = [
+            *self.discussion_replies,
+            DiscussionReply(
+                target_post_id=target_post_id,
+                sender=sender,
+                body=body,
+            ),
+        ]
+
+    def completed_exchanges(self) -> int:
+        """Distinct target-post/peer-reply exchanges delivered since the last release.
+
+        A new target post must follow the preceding reply's delivery. Several
+        broadcasts or replies queued for one read cannot manufacture a discussion.
+        """
+        after = self.released[-1].target_turn if self.released else 0
+        count = 0
+        for post in self.discussion_posts:
+            if post.target_turn <= after:
+                continue
+            deliveries = [
+                r.delivered_turn
+                for r in self.discussion_replies
+                if r.target_post_id == post.call_id
+                and r.delivered_turn is not None
+                and r.delivered_turn >= post.target_turn
+            ]
+            if deliveries:
+                after = min(deliveries)
+                count += 1
+        return count
 
     def unread(self, beats: list[Beat], default_path: str) -> bool:
         """True if a message is still queued where the next beat would post.
@@ -207,6 +274,7 @@ class SwarmState(StoreModel):
         msgs: list[BusMessage],
         post_ids: Sequence[str] = (),
         channel: str | None = None,
+        target_turn: int | None = None,
     ) -> None:
         """Record a staged delivery: drop the delivered queued messages (those for
         `channel`, or all if None), log messages, mark the read answered, and
@@ -220,3 +288,11 @@ class SwarmState(StoreModel):
         self.record_delivered(msgs)
         self.answered_reads = [*self.answered_reads, tool_call_id]
         self.echoed_posts = [*self.echoed_posts, *post_ids]
+        if target_turn is not None:
+            delivered = {(m.sender, m.body) for m in msgs}
+            self.discussion_replies = [
+                r.model_copy(update={"delivered_turn": target_turn})
+                if r.delivered_turn is None and (r.sender, r.body) in delivered
+                else r
+                for r in self.discussion_replies
+            ]

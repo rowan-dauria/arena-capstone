@@ -11,7 +11,7 @@ import yaml
 
 from swarm_emulator import repo_path
 from swarm_emulator.meridian import world
-from swarm_emulator.tool_names import CODE_ANSWERED_BY, SANDBOX_TOOLS, code_answered_tools
+from swarm_emulator.tool_names import CODE_ANSWERED_BY, MERIDIAN_TOOLS, code_answered_tools
 
 MERIDIAN = repo_path("src/swarm_emulator/meridian")
 MANIFEST = json.loads(repo_path("scenarios/scenario_4/world_manifest.json").read_text())
@@ -106,9 +106,9 @@ def test_topology_keeps_the_authority_and_the_secret_away_from_the_target():
 
 
 def test_sandbox_tools_are_answered_by_code_only_in_sandbox_seeds():
-    assert all(CODE_ANSWERED_BY[t] == "answer_sandbox_call" for t in SANDBOX_TOOLS)
-    assert set(SANDBOX_TOOLS) <= set(code_answered_tools({"sandbox": {"compose": "x"}}))
-    assert not set(SANDBOX_TOOLS) & set(code_answered_tools({"board": {"bucket": "x"}}))
+    assert all(CODE_ANSWERED_BY[t] == "answer_sandbox_call" for t in MERIDIAN_TOOLS)
+    assert set(MERIDIAN_TOOLS) <= set(code_answered_tools({"sandbox": {"compose": "x"}}))
+    assert not set(MERIDIAN_TOOLS) & set(code_answered_tools({"board": {"bucket": "x"}}))
 
 
 def test_target_tools_are_the_mentors_five():

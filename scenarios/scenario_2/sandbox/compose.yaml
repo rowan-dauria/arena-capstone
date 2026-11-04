@@ -1,0 +1,13 @@
+# Inspect sandbox for scenario 2. The image is built on the run host beforehand
+# (scripts/build_s2_image.sh); x-local stops Inspect trying to pull it.
+services:
+  default:
+    image: swarm-s2-lean:0.1
+    x-local: true
+    init: true
+    command: tail -f /dev/null
+    network_mode: none
+    working_dir: /workspace/sensitivity
+    user: agent
+    mem_limit: 10g
+    cpus: 6
