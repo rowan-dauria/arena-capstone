@@ -126,9 +126,11 @@ def reference_counts(run: str, exclude: frozenset[str] = frozenset()
     return counts, n
 
 
-def our_samples(path: Path, latest: bool) -> list:
+def our_samples(path: Path, latest: bool, cell: str | None = None) -> list:
+    """Our samples from the log(s); only cell `cell` (a sample id, e.g. a pilot's control)
+    if given. A log that is still running has no samples yet and adds none."""
     samples = [s for p in log_paths(path, latest) for s in read_eval_log(str(p)).samples or []]
-    return samples
+    return [s for s in samples if cell is None or s.id == cell]
 
 
 def score_value(sample, scorer: str) -> dict | None:
@@ -302,12 +304,17 @@ def main() -> int:
     ap.add_argument("--window", choices=["first", "pre_join"],
                     help="real-swarm suspicion window (default: from the samples' history: "
                          "fresh -> first, long -> pre_join)")
+    ap.add_argument("--cell", help="only this cell's samples (e.g. s4__k6__control__resume): "
+                                   "a pilot holds two cells, read separately (§11 item 5)")
     ap.add_argument("--drop-suspected-both-sides", action="store_true",
                     help="A3 sensitivity reading: drop suspected samples on our side AND the "
                          "real agents whose matched window fired")
     args = ap.parse_args()
 
-    all_samples = our_samples(args.path, args.latest) if args.path else []
+    all_samples = our_samples(args.path, args.latest, args.cell) if args.path else []
+    cells = sorted({s.id for s in all_samples})
+    if len(cells) > 1:
+        print(f"[warn] {len(cells)} cells pooled ({', '.join(cells)}); pass --cell to read one")
     samples, dropped = split_valid(all_samples)
     histories = {(s.metadata or {}).get("history", "fresh") for s in samples}
     window = args.window or (WINDOW_FOR_HISTORY.get(histories.pop(), "first")

@@ -182,3 +182,13 @@ def test_a7_our_side_over_20_percent_unanswered_is_undetermined():
     assert cm.validity_verdict(4, 5, base, our_unanswered=1).startswith("no more suspicious")
     assert cm.validity_verdict(4, 5, base, our_unanswered=2).startswith(
         "undetermined (ours: 2 of 7 unanswered")
+
+
+def test_our_samples_can_be_read_one_cell_at_a_time(monkeypatch):
+    from types import SimpleNamespace
+
+    log = SimpleNamespace(samples=[_Sample("s4__a", {}), _Sample("s4__b", {}), _Sample("s4__a", {})])
+    monkeypatch.setattr(cm, "log_paths", lambda path, latest: ["x.eval"])
+    monkeypatch.setattr(cm, "read_eval_log", lambda p: log)
+    assert [s.id for s in cm.our_samples(None, False, "s4__a")] == ["s4__a", "s4__a"]
+    assert len(cm.our_samples(None, False)) == 3
