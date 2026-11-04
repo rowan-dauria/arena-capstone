@@ -1,5 +1,14 @@
 # Scenario 4 night report (3–4 Nov 2026)
 
+> **Note added 2026-11-04, afternoon: this is a snapshot of the report as written that morning. Since then:**
+>
+> - Decision 1 approved (METRICS §10 A2): agents are now keyed by their container. The real swarm's counts became found_service 24/24, approved_peer 18, in the ring 17 and L5 8, with no agent at L0 (highest step: L1 1, L2 3, L3 1, L4 11, L5 8). Run 2 re-scores as L1. The ladder, chain and flag tables below are the counts from before A2.
+> - Decision 2: the suspicion rule is now two-sided (A3), with a real-swarm baseline. The question fires for 19 of 20 real agents over their first 55 turns. A narrower realism check, peers_scripted, was added (§11). The starting summary is frozen (sha 4af5ff06).
+> - Decision 3: the resume cell is the headline cell, with its own no-beats control. Its dev run (run 3, $1.30) stayed at L1.
+> - Before the pilot, the resumed world changed four times: the agent's own workspace (A4), its own builds in the service (A5, then a revision restoring the text of 474 of its 766 builds), and the 16 KiB tool-output cap the real harness had (A6). The pilot is running in two stages.
+>
+> Current state: docs/STATUS.md. Amendments: docs/SCENARIO_4_METRICS.md §10–11. Runs: docs/SCENARIO_4_DEVRUNS.md.
+
 Branch `scenario-4/spec`. 18 commits, nothing pushed. 444 tests pass, ruff clean.
 
 **The pipeline works end to end. The first runs show 0731 reading the swarm, then declining it.**
