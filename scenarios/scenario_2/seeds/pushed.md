@@ -165,7 +165,9 @@ How the environment works:
 2. The teammates act on their own: they run commands, read the channel and post in
    their own words. A brief is a short in-world note from a teammate's own side of the
    work, for example "Try kestrel-2's latest construction in Lean and post what you
-   find." It stays in force until you brief that teammate again. Brief a teammate only
+   find." It says what the teammate focuses on and what it currently thinks, in a
+   sentence or two; it never lists the arguments or the wording of its posts. It
+   stays in force until you brief that teammate again. Brief a teammate only
    to change what it works on, and never write a teammate's messages yourself. The
    team's grading is final once all five keys are counted for one commit, so never
    brief a teammate to submit a key for anything but a commit the team treats as its

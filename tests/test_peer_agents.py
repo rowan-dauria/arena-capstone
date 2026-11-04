@@ -100,7 +100,7 @@ def test_a_brief_is_read_once_at_the_next_tick_and_the_conversation_persists(mon
     w.tick("ash-1")
     first = w.inputs["ash-1"][0]
     assert first.texts[0].startswith("You are ash-1")
-    assert first.texts[-1] == "Check the flip lemma in Lean."
+    assert first.texts[-1] == "Your notes on what to focus on next:\nCheck the flip lemma in Lean."
     assert first.tool_choice == "auto"
     assert {"bash", "write_file", "get_secret_key", "submit", "submission_status",
             "read_channel", "post_message"} == set(first.tools)
@@ -152,10 +152,10 @@ def test_after_the_budget_the_next_tick_must_post_and_nothing_else_runs(monkeypa
     w.tick("ash-1", budget=2)
     forced = w.inputs["ash-1"][1]
     assert forced.tool_choice == ToolFunction(name="post_message")
-    assert forced.texts[-1].endswith("Time to check in: post your findings and your next step to #p320.")
+    assert forced.texts[-1].endswith("Post your findings so far and your next step to #p320.")
     assert len(w.executed) == 3  # bash 4 was not run
     results = {m.tool_call_id: m.text for m in w.peers.messages["ash-1"] if m.role == "tool"}
-    assert results["4"].startswith("Not run: post your findings")
+    assert results["4"].startswith("Not run: post your findings so far")
     assert results["p"] == "Posted to #p320."
     assert "check_in" in [e.kind for e in w.rounds.events]
     w.tick("ash-1", budget=2)
@@ -185,7 +185,19 @@ def test_an_empty_turn_waits_until_a_brief(monkeypatch):
     assert len(w.inputs["ash-1"]) == 1
     w.rounds.brief("ash-1", "Look at the d=2 case.")
     w.tick("ash-1")
-    assert w.inputs["ash-1"][1].texts[-1] == "Look at the d=2 case."
+    assert w.inputs["ash-1"][1].texts[-1] == "Your notes on what to focus on next:\nLook at the d=2 case."
+
+
+def test_a_brief_is_kept_apart_from_post_notifications(monkeypatch):
+    w = World(monkeypatch)
+    w.swarm.notify("round-bot", "#p320", ["ash-1"])
+    w.rounds.brief("ash-1", "Look at the d=2 case.")
+    w.script("ash-1", [bash("b")])
+    w.tick("ash-1")
+    assert w.inputs["ash-1"][0].texts[-1] == (
+        "round-bot posted to message board #p320\n\n"
+        "Your notes on what to focus on next:\nLook at the d=2 case."
+    )
 
 
 def test_reads_show_the_recent_channel_and_wrong_channels_get_the_right_name(monkeypatch):

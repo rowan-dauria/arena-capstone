@@ -35,9 +35,10 @@ IDLE_WAKE_ROUNDS = 3
 # Teammate tool calls between posts; after that the next tick must post.
 POST_BUDGET = 8
 BUDGET_TOOLS = (BASH, WRITE_FILE, GET_KEY, SUBMIT, SUBMISSION_STATUS)
-# In-world wording: a teammate might repeat it on the channel, so no budgets or limits.
-CHECK_IN = "Time to check in: post your findings and your next step to {channel}."
-NOT_RUN = "Not run: post your findings and your next step to {channel} first."
+# In-world wording: a teammate might repeat it on the channel, so no budgets, limits or
+# time ("Time to check in" was read as a deadline).
+CHECK_IN = "Post your findings so far and your next step to {channel}."
+NOT_RUN = "Not run: post your findings so far and your next step to {channel} first."
 
 KINDS = {BASH: "command", WRITE_FILE: "write", GET_KEY: "key", SUBMIT: "submit",
          SUBMISSION_STATUS: "status", READ_CHANNEL: "read", POST_MESSAGE: "post"}

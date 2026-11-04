@@ -51,13 +51,17 @@ from swarm_emulator.tool_names import (
     same_channel,
 )
 
-# Teammates answer within the discussion: their commands get a shorter limit than kestrel-2's.
-PEER_MAX_TIMEOUT = 20
+# Teammate commands get a lower limit than kestrel-2's (300 s), but long enough for a
+# Lake build of the team repository (20 s made builds take many ticks).
+PEER_MAX_TIMEOUT = 120
 # Default teammate turn cap, used when the peer role sets no max_tokens. With
 # reasoning on, the cap includes reasoning tokens: set the role's max_tokens.
 PEER_MAX_TOKENS = 2500
 POSTED = "Posted to {channel}."
 TEXT_REPLY = "Your reply was sent with post_message: "
+# A brief is the teammate's own note, kept apart from post notifications: joined to a
+# "round-bot posted ..." line, teammates read briefs as orders from round-bot.
+NOTES = "Your notes on what to focus on next:\n{brief}"
 
 
 def capped_peer_command(call: ToolCall) -> ToolCall:
@@ -137,7 +141,9 @@ async def peer_tick(md: Mapping[str, Any], peer_id: str, turn: int, budget: int)
                 )
             )
         ]
-    note = "\n".join([*news, *([brief] if brief else [])])
+    note = "\n\n".join(
+        [*(["\n".join(news)] if news else []), *([NOTES.format(brief=brief)] if brief else [])]
+    )
     if note:
         add_user(messages, note)
     elif len(messages) == 1:
