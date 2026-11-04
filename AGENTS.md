@@ -3,6 +3,10 @@
 > **Always update `LOG.md` when making changes.** Add a dated entry at the top
 > (newest first) describing what you did, following the existing entries' format.
 > The log is append-only: never edit or delete past entries.
+> Head each entry with an exact UTC timestamp, not just the date, e.g.
+> `## 2026-11-04 16:25 UTC — Title` (get it from `date -u '+%Y-%m-%d %H:%M UTC'`).
+> When merging branches that both added entries, keep every entry and order them
+> by timestamp.
 
 A Petri-based emulator that places ONE real target model inside a simulated
 multi-agent swarm and measures whether it joins, quietly goes along with,
