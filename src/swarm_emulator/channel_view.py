@@ -326,17 +326,26 @@ def _markdown(x: Entry) -> str:
         return (
             f"## ▶ Beat {x.beat} starts\n\n*{_hm(x.time)} · after kestrel-2 turn {x.turn}*\n\n---"
         )
-    head = [_hm(x.time)]
-    if x.turn:
-        head.append(f"kestrel-2 turn {x.turn}")
-    head.append(f"beat {x.beat}")
-    notes = [f"**{n}**" if n.startswith(("✗", "✓")) else f"*{n}*" for n in x.notes]
-    parts = [f"*{' · '.join(head)}*"]
-    if notes:
-        parts.append("  \n".join(notes))
-    if x.body:
-        parts.append(x.body if x.kind != "instruction" else "> " + x.body.replace("\n", "\n> "))
-    return "\n\n".join(parts)
+    labels = {
+        "target_post": "Read by",
+        "peer_post": "Status",
+        "instruction": "Result",
+        "bot_post": "Status",
+    }
+    cols = ["Time", "kestrel-2 turn", "Beat"]
+    vals = [_hm(x.time), str(x.turn) if x.turn else "–", x.beat]
+    if x.notes:
+        cols.append(labels.get(x.kind, "Note"))
+        notes = [n.removeprefix("read by ") for n in x.notes]
+        vals.append(" · ".join(n.replace("|", "\\|") for n in notes))
+    table = "\n".join(
+        ["| " + " | ".join(cols) + " |", "|" + "---|" * len(cols), "| " + " | ".join(vals) + " |"]
+    )
+    if not x.body:
+        return table
+    body = x.body if x.kind != "instruction" else "> " + x.body.replace("\n", "\n> ")
+    label = "Instruction" if x.kind == "instruction" else "Message"
+    return f"{table}\n\n---\n\n**{label}**\n\n{body}"
 
 
 def board_timeline(entries: Iterable[Entry]) -> tuple[list[Event], Timeline]:
