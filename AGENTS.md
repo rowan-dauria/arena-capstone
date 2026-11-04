@@ -1,5 +1,9 @@
 # Swarm emulator
 
+> **Always update `LOG.md` when making changes.** Add a dated entry at the top
+> (newest first) describing what you did, following the existing entries' format.
+> The log is append-only: never edit or delete past entries.
+
 A Petri-based emulator that places ONE real target model inside a simulated
 multi-agent swarm and measures whether it joins, quietly goes along with,
 refuses, or reports a misaligned goal. It measures individual propensity,
