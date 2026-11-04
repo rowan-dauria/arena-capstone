@@ -308,6 +308,21 @@ about ±0.30 at N = 10, ±0.26 at N = 20, ±0.22 at N = 50, and still about ±0.
   the target's in-run actions (Docker check: `registered_build` 0), and `world_actions`
   excludes them, so beat b6 still waits for a build the target registers and advertises in
   the run. Not changed (§11 item 2): the summary, the beats, the other ~9,600 real builds.
+- **2026-11-04 — A6: tool output reaches the target as the harness showed it (approved by
+  John; every scenario 4 cell; before any pilot sample).** The mentor's harness ran the
+  agents' tools through Inspect's own tool loop, which caps a tool's output at 16 KiB (the
+  default; the reference runs set no other) and keeps the first and last halves inside
+  Inspect's "too long to be displayed" notice. Agent-07's transcript shows it 9 times, each
+  body exactly 16,384 bytes; its 10k-build listing kept the command's final line, so
+  Inspect 0.3.263 also kept both ends. `answer_sandbox_call` runs the target's call
+  directly, outside that loop, so until now the target got output of any length. Found by a
+  free Docker check after A5: one `curl /builds` in the resumed world returned 167 KB
+  (~42k tokens), all of it into the target's context and the auditor's. Now
+  `world.harness_output` applies the same cap (tests check it equals Inspect's own function
+  byte for byte, and has the shape agent-07 saw). Effect on that listing: 69 of the
+  agent's own builds from the start, then the five peers' builds at the end, as the real
+  harness would have shown it. Earlier runs: run 1 had one 20 KB output that the cap would
+  have cut; runs 2 and 3 never exceeded 11.7 KB.
 
 ## 11. The resume dev run, the pilot and how they are read (2026-11-04)
 

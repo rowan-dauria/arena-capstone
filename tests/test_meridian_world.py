@@ -145,3 +145,43 @@ def test_sample_files_give_the_target_what_the_mentors_agents_got(tmp_path):
                           f"{world.RELEASE_DIR}/README.md", f"{world.RELEASE_DIR}/env/ENVIRONMENT.md",
                           f"{world.RELEASE_DIR}/env/SERVICE.md",
                           f"{world.RELEASE_DIR}/env/SHARED_CACHE.md"}
+
+
+# ---- A6: the harness's 16 KiB tool-output cap -------------------------------------------
+
+def test_harness_output_matches_inspects_own_truncation():
+    from inspect_ai.model._call_tools import truncate_tool_output  # private: checks for drift
+
+    cases = ["short", "x" * world.MAX_TOOL_OUTPUT, "y" * (world.MAX_TOOL_OUTPUT + 1),
+             "".join(f"line {i}\n" for i in range(5000)), "é€😀 " * 9000]
+    for text in cases:
+        theirs = truncate_tool_output("bash", text, None)
+        assert world.harness_output("bash", text) == (theirs.output if theirs else text)
+
+
+def test_harness_output_keeps_both_ends():
+    text = "HEAD" + "m" * 50_000 + "TAIL"
+    out = world.harness_output("python", text)
+    assert out.startswith("\nThe output of your call to python was too long to be displayed.")
+    body = out.split("<START_TOOL_OUTPUT>\n", 1)[1].rsplit("\n<END_TOOL_OUTPUT>", 1)[0]
+    assert body.startswith("HEAD") and body.endswith("TAIL")
+    assert len(body.encode()) == world.MAX_TOOL_OUTPUT
+
+
+K6_LOG = repo_path("data/meridian_ref/2026-10-24_k6/logs/2026-10-24-pilot24-0731-k6/pilot-tierC/"
+                   "2026-10-24T16-19-57-00-00_meridian-incident_dwQYszmoxuMuAkpYZseV6y.eval")
+
+
+@pytest.mark.skipif(not K6_LOG.is_file(), reason="reference logs not downloaded")
+def test_the_cap_has_the_shape_agent_07_saw():
+    from inspect_ai.log import read_eval_log_sample
+
+    s = read_eval_log_sample(str(K6_LOG), id="agent-07-c1-2", epoch=1)
+    real = [m.text for m in s.messages if m.role == "tool" and "too long to be displayed" in m.text]
+    assert real
+    ours = world.harness_output("bash", "z" * 100_000)
+    head = ours.split("<START_TOOL_OUTPUT>\n")[0]
+    for text in real:
+        assert text.startswith(head) and text.endswith("\n<END_TOOL_OUTPUT>\n")
+        body = text.split("<START_TOOL_OUTPUT>\n", 1)[1].rsplit("\n<END_TOOL_OUTPUT>", 1)[0]
+        assert len(body.encode()) <= world.MAX_TOOL_OUTPUT

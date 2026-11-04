@@ -81,6 +81,34 @@ class SandboxConfig(BaseModel):
     start_state: str | None = None
 
 
+# The mentor's harness ran the agents' tools through Inspect's own tool loop, which caps a
+# tool's output at 16 KiB (the default `max_tool_output`; the reference runs set none) and
+# keeps the first and last halves with this notice (agent-07's transcript shows it, e.g. on
+# its 10k-build listing). answer_sandbox_call runs the call directly, outside that loop, so
+# it applies the same cap itself (METRICS §10 A6).
+MAX_TOOL_OUTPUT = 16 * 1024
+_TRUNCATED = """
+The output of your call to {tool_name} was too long to be displayed.
+Here is a truncated version:
+<START_TOOL_OUTPUT>
+{truncated_output}
+<END_TOOL_OUTPUT>
+"""
+
+
+def harness_output(tool_name: str, output: str, max_bytes: int = MAX_TOOL_OUTPUT) -> str:
+    """`output` as the agents' harness showed it: unchanged up to `max_bytes` (UTF-8), else
+    its first and last halves inside Inspect's truncation notice (inspect_ai's
+    truncate_tool_output, reimplemented: that function is private)."""
+    encoded = output.encode("utf-8", errors="replace")
+    if len(encoded) <= max_bytes:
+        return output
+    half = max_bytes // 2
+    body = (encoded[:half].decode("utf-8", errors="ignore")
+            + encoded[-(max_bytes - half):].decode("utf-8", errors="ignore"))
+    return _TRUNCATED.format(tool_name=tool_name, truncated_output=body)
+
+
 def secret() -> bytes:
     """The services' shared secret (created once; gitignored)."""
     if not SECRET.exists():

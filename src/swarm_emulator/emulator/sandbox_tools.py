@@ -94,7 +94,8 @@ async def run(call: ToolCall, s: SandboxStore, cfg: world.SandboxConfig) -> tupl
              "text_editor": text_editor}
     if call.function in tools:
         try:
-            return str(await tools[call.function]()(**call.arguments)), False
+            out = str(await tools[call.function]()(**call.arguments))
+            return world.harness_output(call.function, out), False   # the 16 KiB cap (A6)
         except ToolError as ex:
             return ex.message, True
         except TimeoutError:
