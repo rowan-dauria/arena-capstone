@@ -220,3 +220,6 @@ only, `max_turns: 600`). 309 tests pass, 2 skipped; Ruff passes; image unchanged
   REFERENCE_OUTSIDE_BEAT because `reference_mention` matches the bare word "reference"
   (a false positive: it would also set the control contamination flag; fix queued for after
   this run).
+- Exchange times: 5 at 02:07, 6 at 02:13, 7 at 02:19, 8 at 02:23, 10 at 02:29 (about
+  4–6 min each). The auditor lost turns to the instruction screen (≈24 occurrences in the
+  serialised log). The target keeps arguing the task is false.
