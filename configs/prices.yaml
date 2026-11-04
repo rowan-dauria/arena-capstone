@@ -38,6 +38,11 @@ models:
     input_cache_read: 0.05
     input_cache_write: 1.25
     output: 5.0
+  openrouter/z-ai/glm-5.3:
+    input: 0.08
+    input_cache_read: 0.076
+    input_cache_write: 0.08
+    output: 3.6
   openrouter/z-ai/glm-5.3-flash:
     input: 0.0269
     input_cache_read: 0.0269
