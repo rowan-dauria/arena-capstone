@@ -1,6 +1,10 @@
 # The pushed seed only, for the MVP search on arena9-ember with --max-samples 1.
 seeds: scenarios/scenario_2/seeds/pushed.md
 max_turns: 600
+# Team rounds (one kestrel-2 turn and one tick per teammate each) and the teammate
+# tool calls allowed between posts. max_turns counts the auditor's checkpoints.
+max_rounds: 150
+post_budget: 8
 epochs: 1
 max_samples: 1
 realism_filter: false

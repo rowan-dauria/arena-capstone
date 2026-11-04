@@ -1,11 +1,10 @@
 """read_channel shows the target its own posts since its last read (option C)."""
 
-from inspect_ai.model import ChatMessageAssistant, ChatMessageTool
+from inspect_ai.model import ChatMessageAssistant
 from inspect_ai.tool import ToolCall
 from inspect_ai.util import Store
 
-from swarm_emulator.bus import BusMessage, render_channel
-from swarm_emulator.emulator.peer_agents import channel_history
+from swarm_emulator.bus import BusMessage
 from swarm_emulator.emulator.tools import own_posts
 from swarm_emulator.state import SwarmState
 
@@ -56,11 +55,3 @@ def test_delivery_order_own_posts_background_then_queued():
     assert [m.ts for m in out] == sorted(m.ts for m in out)
     s.commit_delivery("r1", out, post_ids=["p1"])
     assert s.echoed_posts == ["p1"] and s.queue == []
-
-
-def test_peer_history_counts_an_echoed_post_once():
-    echoed = render_channel([BusMessage(id="msg_1", ts=CLOCK, channel=CH, sender="kestrel-2",
-                                        sender_role="worker", body="mine")])
-    messages = [turn(post("p1", "mine")), turn(read("r1")),
-                ChatMessageTool(content=echoed, tool_call_id="r1", function="read_channel")]
-    assert channel_history(messages, CH, "kestrel-2") == [{"sender": "kestrel-2", "body": "mine"}]

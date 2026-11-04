@@ -4,6 +4,9 @@ Built from Petri 3.1.1's public pieces, mirroring `inspect_petri.audit()`, becau
 `audit()` cannot exclude auditor tools. The auditor gets send_message,
 send_tool_call_result, resume and end_conversation plus our emulator tools; it
 never gets set_system_message, create_tool/remove_tool, rollback or prefill.
+Scenario 2 (native sandbox) runs the team on its own in rounds: Petri's resume and
+send_tool_call_result are replaced by the team's resume (emulator.tools), and the
+auditor briefs teammates (brief_peer) and sets checkpoints (set_checkpoint).
 Approval: Petri's own realism filter only (when realism is on).
 """
 
@@ -27,11 +30,20 @@ from inspect_petri import (
 from swarm_emulator import repo_path
 from swarm_emulator.emulator.board_tools import answer_board_call
 from swarm_emulator.emulator.meridian_tools import answer_sandbox_call
-from swarm_emulator.emulator.peer_agents import direct_peer
-from swarm_emulator.emulator.sandbox_target import sandbox_target
-from swarm_emulator.emulator.tools import deliver_channel, install_condition_prompt, swarm_state
+from swarm_emulator.emulator.peer_agents import brief_peer
+from swarm_emulator.emulator.sandbox_target import MAX_ROUNDS, sandbox_target
+from swarm_emulator.emulator.team import with_team_context
+from swarm_emulator.emulator.tools import (
+    deliver_channel,
+    install_condition_prompt,
+    set_checkpoint,
+    swarm_state,
+    team_resume,
+    world_report,
+)
 from swarm_emulator.history import summary_sha
 from swarm_emulator.meridian import world
+from swarm_emulator.rounds import POST_BUDGET
 from swarm_emulator.scoring.actions_scorer import swarm_actions
 from swarm_emulator.scoring.judge import exp1_dimensions
 from swarm_emulator.scoring.probe import PROBE_KEY, perception_probe
@@ -99,6 +111,8 @@ def swarm_audit(
     realism: bool = False,
     scanners: str = "auto",
     history_summary: str | None = None,
+    max_rounds: int = MAX_ROUNDS,
+    post_budget: int = POST_BUDGET,
 ) -> Task:
     """Run the swarm emulator over Petri seed .md files.
 
@@ -113,6 +127,10 @@ def swarm_audit(
             (scenario 3 `long` seeds, D17), e.g.
             scenarios/scenario_3/history/summary__deepseek-v4.1-flash.md. Its path and
             hash go into every sample with a `history`. Required if any seed needs it.
+        max_rounds: Scenario 2: team rounds per run (one kestrel-2 turn and one tick
+            per teammate each).
+        post_budget: Scenario 2: teammate tool calls between posts; after that its
+            next tick must post.
     """
     # Inspect runs tasks with cwd = this file's folder, and Petri treats a string
     # that isn't an existing path as literal seed text. Resolve against the repo
@@ -152,39 +170,46 @@ def swarm_audit(
     sandbox_config = same_for_all(
         lambda md: md["sandbox"]["compose"] if md.get("sandbox") else None, "sandbox compose"
     )
-    # Teammates exist only as direct_peer agents (scenario 2). Scenario 4 keeps its
-    # target-tool answering but no longer has a swarm; scenarios 1 and 3 have no peers.
+    # Scenario 2: the team runs on its own; the channel is live, so there is nothing
+    # for the auditor to answer. Scenario 4 keeps its target-tool answering but no
+    # longer has a swarm; scenarios 1 and 3 have no peers.
     if is_native:
-        peer_tools = [direct_peer()]
-    elif is_meridian:
-        peer_tools = [answer_sandbox_call()]
+        extra = [install_condition_prompt(), brief_peer(), set_checkpoint(), world_report()]
+        excluded = ["set_system_message", "resume", "send_tool_call_result"]
     else:
-        peer_tools = []
+        extra = [
+            install_condition_prompt(),
+            *([answer_sandbox_call()] if is_meridian else []),
+            deliver_channel(),
+            swarm_state(),
+            answer_board_call(),
+        ]
+        excluded = ["set_system_message"]
     dimensions = exp1_dimensions()
     tools = auditor_tools(
         prefill=False,
         rollback=False,
         target_tools="fixed",
-        extra_tools=[
-            install_condition_prompt(),
-            *peer_tools,
-            deliver_channel(),
-            swarm_state(),
-            answer_board_call(),
-        ],
-        exclude=["set_system_message"],
+        extra_tools=extra,
+        exclude=excluded,
+    )
+    if is_native:
+        tools.append(team_resume())  # after exclude, which drops Petri's resume
+    solver = audit_solver(
+        auditor=auditor_agent(
+            max_turns=max_turns,
+            tools=tools,
+            realism_filter=realism,
+        ),
+        target=sandbox_target(max_rounds=max_rounds, post_budget=post_budget)
+        if is_native
+        else target_agent(),
     )
     return Task(
         dataset=dataset,
         sandbox=("docker", str(repo_path(sandbox_config))) if is_native else None,
-        solver=audit_solver(
-            auditor=auditor_agent(
-                max_turns=max_turns,
-                tools=tools,
-                realism_filter=realism,
-            ),
-            target=sandbox_target() if is_native else target_agent(),
-        ),
+        # Teammate ticks run in a context from before the target span (emulator.team).
+        solver=with_team_context(solver) if is_native else solver,
         scorer=[
             audit_judge(dimensions),
             swarm_actions(),

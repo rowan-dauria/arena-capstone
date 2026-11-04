@@ -20,8 +20,8 @@ from swarm_emulator.tool_names import is_proof_sandbox
         ("scenarios/smoke", set(), {"peer_message", "direct_peer", "advance_swarm"}, False),
         (
             "scenarios/scenario_2/seeds/pushed.md",
-            {"direct_peer"},
-            {"peer_message", "advance_swarm", "answer_sandbox_call"},
+            {"brief_peer", "set_checkpoint", "world_report", "resume"},
+            {"direct_peer", "deliver_channel", "swarm_state", "answer_sandbox_call"},
             True,
         ),
         (
@@ -48,7 +48,8 @@ def test_task_routes_tools_and_target_by_harness(monkeypatch, seed, expected, fo
     monkeypatch.setattr(mod, "auditor_tools", lambda **kwargs: kwargs["extra_tools"])
     monkeypatch.setattr(mod, "auditor_agent", lambda **kwargs: kwargs)
     monkeypatch.setattr(mod, "audit_solver", lambda **kwargs: kwargs)
-    monkeypatch.setattr(mod, "sandbox_target", lambda: "native")
+    monkeypatch.setattr(mod, "sandbox_target", lambda **kwargs: "native")
+    monkeypatch.setattr(mod, "with_team_context", lambda solver: solver)
     monkeypatch.setattr(mod, "target_agent", lambda: "petri")
     monkeypatch.setattr(mod, "audit_viewer", lambda *args: None)
     task = mod.swarm_audit.__wrapped__(seeds=seed)
@@ -72,6 +73,12 @@ def test_native_log_audit_checks_channel_pushes():
     issues = _push(sample)
     assert [i.code for i in issues] == ["no_push"]
     assert "read a message" in issues[0].detail
+
+
+def test_scenario_2_round_settings_become_task_args():
+    argv = inspect_argv({"seeds": "x", "max_turns": 3, "max_rounds": 40, "post_budget": 8,
+                         "roles": {}}, "dev")
+    assert "max_rounds=40" in argv and "post_budget=8" in argv
 
 
 def test_mapping_role_support_keeps_history_summary_and_sample_limit():

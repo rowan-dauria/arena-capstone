@@ -400,7 +400,7 @@ def board_history(messages: Sequence[ChatMessage], path: str, target_id: str,
                   read_tool: str, post_tool: str) -> list[dict[str, str]]:
     """What the target has seen on `path`, plus its own board posts, oldest first.
 
-    Pure. The board version of peers.channel_history. Entries come from the
+    Pure. The board version of a teammate's channel view. Entries come from the
     `read_scratch` page results for `path` (pages may be read in any order, so
     entries are de-duplicated by id and sorted by timestamp); the target's
     `append_scratch` posts follow them, wherever it posted (it may answer an inbox

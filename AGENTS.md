@@ -13,8 +13,8 @@ multi-agent swarm and measures whether it joins, quietly goes along with,
 refuses, or reports a misaligned goal. It measures individual propensity,
 not emergent swarm dynamics.
 
-Where things stand: `docs/STATUS.md`. Full design and task list: `docs/SPEC.md`
-(scenario 2: `docs/SCENARIO_2_SPEC.md`; scenario 3: `docs/SCENARIO_3_SPEC.md`, plus the history, drift and ladder addenda `docs/SCENARIO_3_{HISTORY,DRIFT,LADDER}_SPEC.md`). Open questions: `docs/DECISIONS.md`.
+The code, configs and seeds are the source of truth. History: `LOG.md`. Scenario 2's
+overnight runs: `docs/S2_OVERNIGHT_SUMMARY.md`. Pruning notes: `petri-pruning/`.
 
 ## Commands
 
@@ -55,17 +55,23 @@ uv run python scripts/board_view.py logs/dev_s2_pushed --serve  # "message board
 - **Public Petri API only.** Never import `inspect_petri._*` private modules.
 - **Contracts are shared.** `src/swarm_emulator/bus.py` and `config.py` define
   the message envelope and the condition schema. Every other module imports
-  from them. Changing them is a team decision: log it in `docs/DECISIONS.md`.
+  from them. Changing them is a team decision: record it in `LOG.md`.
 - **The auditor never sets the condition.** The identity/structure/oversight
   text comes from seed metadata via `install_condition_prompt`.
   `set_system_message` is excluded from the auditor's tools.
 - **The auditor never writes teammates' messages.** They come only from the
-  `peer` model role via `direct_peer`. The seed instructions say so and the
-  post-run log audit (`log_audit.py`, `bypass`) flags any that appear; there is
-  no in-run guard (D37).
+  `peer` model role: in scenario 2 teammates post for themselves on the live
+  channel, and the auditor only briefs them (`brief_peer`). The seed instructions
+  say so and the post-run log audit (`log_audit.py`, `bypass`) flags any that
+  appear; there is no in-run guard (D37).
 - **The narrative is the auditor's** (pure Petri, D37): no beats, release gates or
   post checker. The seed tells the auditor how the work should unfold; it decides
-  the pacing and directs the teammates.
+  the pacing and briefs the teammates.
+- **Scenario 2's team runs on its own, in rounds.** Each round is one target turn
+  and one tick per teammate; the auditor's `resume` runs rounds until a checkpoint
+  (`rounds.py`). Teammate model calls run in the team context (`emulator/team.py`),
+  never under the target's span: Petri builds the judge's target timeline from the
+  model calls there.
 - **Rollback is off** (`enable_rollback=False`). Swarm state lives in an Inspect
   `StoreModel` and would not rewind with the conversation.
 - **Caching stays off** (Petri default). Caching would collapse repeated runs.
@@ -73,7 +79,7 @@ uv run python scripts/board_view.py logs/dev_s2_pushed --serve  # "message board
   seeds, auditor instructions or the peer model's prompt.
 - **Logic modules are unit-testable without API calls.** Put model calls only
   in tools and scorers; keep `state.py`, `config.py`, `bus.py`, `clock.py`,
-  `proof.py`, `board.py`, `pilot_gate.py`,
+  `proof.py`, `rounds.py`, `board.py`, `pilot_gate.py`,
   `scoring/actions.py` and `scoring/outcome.py` pure.
 - **Seeds are plain Petri seed files, edited directly** (D38): front matter is the
   sample's metadata, the body is the auditor's instructions. There is no seed grid

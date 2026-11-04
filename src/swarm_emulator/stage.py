@@ -95,6 +95,9 @@ def inspect_argv(stage: dict[str, Any], stage_name: str) -> list[str]:
         if f"summary__{model_slug(target)}." not in summary:
             raise ValueError(f"history_summary {summary} is not the summary for target {target}")
         argv[3:3] = ["-T", f"history_summary={summary}"]
+    for key in ("max_rounds", "post_budget"):  # scenario 2's team rounds
+        if stage.get(key) is not None:
+            argv[3:3] = ["-T", f"{key}={int(stage[key])}"]
     if stage.get("max_samples") is not None:
         argv += ["--max-samples", str(stage["max_samples"])]
     for role, model in stage["roles"].items():

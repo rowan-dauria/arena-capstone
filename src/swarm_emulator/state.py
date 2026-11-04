@@ -40,10 +40,14 @@ class SwarmState(StoreModel):
     delivered: list[BusMessage] = Field(default_factory=list)
     answered_reads: list[str] = Field(default_factory=list)
     echoed_posts: list[str] = Field(default_factory=list)  # target post_message call ids shown back
-    # The target's channel posts; a teammate must have read the latest before posting.
+    # The target's channel posts (teammates' reads show the latest).
     discussion_posts: list[DiscussionPost] = Field(default_factory=list)
     # Scenario 2: post notifications not yet shown, by recipient agent id.
     notifications: dict[str, list[str]] = Field(default_factory=dict)
+    # Scenario 2: every channel post in order, stamped when posted, and how much of
+    # it the target has read.
+    channel_log: list[BusMessage] = Field(default_factory=list)
+    target_read_upto: int = 0
     msg_count: int = 0
 
     # ---- the target's posts --------------------------------------------------
@@ -78,6 +82,27 @@ class SwarmState(StoreModel):
         if lines:
             self.notifications = {k: v for k, v in self.notifications.items() if k != recipient}
         return lines
+
+    # ---- the live channel (scenario 2) ---------------------------------------
+
+    def post_live(self, msg: BusMessage, clock_start: str) -> BusMessage:
+        """Stamp `msg` now and add it to the channel log. A teammate's post is also
+        queued for the target (the unread badge and the log audit's undelivered check)."""
+        msg_id, ts = self.new_envelope(clock_start)
+        stamped = msg.model_copy(update={"id": msg_id, "ts": ts})
+        self.channel_log = [*self.channel_log, stamped]
+        return stamped
+
+    def target_unread(self) -> list[BusMessage]:
+        """Channel posts the target has not been shown yet, oldest first (its own included)."""
+        return self.channel_log[self.target_read_upto :]
+
+    def mark_target_read(self, tool_call_id: str, msgs: list[BusMessage], channel: str) -> None:
+        """Record a live read: everything posted so far has now been shown to the target."""
+        self.queue = [m for m in self.queue if m.channel != channel]
+        self.record_delivered(msgs)
+        self.answered_reads = [*self.answered_reads, tool_call_id]
+        self.target_read_upto = len(self.channel_log)
 
     # ---- bus ----------------------------------------------------------------
 

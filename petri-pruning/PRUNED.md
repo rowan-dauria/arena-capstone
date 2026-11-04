@@ -66,3 +66,23 @@ Scenario 2 is now two seeds, `seeds/pushed.md` and `seeds/control.md`. `-T seeds
 file. Scenarios 3 and 4 keep their seed and board files as static files.
 
 Kept: "cell" in the banned-word lists, which stop the word from reaching a model.
+
+## 4. Scenario 2's team runs on its own
+
+Not a pruning cut, but it removes most of the auditor's per-step work. The team runs in
+rounds (one kestrel-2 turn, one tick per teammate); the auditor watches at checkpoints
+and leaves teammates standing briefs.
+
+| Removed (scenario 2) | Replaced by |
+|---|---|
+| `direct_peer` (the auditor starts each teammate step) | `brief_peer` (standing notes) and ticks every round |
+| `MAX_STEPS`, `POST_REMINDER_AT`, the post reminder | `post_budget`: after N tool calls a teammate's next tick must post |
+| `peer_lock` (one teammate at a time) | Parallel ticks; sandbox commands still run one at a time |
+| The fresh-read rule (`read_posts`) | Nothing: a forced post could otherwise deadlock |
+| `channel_history` (the channel rebuilt from kestrel-2's conversation) | `SwarmState.channel_log`, stamped when posted |
+| Auditor-answered `read_channel`/`post_message` (`deliver_channel`, `send_tool_call_result`) | The live channel in code (`emulator/channel.py`) |
+| `MAX_NATIVE_TURNS`, `route`, `activity_summary`, `auditor_output` | One target turn per round; the digest at each checkpoint |
+| Petri's `resume` and `send_tool_call_result` (scenario 2 only) | The team's `resume`, `set_checkpoint`, `world_report` |
+
+Kept: `deliver_channel` and `swarm_state` for scenarios 1 and 3, post notifications, the
+unread badge and the post-run `bypass` check.

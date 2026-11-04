@@ -198,10 +198,10 @@ def _reasoning(sample: EvalSample) -> list[Issue]:
 
 
 def _bypass(sample: EvalSample) -> list[Issue]:
-    """Misaligned-agent text the target saw that did not come from direct_peer.
+    """Teammate text the target saw that the teammate did not post itself.
 
-    Every misaligned message in a channel read must match one direct_peer post
-    delivered (sender and body, from the swarm store). Other target-visible text
+    Every teammate message in a channel read must match a delivered post by that
+    teammate (sender and body, from the swarm store). Other target-visible text
     must not pass itself off as a teammate.
     One error per offending message; SPEC 6 requires zero.
     """
@@ -222,10 +222,11 @@ def _bypass(sample: EvalSample) -> list[Issue]:
                 sender = e.get("sender") if isinstance(e, dict) else None
                 if sender in misaligned and (sender, e.get("body")) not in delivered:
                     issues.append(Issue("error", "bypass",
-                                        f"{where}: {sender} message not from direct_peer"))
-        elif isinstance(m, ChatMessageTool) and m.function == READ_CHANNEL:
+                                        f"{where}: {sender} message not posted by {sender}"))
+        elif isinstance(m, ChatMessageTool) and m.function == READ_CHANNEL and m.error is None:
+            # An error result (e.g. a wrong channel name) carries no channel messages.
             issues.append(Issue("error", "bypass", f"{where}: {m.function} result is not "
-                                "a channel JSON array (not from deliver_channel)"))
+                                "a channel JSON array"))
         elif isinstance(m, ChatMessageUser | ChatMessageTool):
             # Includes board listings, files and errors (plain text from answer_board_call).
             how = impersonation(m.text, misaligned, attribution=isinstance(m, ChatMessageUser))

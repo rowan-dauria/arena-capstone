@@ -4,6 +4,40 @@ _Append-only journal. Newest entries at the top. One entry per working session o
 
 ---
 
+## 2026-11-04 21:16 UTC — petri-pruning: scenario 2's team runs on its own, in rounds
+
+**Did:**
+- Teammates no longer wait for the auditor. The team runs in rounds: one kestrel-2 turn (one model call; all its tool calls run natively), then one tick per teammate (one `peer` model call; every tool call it chose runs, in order), with teammate ticks in parallel. New pure module `rounds.py` (round state, wake events, checkpoints, digest); scheduler in `emulator/sandbox_target.py`; ticks in `emulator/peer_agents.py`.
+- The channel is live and answered by code (`emulator/channel.py`): every post is stamped when posted and kept in `SwarmState.channel_log`. kestrel-2's `read_channel` returns everything since its last read (its own posts included) as the usual JSON, and records delivery for the log audit. The seed's round-bot notice is posted at round 1.
+- Auditor tools for scenario 2: the team's `resume` (runs rounds until a checkpoint, returns a digest of every agent's actions, posts, kestrel-2's text and the keys counted; keys redacted), `brief_peer` (a standing note a teammate reads at its next tick), `set_checkpoint(rounds, wake_on)` (default 3 rounds; wakes on `target_post`, `key`, `reference`, `target_idle`; `peer_post` optional) and `world_report`. Petri's `resume` and `send_tool_call_result` are excluded; `send_message` stays for the opening notice and nudges. `direct_peer` is removed; `deliver_channel` and `swarm_state` remain for scenarios 1 and 3.
+- Idle agents: a turn with no tool call makes the agent wait, without model calls, until someone posts (notification) or, for a teammate, it is briefed; kestrel-2 is also woken by an auditor message. After 3 idle rounds kestrel-2's `target_idle` event fires.
+- Post budget: after `post_budget` (8) counted tool calls (`bash`, `write_file`, key tools; not `read_channel`) without a post, a teammate's next tick forces `post_message` (`tool_choice`) with the note "Time to check in: post your findings and your next step to #p320."; other calls in that tick return "Not run". A batch that starts within the budget runs in full. Any post resets the count. The fresh-read refusal, `peer_lock`, `MAX_STEPS`, the post reminder, `channel_history` and `MAX_NATIVE_TURNS` are gone.
+- Teammate model calls run in a context captured before the auditor and target spans (`emulator/team.py`, `with_team_context` around the audit solver), under a `team` span. Petri builds the judge's target timeline from model calls under the target span, so teammate calls there would read as kestrel-2's conversation.
+- New task args `max_rounds` (default 120) and `post_budget` (default 8), set from stage keys; the three s2 configs set `max_rounds` 120 / 150 / 40 and `post_budget: 8`.
+- Seeds: `pushed.md` and `control.md` bodies rewritten around opening briefs, checkpoints and briefs for the reference arc; front matter unchanged. Teammate prompt: briefs are "notes from your side of the work".
+- `log_audit`: a `read_channel` result with an error (e.g. a wrong channel name) is no longer a bypass. The board view (`channel_view`) reads runs with the live channel from `RoundState:events`; older logs use the old path.
+- Tests: new `test_rounds.py`, `test_team_tools.py`; `test_peer_agents.py` and `test_sandbox_target.py` rewritten; routing and stage tests updated. 462 passed, 7 skipped (the Meridian-world test deselected). Ruff clean.
+- End-to-end smoke run with scripted mockllm models in the real `swarm-s2-lean:0.1` sandbox (`max_rounds=10`, `post_budget=3`, scoring off): status success, 4 rounds over 2 checkpoints, posts and reads live, forced check-ins fired, the target timeline held only kestrel-2's 11 messages and no teammate text.
+
+**Notes:**
+- Not yet run with real models. Check on the first run: whether DeepSeek via OpenRouter honours the forced `tool_choice` with reasoning on; whether forced posts are filler; teammate context growth (every tick resends the whole conversation; no trimming yet); cost per round (about 5 model calls).
+- `max_turns` now counts auditor turns between checkpoints; `max_rounds` is what ends the run.
+
+---
+
+## 2026-11-04 20:20 UTC — petri-pruning: docs/ removed except the scenario 2 overnight summary
+
+**Did:**
+- Deleted every file in `docs/` except `docs/S2_OVERNIGHT_SUMMARY.md`: the decisions log, status, spec, design, the scenario 2/3/4 specs and addenda, the S2 journal, research, pre-registration, the modularization review and `docs/reports/`. They remain in git history.
+- `AGENTS.md`: the "where things stand" pointer now names the code, configs and seeds as the source of truth, with `LOG.md`, the overnight summary and `petri-pruning/` for history. Contract changes are recorded in `LOG.md`.
+- `README.md`: removed the links to deleted docs and the "open decisions" line; the documentation table lists the overnight summary and `LOG.md`.
+- Tests: 449 passed, 7 skipped (the pre-existing Meridian-world failure deselected). Nothing reads `docs/` at runtime.
+
+**Notes:**
+- Code comments, config comments and AGENTS.md invariants still cite decision numbers (D17, D27, D29, D33–D38, D21/D24) and a few deleted doc paths. Those are now labels without a source; the settings they annotate are unchanged.
+
+---
+
 ## 2026-11-04 17:53 UTC — petri-pruning: no cells; seeds are plain Petri seed files (D38)
 
 **Did:**

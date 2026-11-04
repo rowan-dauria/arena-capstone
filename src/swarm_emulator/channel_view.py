@@ -2,7 +2,9 @@
 
 Built after a run from the sample's own events and store: kestrel-2's channel posts,
 teammates' posts (with what happened to each: delivered or not posted), what kestrel-2
-received when it read the channel, and the auditor's instructions to teammates. Each item
+received when it read the channel, and the auditor's instructions to teammates. Runs
+with the live channel (team rounds) are read from the round log in the store
+(`RoundState:events`); older runs from their direct_peer/deliver_channel events. Each item
 becomes an `InfoEvent` stamped with the time of the original action, listed in time order
 in a `Timeline` named "message board".
 
@@ -35,6 +37,7 @@ TIMELINE_NAME = "message board"
 SPAN_ID = "message-board"
 ATTACHMENT = re.compile(r"attachment://([0-9a-f]{32})")
 PEER_STORE = "PeerAgentStore:messages"
+ROUNDS_STORE = "RoundState:events"
 TEXT_REPLY = "Your reply was sent with post_message: "
 
 
@@ -114,6 +117,40 @@ def _peer_status(result: str) -> str:
     return f"not posted: {_norm(result)[:160]}"
 
 
+def round_entries(round_events: Sequence[Mapping[str, Any]], target_id: str) -> list[Entry]:
+    """Board entries from the round log of a run with the live channel."""
+    evs = [e for e in round_events if e.get("time")]
+    entries: list[Entry] = []
+    reads = [datetime.fromisoformat(e["time"]) for e in evs
+             if e.get("actor") == target_id and e.get("kind") == "read"]
+    for e in evs:
+        t, actor, kind = datetime.fromisoformat(e["time"]), e.get("actor", ""), e.get("kind")
+        body, rnd = str(e.get("detail", "")), e.get("round")
+        if kind == "post":
+            read = next((r for r in reads if r >= t), None)
+            if actor == target_id:
+                entries.append(Entry(time=t, kind="target_post", actor=actor, body=body,
+                                     title=f"{actor} → #p320 (round {rnd})"))
+            else:
+                notes = [f"✓ read by {target_id} at {_hm(read)}" if read
+                         else f"posted; {target_id} never read it"]
+                entries.append(Entry(time=t, kind="peer_post" if actor != "round-bot" else "bot_post",
+                                     actor=actor, body=body, notes=notes,
+                                     title=f"{actor} → #p320 (round {rnd})"))
+        elif kind == "brief":
+            peer, _, text = body.partition(": ")
+            entries.append(Entry(time=t, kind="instruction", actor="auditor", body=text,
+                                 title=f"auditor → {peer} (brief, round {rnd})"))
+        elif kind == "check_in":
+            entries.append(Entry(time=t, kind="instruction", actor=actor, body="",
+                                 title=f"{actor} asked to check in (round {rnd})"))
+        elif kind == "read" and actor == target_id:
+            entries.append(Entry(time=t, kind="received", actor=actor, body="",
+                                 title=f"{actor} read the channel (round {rnd})"))
+    entries.sort(key=lambda x: x.time)
+    return entries
+
+
 def board_entries(
     events: Sequence[Event],
     store: Mapping[str, Any],
@@ -121,6 +158,8 @@ def board_entries(
     target_id: str = "kestrel-2",
 ) -> list[Entry]:
     """Board entries in time order, from a finished sample's events and store."""
+    if store.get(ROUNDS_STORE):
+        return round_entries(store[ROUNDS_STORE], target_id)
     resolve = _resolver(attachments)
     peer_msgs: dict[str, list[dict]] = resolve(store.get(PEER_STORE) or {})
     peers = list(peer_msgs)
