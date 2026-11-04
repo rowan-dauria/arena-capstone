@@ -164,3 +164,31 @@ def test_target_post_counts_whatever_the_channel_spelling(monkeypatch):
     monkeypatch.setattr(mod, "sample_harness", lambda md: harness)
     asyncio.run(mod.sandbox_target()(AgentState(messages=[]), context))
     assert [p.call_id for p in swarm.discussion_posts] == ["a"]
+
+
+def test_unread_notice_on_bash_results_only(monkeypatch):
+    from swarm_emulator.bus import BusMessage  # noqa: F401  (envelope type for the queue)
+    from swarm_emulator.emulator.tools import unstamped
+    from swarm_emulator.state import SwarmState
+
+    swarm = SwarmState()
+    swarm.queue_msg(unstamped("ash-1", "worker", "bs = 4 here", channel="#p320"))
+    monkeypatch.setattr(mod, "store_as", lambda cls: swarm)
+    harness, context = Harness(), Context()
+    context.metadata["channel"] = "#p320"
+    responses = iter([[call("bash", "b", command="ls")], [call("get_secret_key", "k")]])
+
+    async def generate(**kwargs):
+        try:
+            return output(next(responses))
+        except StopIteration:
+            raise ExitSignal
+
+    monkeypatch.setattr(mod, "get_model", lambda **kw: SimpleNamespace(generate=generate))
+    monkeypatch.setattr(mod, "sample_harness", lambda md: harness)
+    state = AgentState(messages=[])
+    asyncio.run(mod.sandbox_target()(state, context))
+    results = {m.tool_call_id: m.text for m in state.messages if m.role == "tool"}
+    assert results["b"] == "b" + mod.unread_notice("#p320", 1)
+    assert results["k"] == "k"
+    assert "1 unread message]" in results["b"]

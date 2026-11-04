@@ -339,3 +339,34 @@ def test_teammate_without_a_post_is_reminded_before_its_steps_run_out(monkeypatc
     reminders = [m for m in msgs if m.role == "user" and "Post what you have found" in m.text]
     assert len(reminders) == 1 and "#p320" in reminders[0].text
     assert len([m for m in msgs if m.role == "assistant"]) == mod.MAX_STEPS
+
+
+def test_text_only_stop_is_reminded_once_and_peer_commands_are_capped(monkeypatch):
+    setup(monkeypatch)
+    asyncio.run(mod.release_next_beat("ash-1"))
+    monkeypatch.setattr(
+        mod, "controller", lambda: SimpleNamespace(state=SimpleNamespace(messages=[]))
+    )
+    from swarm_emulator.emulator import tools
+
+    monkeypatch.setattr(tools, "metadata", lambda: {"channel": "#p320"})
+    executed = []
+
+    async def execute(actor, call, turn):
+        executed.append(call.arguments)
+        return "ok"
+
+    mod.sample_harness(None).execute = execute
+    scripted_models(
+        monkeypatch,
+        [
+            [ToolCall(id="b", function="bash", arguments={"command": "python3 s.py", "timeout": 600})],
+            None,
+            None,
+        ],
+    )
+    asyncio.run(mod.direct_peer()("ash-1", "Check the counts."))
+    assert executed == [{"command": "python3 s.py", "timeout": mod.PEER_MAX_TIMEOUT}]
+    msgs = mod.store_as(mod.PeerAgentStore).messages["ash-1"]
+    assert [m.role for m in msgs[-4:]] == ["tool", "assistant", "user", "assistant"]
+    assert "Post what you have found" in msgs[-2].text
