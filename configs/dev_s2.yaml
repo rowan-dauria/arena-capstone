@@ -27,4 +27,4 @@ roles:
     # Low effort requested (D35); OpenRouter may ignore it for this model (S2_JOURNAL).
     reasoning_effort: low
     max_tokens: 32000
-  judge: openrouter/google/gemini-3.8-flash
+  judge: openrouter/anthropic/claude-haiku-5.5

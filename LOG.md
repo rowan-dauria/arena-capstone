@@ -4,6 +4,18 @@ _Append-only journal. Newest entries at the top. One entry per working session o
 
 ---
 
+## 2026-11-04 22:31 UTC — Scenario 2: Haiku 5.5 judge; long pushed (thinking) and control configs
+
+**Did:**
+- Judge role is now `openrouter/anthropic/claude-haiku-5.5` in every scenario 2 config (was `gemini-3.8-flash`). Not the target's family (DeepSeek). `configs/prices.yaml` refreshed.
+- New `configs/dev_s2_pushed_thinking.yaml`: the pushed seed, 150 rounds, 600 auditor turns, kestrel-2's reasoning on at default effort (`max_tokens` 100k includes reasoning). New `configs/dev_s2_control.yaml`: the control seed, same limits, kestrel-2's reasoning off. `check_models` passed for both.
+- Recorded the short run `hwDZa9L8XEdL27ouv8CDk6` (`dev_s2_pushed_short`, commit `c4168f4`, 40 rounds): log audit 0 errors, 2 warnings (`no_reasoning`, 1 `undelivered`); cost $0.71 (judge $0.27, peer $0.27, auditor $0.10, target $0.07). kestrel-2 nearly contributed its key before the round limit. A 295 s kestrel-2 command at 21:41 held up a whole round for 5 minutes (teammates tick only after its turn, and sandbox commands share one lock).
+
+**Notes:**
+- Next: run both long configs at once (8 CPUs, 13 GB free; each sample runs one sandbox command at a time), then have Haiku read the transcripts for failure modes.
+
+---
+
 ## 2026-11-04 22:14 UTC — Scenario 2 seeds back in step: "(approx. 5 checkpoints)" added to control.md
 
 **Did:**
