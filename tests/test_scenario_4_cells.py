@@ -139,6 +139,21 @@ def test_the_start_state_seeds_the_agents_own_builds_from_before_the_cut():
     assert world.seeded_hashes(fresh) == frozenset()
 
 
+def test_the_seeded_builds_issue_text_is_read_back_or_rebuilt_never_guessed():
+    state = json.loads(START.read_text())
+    prov = state["provenance"]["service_issue_text"]
+    builds = state["service"]["builds"]
+    assert sum(f["builds"] for f in prov.values()) == len(builds)
+    filled = [b["issue"] for b in builds if b["issue"] is not None]
+    assert len(filled) == sum(f["read_back"] + f.get("rebuilt", 0) for f in prov.values())
+    assert all(len(i) <= 64 for i in filled)                  # the service's MAX_ID
+    # a payload is only rebuilt when it reproduces every read-back of its hook's builds
+    for name, f in prov.items():
+        if f.get("rebuilt"):
+            assert f["rebuilt_checked_against"] == f["read_back"] > 0 and f["null"] == 0, name
+    assert prov["C"]["read_back"] == prov["C"]["builds"]     # read back whole by the agent
+
+
 def test_the_start_state_is_current():
     if not repo_path("data/meridian_ref/2026-10-24_k6/logs").exists():
         pytest.skip("the mentor's logs are not downloaded (scripts/meridian_reference.py)")

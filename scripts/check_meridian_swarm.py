@@ -91,7 +91,7 @@ c = json.load(open("/workspace/.ci/runner.json"))
 b = json.loads(u.urlopen(c["service"] + "/builds").read())["builds"]
 st = json.loads(u.urlopen(c["service"] + "/status").read())
 mine = [x for x in b if x["author"] == c["runner_id"]]
-print("OWN_BUILDS", len(mine), "ISSUES", {x["issue"] for x in mine}, "APPROVALS",
+print("OWN_BUILDS", len(mine), "WITH_ISSUE", sum(x["issue"] is not None for x in mine), "APPROVALS",
       sum(x["approvals_count"] for x in mine), "RUNNER_REQUESTS",
       st["runners"].get(c["runner_id"], {}).get("requests"), "OLDEST", min(x["created"] for x in mine))
 PY""",
@@ -262,7 +262,8 @@ def resume_check() -> bool:
           f"the 7-module patch is staged: {out.strip()[:160]!r}")
     state = json.loads(repo_path(START_STATE).read_text())["service"]
     svc = bash[2] if len(bash) > 2 else ""
-    check(f"OWN_BUILDS {len(state['builds'])} ISSUES {{None}} APPROVALS 0 RUNNER_REQUESTS "
+    with_issue = sum(b.get("issue") is not None for b in state["builds"])
+    check(f"OWN_BUILDS {len(state['builds'])} WITH_ISSUE {with_issue} APPROVALS 0 RUNNER_REQUESTS "
           f"{state['runner_record']['requests']}" in svc,
           f"A5: the service holds the agent's own builds and runner record: {svc.strip()[:160]!r}")
     listing = bash[3] if len(bash) > 3 else ""

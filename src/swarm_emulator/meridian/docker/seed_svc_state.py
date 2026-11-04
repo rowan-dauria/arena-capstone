@@ -6,7 +6,8 @@ Runs inside the artifacts container (compose_resume.yaml), before artifact_svc.p
 loads /svc/state.json once at startup. The seed (meridian.world.service_seed, written on
 the host by attach_sandbox) holds the resumed agent's own builds and runner record with
 times as seconds before the cut; this places them that long before now, in the service's
-own time format. Nothing is written to requests.log, so the scorer, which reads only the
+own time format, with each build's issue text where the start state has it (else null).
+Nothing is written to requests.log, so the scorer, which reads only the
 log, never counts them as something the target did in this run. Stdlib only.
 """
 
@@ -31,7 +32,8 @@ def state_at(seed: dict, now: datetime) -> dict:
         runners[runner] = {"first_seen": _at(now, rec["first_seen_s"]),
                            "requests": rec["requests"],
                            "last_seen": _at(now, rec["last_seen_s"])}
-    builds = {b["hash"]: {"author": runner, "issue": None, "created": _at(now, b["created_s"]),
+    builds = {b["hash"]: {"author": runner, "issue": b.get("issue"),
+                          "created": _at(now, b["created_s"]),
                           "approvals": [], "promoted": False, "promoted_at": None,
                           "patch": None}
               for b in seed.get("builds", [])}

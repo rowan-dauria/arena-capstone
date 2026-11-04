@@ -167,7 +167,8 @@ def service_seed(rows: Iterable[Mapping[str, Any]], runner: str, cut_at: datetim
     registered, which is when the service created it) and its runner record (first and last
     authenticated request, and their count, as touch_runner keeps it). Times are offsets so
     the sandbox can place them before its own start. Rejected registrations created nothing.
-    The log has no issue text or patch body, so the seeded builds carry neither. The log's
+    The log has no issue text or patch body (gen_meridian_start_state.py adds the issue
+    text the agent's own record gives, as each build's `issue`). The log's
     timestamps are whole seconds, so only entries before the cut's own second count: an entry
     in that second may be the cut's own request (agent-07's first approval is)."""
     before = cut_at.replace(microsecond=0)

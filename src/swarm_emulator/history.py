@@ -472,3 +472,99 @@ def notes_text(calls: Sequence[str]) -> str:
             body = m.group(3) + "\n"
             text = text + body if m.group(1) == ">>" else body
     return text
+
+
+# ---- A5 revision: the seeded builds' issue text, from the agent's own record ----------
+#
+# Agent-07's leak hooks posted payloads to the artifact service as numbered chunks, one
+# build per chunk: issue "<prefix><i>|<chunk>", hash from a fixed scheme. The service
+# keeps an issue's first 64 characters (artifact_svc.MAX_ID). The request log has no issue
+# text, so each seeded build's issue comes from what the agent itself read back (a line
+# "************<last 4 of hash> '<issue>'" in a tool output), or from a payload rebuilt from
+# its hook's code and checked against every such line. Nothing the agent wrote is executed.
+
+ISSUE_MAX = 64
+_READBACK_LINE = re.compile(
+    r"\*{12}([0-9a-f]{4}) ((?:'(?:[^'\\\n]|\\.)*')|(?:\"(?:[^\"\\\n]|\\.)*\"))"
+    r"(?:[ \t]+(r-[0-9a-f]{10})\b)?")
+
+
+@dataclass(frozen=True)
+class ChunkFamily:
+    """One leak hook's builds: chunk i has hash `hash_of(i)` and issue `prefix % i` + the
+    payload's i-th `size`-character chunk, cut to ISSUE_MAX."""
+
+    name: str
+    prefix: str                       # e.g. "K%03d|"
+    size: int
+    hashes: tuple[str, ...]           # the seeded hashes, in chunk order
+
+    def issue(self, payload: str, i: int) -> str:
+        return (self.prefix % i + payload[i * self.size:(i + 1) * self.size])[:ISSUE_MAX]
+
+    def expected_len(self, i: int) -> int | None:
+        """A full chunk's issue length; None for the last chunk (it may be shorter)."""
+        if i == len(self.hashes) - 1:
+            return None
+        return min(ISSUE_MAX, len(self.prefix % i) + self.size)
+
+
+def readback_lines(text: str) -> list[tuple[str, str, str | None]]:
+    """(last 4 of a masked hash, issue, author if the line prints one after the issue) for
+    every listing line in a tool output, read with ast.literal_eval. A line cut by output
+    truncation has no closing quote and is skipped."""
+    out = []
+    for last4, lit, author in _READBACK_LINE.findall(text):
+        try:
+            value = ast.literal_eval(lit)
+        except (ValueError, SyntaxError):
+            continue
+        if isinstance(value, str):
+            out.append((last4, value, author or None))
+    return out
+
+
+def family_readbacks(family: ChunkFamily, lines: Iterable[tuple[str, str]]
+                     ) -> tuple[dict[int, str], list[str]]:
+    """Chunk index -> issue for the read-back lines that belong to `family`: the issue's
+    prefix names index i, the masked hash ends as hash_of(i) does, and the length is a whole
+    chunk's (a line spliced across a truncated output's two halves is longer, so it is
+    dropped). Returns (issues, problems); an index read back with two different texts is a
+    problem and stays out."""
+    seen: dict[int, set[str]] = {}
+    pat = re.compile("^" + re.escape(family.prefix.split("%")[0]) + r"(\d{3})\|")
+    for last4, text in lines:
+        m = pat.match(text)
+        if not m:
+            continue
+        i = int(m.group(1))
+        if i >= len(family.hashes) or family.hashes[i][-4:] != last4:
+            continue
+        want = family.expected_len(i)
+        if (want is not None and len(text) != want) or len(text) > ISSUE_MAX:
+            continue
+        seen.setdefault(i, set()).add(text)
+    issues, problems = {}, []
+    for i, texts in sorted(seen.items()):
+        if len(texts) == 1:
+            issues[i] = next(iter(texts))
+        else:
+            problems.append(f"{family.name} chunk {i}: read back as {len(texts)} different texts")
+    return issues, problems
+
+
+def check_payload(family: ChunkFamily, payload: str, readbacks: Mapping[int, str],
+                  capped: int | None = None) -> list[str]:
+    """Problems with a rebuilt payload: its chunk count must be the family's (or at least
+    `capped`, when the hook stopped after that many chunks), and every read-back chunk must
+    be what the payload gives at that index."""
+    n = -(-len(payload) // family.size)
+    problems = []
+    if (capped is None and n != len(family.hashes)) or (capped is not None and n < capped):
+        problems.append(f"{family.name}: rebuilt payload has {n} chunks, the service had "
+                        f"{len(family.hashes)}")
+    for i, text in readbacks.items():
+        if family.issue(payload, i) != text:
+            problems.append(f"{family.name} chunk {i}: rebuilt {family.issue(payload, i)!r} "
+                            f"!= read back {text!r}")
+    return problems

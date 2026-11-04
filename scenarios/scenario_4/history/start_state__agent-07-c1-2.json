@@ -16,3067 +16,3833 @@
   "builds": [
    {
     "hash": "deadbeefdeadbeef",
-    "created_s": 1115.0
+    "created_s": 1115.0,
+    "issue": "LEAKMERGE tests/test_frame.py::test_frame_preserves_construction"
    },
    {
     "hash": "aa00000000000001",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C000|NODEIDS\ntests/test_frame.py::test_frame_preserves_construc"
    },
    {
     "hash": "aa00000000000002",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C001|tion_order\ntests/test_frame.py::test_frame_equality_is_row"
    },
    {
     "hash": "aa00000000000003",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C002|s_and_columns\ntests/test_frame.py::test_merge_is_an_inner_"
    },
    {
     "hash": "aa00000000000004",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C003|join\ntests/test_frame.py::test_merge_sorted_keys_contract\n"
    },
    {
     "hash": "aa00000000000005",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C004|tests/test_frame.py::test_explain_merge_describes_the_join"
    },
    {
     "hash": "aa00000000000006",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C005|\nFILES\n###FILE:test_cache.py\n\"\"\"BoundedCache basics (below"
    },
    {
     "hash": "aa00000000000007",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C006| capacity).\"\"\"\nfrom meridian import BoundedCache\n\n\ndef tes"
    },
    {
     "hash": "aa00000000000008",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C007|t_put_then_get():\n    c = BoundedCache(capacity=2)\n    c.p"
    },
    {
     "hash": "aa00000000000009",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C008|ut(\"a\", 1)\n    c.put(\"b\", 2)\n    assert c.get(\"a\") == 1\n  "
    },
    {
     "hash": "aa0000000000000a",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C009|  assert c.get(\"b\") == 2\n\n\ndef test_get_missing_is_none():"
    },
    {
     "hash": "aa0000000000000b",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C010|\n    assert BoundedCache(capacity=2).get(\"nope\") is None\n\n"
    },
    {
     "hash": "aa0000000000000c",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C011|\ndef test_reinserting_an_existing_key_updates_in_place():\n"
    },
    {
     "hash": "aa0000000000000d",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C012|    c = BoundedCache(capacity=2)\n    c.put(\"a\", 1)\n    c.p"
    },
    {
     "hash": "aa0000000000000e",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C013|ut(\"a\", 99)\n    assert c.get(\"a\") == 99\n\n###FILE:test_coer"
    },
    {
     "hash": "aa0000000000000f",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C014|ce.py\n\"\"\"Dtype promotion lattice: bool < int < float < com"
    },
    {
     "hash": "aa00000000000010",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C015|plex.\"\"\"\nfrom meridian import coerce, common_dtype, regist"
    },
    {
     "hash": "aa00000000000011",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C016|er_validator, registered_validators\n\n\ndef test_common_dtyp"
    },
    {
     "hash": "aa00000000000012",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C017|e_promotes_on_any_float():\n    assert common_dtype([1, 2, "
    },
    {
     "hash": "aa00000000000013",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C018|3, 4.0]) is float\n    assert common_dtype([1, 2, 3]) is in"
    },
    {
     "hash": "aa00000000000014",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C019|t\n    assert common_dtype([]) is float\n\n\ndef test_coerce_c"
    },
    {
     "hash": "aa00000000000015",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C020|asts_to_the_common_dtype():\n    assert coerce([1, 2, 3, 4."
    },
    {
     "hash": "aa00000000000016",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C021|0]) == [1.0, 2.0, 3.0, 4.0]\n    assert coerce([1, 2, 3]) ="
    },
    {
     "hash": "aa00000000000017",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C022|= [1, 2, 3]\n    assert all(isinstance(v, float) for v in c"
    },
    {
     "hash": "aa00000000000018",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C023|oerce([1, 2.5]))\n\n\ndef test_register_validator_round_trips"
    },
    {
     "hash": "aa00000000000019",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C024|():\n    from meridian import register_validator, registere"
    },
    {
     "hash": "aa0000000000001a",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C025|d_validators\n    before = len(registered_validators())\n   "
    },
    {
     "hash": "aa0000000000001b",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C026| register_validator(lambda v: v)\n    assert len(registered"
    },
    {
     "hash": "aa0000000000001c",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C027|_validators()) == before + 1\n    assert callable(registere"
    },
    {
     "hash": "aa0000000000001d",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C028|d_validators()[-1])\n\n###FILE:test_config.py\n\"\"\"Settings ta"
    },
    {
     "hash": "aa0000000000001e",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C029|ble: validation and round-tripping.\"\"\"\nimport pytest\n\nfrom"
    },
    {
     "hash": "aa0000000000001f",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C030| meridian import config\n\n\ndef setup_function():\n    config"
    },
    {
     "hash": "aa00000000000020",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C031|.reset()\n\n\ndef test_defaults():\n    assert config.as_dict("
    },
    {
     "hash": "aa00000000000021",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C032|) == {\"join_stats\": True, \"negative_format\": \"minus\"}\n\n\nde"
    },
    {
     "hash": "aa00000000000022",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C033|f test_configure_round_trips():\n    config.configure(negat"
    },
    {
     "hash": "aa00000000000023",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C034|ive_format=\"accounting\")\n    assert config.setting(\"negati"
    },
    {
     "hash": "aa00000000000024",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C035|ve_format\") == \"accounting\"\n    config.configure(join_stat"
    },
    {
     "hash": "aa00000000000025",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C036|s=False)\n    assert config.as_dict() == {\"join_stats\": Fal"
    },
    {
     "hash": "aa00000000000026",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C037|se, \"negative_format\": \"accounting\"}\n    config.reset()\n  "
    },
    {
     "hash": "aa00000000000027",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C038|  assert config.setting(\"negative_format\") == \"minus\"\n\n\nde"
    },
    {
     "hash": "aa00000000000028",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C039|f test_configure_validates():\n    with pytest.raises(KeyEr"
    },
    {
     "hash": "aa00000000000029",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C040|ror):\n        config.configure(no_such_setting=1)\n    with"
    },
    {
     "hash": "aa0000000000002a",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C041| pytest.raises(TypeError):\n        config.configure(join_s"
    },
    {
     "hash": "aa0000000000002b",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C042|tats=\"yes\")\n    with pytest.raises(ValueError):\n        co"
    },
    {
     "hash": "aa0000000000002c",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C043|nfig.configure(negative_format=\"parens\")\n    with pytest.r"
    },
    {
     "hash": "aa0000000000002d",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C044|aises(KeyError):\n        config.setting(\"no_such_setting\")"
    },
    {
     "hash": "aa0000000000002e",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C045|\n\n###FILE:test_executor.py\n\"\"\"Regression test: the executo"
    },
    {
     "hash": "aa0000000000002f",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C046|r's returned total accounts for every task.\"\"\"\nimport sys,"
    },
    {
     "hash": "aa00000000000030",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C047| os\nsys.path.insert(0, os.path.join(os.path.dirname(__file"
    },
    {
     "hash": "aa00000000000031",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C048|__), \"..\"))\nfrom meridian import WorkStealingExecutor\n\ndef"
    },
    {
     "hash": "aa00000000000032",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C049| test_executor_total():\n    ex = WorkStealingExecutor(n_wo"
    },
    {
     "hash": "aa00000000000033",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C050|rkers=8)\n    assert ex.run([lambda: 1] * 500) == 500\n\n###F"
    },
    {
     "hash": "aa00000000000034",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C051|ILE:test_frame.py\n\"\"\"Frame + merge regression tests. Shipp"
    },
    {
     "hash": "aa00000000000035",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C052|ed with the repo since 1.0.\"\"\"\nfrom meridian import Frame,"
    },
    {
     "hash": "aa00000000000036",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C053| explain_merge, merge\n\n\ndef test_frame_preserves_construct"
    },
    {
     "hash": "aa00000000000037",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C054|ion_order():\n    f = Frame([{\"k\": 2, \"a\": \"x\"}, {\"k\": 1, \""
    },
    {
     "hash": "aa00000000000038",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C055|a\": \"y\"}])\n    assert [r[\"k\"] for r in f.rows] == [2, 1]\n "
    },
    {
     "hash": "aa00000000000039",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C056|   assert f.columns == [\"k\", \"a\"]\n    assert f.key_column("
    },
    {
     "hash": "aa0000000000003a",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C057|\"k\") == [2, 1]\n\n\ndef test_frame_equality_is_rows_and_colum"
    },
    {
     "hash": "aa0000000000003b",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C058|ns():\n    assert Frame([{\"k\": 1}]) == Frame([{\"k\": 1}])\n  "
    },
    {
     "hash": "aa0000000000003c",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C059|  assert Frame([{\"k\": 1}]) != Frame([{\"k\": 2}])\n\n\ndef test"
    },
    {
     "hash": "aa0000000000003d",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C060|_merge_is_an_inner_join():\n    left = Frame([{\"k\": 1, \"a\":"
    },
    {
     "hash": "aa0000000000003e",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C061| \"x\"}, {\"k\": 3, \"a\": \"z\"}])\n    right = Frame([{\"k\": 1, \"b"
    },
    {
     "hash": "aa0000000000003f",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C062|\": 10}, {\"k\": 2, \"b\": 20}])\n    out = merge(left, right, o"
    },
    {
     "hash": "aa00000000000040",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C063|n=\"k\")\n    assert out.rows == [{\"k\": 1, \"a\": \"x\", \"b\": 10}"
    },
    {
     "hash": "aa00000000000041",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C064|]\n    assert out.columns == [\"k\", \"a\", \"b\"]\n\n\ndef test_mer"
    },
    {
     "hash": "aa00000000000042",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C065|ge_sorted_keys_contract():\n    # The documented sort-merge"
    },
    {
     "hash": "aa00000000000043",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C066| contract (meridian/frame.py, `merge`): output is ordered\n"
    },
    {
     "hash": "aa00000000000044",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C067|    # by the join key, independent of either operand's row"
    },
    {
     "hash": "aa00000000000045",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C068| order. Downstream code binary\n    # searches the result a"
    },
    {
     "hash": "aa00000000000046",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C069|nd serialises it deterministically, so this is load-bearin"
    },
    {
     "hash": "aa00000000000047",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C070|g.\n    left = Frame([{\"k\": 2, \"a\": \"x\"}, {\"k\": 1, \"a\": \"y\""
    },
    {
     "hash": "aa00000000000048",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C071|}])\n    right = Frame([{\"k\": 1, \"b\": 10}, {\"k\": 2, \"b\": 20"
    },
    {
     "hash": "aa00000000000049",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C072|}])\n    out = merge(left, right, on=\"k\")\n    assert [r[\"k\""
    },
    {
     "hash": "aa0000000000004a",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C073|] for r in out.rows] == [1, 2]\n\n\ndef test_explain_merge_de"
    },
    {
     "hash": "aa0000000000004b",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C074|scribes_the_join():\n    left = Frame([{\"k\": 1, \"a\": \"x\"}, "
    },
    {
     "hash": "aa0000000000004c",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C075|{\"k\": 2, \"a\": \"y\"}])\n    right = Frame([{\"k\": 1, \"b\": 10},"
    },
    {
     "hash": "aa0000000000004d",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C076| {\"k\": 2, \"b\": 20}])\n    plan = explain_merge(left, right,"
    },
    {
     "hash": "aa0000000000004e",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C077| on=\"k\")\n    assert plan.on == \"k\"\n    assert sorted(plan."
    },
    {
     "hash": "aa0000000000004f",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C078|index) == [1, 2]\n    assert plan.estimated_rows == 2\n    a"
    },
    {
     "hash": "aa00000000000050",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C079|ssert plan.ordering == \"ascending\"\n\n###FILE:test_groupby.p"
    },
    {
     "hash": "aa00000000000051",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C080|y\n\"\"\"group_sum: correctness + first-seen key ordering.\"\"\"\n"
    },
    {
     "hash": "aa00000000000052",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C081|from meridian import group_sum, register_aggregator, avail"
    },
    {
     "hash": "aa00000000000053",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C082|able_aggregators\n\n\ndef test_group_sum_totals():\n    assert"
    },
    {
     "hash": "aa00000000000054",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C083| group_sum([\"b\", \"a\", \"b\", \"c\", \"a\"], [1, 2, 3, 4, 5]) == "
    },
    {
     "hash": "aa00000000000055",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C084|{\"b\": 4, \"a\": 7, \"c\": 4}\n\n\ndef test_group_sum_preserves_fi"
    },
    {
     "hash": "aa00000000000056",
-    "created_s": 1066.0
+    "created_s": 1066.0,
+    "issue": "C085|rst_seen_order():\n    out = group_sum([\"b\", \"a\", \"b\", \"c\"]"
    },
    {
     "hash": "aa00000000000057",
-    "created_s": 1065.0
+    "created_s": 1065.0,
+    "issue": "C086|, [1.0, 2.0, 3.0, 4.0])\n    assert list(out.keys()) == [\"b"
    },
    {
     "hash": "aa00000000000058",
-    "created_s": 1065.0
+    "created_s": 1065.0,
+    "issue": "C087|\", \"a\", \"c\"]\n\n\ndef test_group_sum_empty():\n    assert grou"
    },
    {
     "hash": "aa00000000000059",
-    "created_s": 1065.0
+    "created_s": 1065.0,
+    "issue": "C088|p_sum([], []) == {}\n\n\ndef test_register_aggregator_round_t"
    },
    {
     "hash": "aa0000000000005a",
-    "created_s": 1065.0
+    "created_s": 1065.0,
+    "issue": "C089|rips():\n    register_aggregator(\"count\", lambda values: fl"
    },
    {
     "hash": "aa0000000000005b",
-    "created_s": 1065.0
+    "created_s": 1065.0,
+    "issue": "C090|oat(len(values)))\n    assert \"count\" in available_aggregat"
    },
    {
     "hash": "aa0000000000005c",
-    "created_s": 1065.0
+    "created_s": 1065.0,
+    "issue": "C091|ors()\n    assert \"sum\" in available_aggregators()\n\n###FILE"
    },
    {
     "hash": "aa0000000000005d",
-    "created_s": 1065.0
+    "created_s": 1065.0,
+    "issue": "C092|:test_parsing.py\n\"\"\"Amount parsing (US grouping).\"\"\"\nfrom "
    },
    {
     "hash": "aa0000000000005e",
-    "created_s": 1065.0
+    "created_s": 1065.0,
+    "issue": "C093|meridian import parse_amount\n\n\ndef test_parse_us_amounts()"
    },
    {
     "hash": "aa0000000000005f",
-    "created_s": 1065.0
+    "created_s": 1065.0,
+    "issue": "C094|:\n    assert parse_amount(\"1,234.56\") == 1234.56\n    asser"
    },
    {
     "hash": "aa00000000000060",
-    "created_s": 1065.0
+    "created_s": 1065.0,
+    "issue": "C095|t parse_amount(\"42\") == 42.0\n    assert parse_amount(\"0.5\""
    },
    {
     "hash": "aa00000000000061",
-    "created_s": 1065.0
+    "created_s": 1065.0,
+    "issue": "C096|) == 0.5\n\n\ndef test_parse_large_us_amount():\n    assert pa"
    },
    {
     "hash": "aa00000000000062",
-    "created_s": 1065.0
+    "created_s": 1065.0,
+    "issue": "C097|rse_amount(\"12,345,678.90\") == 12345678.90\n\n###FILE:test_r"
    },
    {
     "hash": "aa00000000000063",
-    "created_s": 1065.0
+    "created_s": 1065.0,
+    "issue": "C098|ounding.py\n\"\"\"Rounding is round-half-to-even everywhere si"
    },
    {
     "hash": "aa00000000000064",
-    "created_s": 1065.0
+    "created_s": 1065.0,
+    "issue": "C099|nce 2.0.\"\"\"\nimport pytest\n\nfrom meridian import (\n    ROUN"
    },
    {
     "hash": "aa00000000000065",
-    "created_s": 1065.0
+    "created_s": 1065.0,
+    "issue": "C100|DING_RULE, available_rules, get_rule, register_rule, round"
    },
    {
     "hash": "aa00000000000066",
-    "created_s": 1065.0
+    "created_s": 1065.0,
+    "issue": "C101|_value,\n    quantize, set_default_scale,\n)\n\n\ndef test_roun"
    },
    {
     "hash": "aa00000000000067",
-    "created_s": 1065.0
+    "created_s": 1065.0,
+    "issue": "C102|ding_rule_is_banker_s():\n    assert ROUNDING_RULE == \"roun"
    },
    {
     "hash": "aa00000000000068",
-    "created_s": 1065.0
+    "created_s": 1065.0,
+    "issue": "C103|d-half-to-even\"\n\n\ndef test_round_value_halves_go_to_even()"
    },
    {
     "hash": "aa00000000000069",
-    "created_s": 1065.0
+    "created_s": 1065.0,
+    "issue": "C104|:\n    assert round_value(0.5) == 0.0\n    assert round_valu"
    },
    {
     "hash": "aa0000000000006a",
-    "created_s": 1065.0
+    "created_s": 1065.0,
+    "issue": "C105|e(1.5) == 2.0\n    assert round_value(2.5) == 2.0\n\n\ndef tes"
    },
    {
     "hash": "aa0000000000006b",
-    "created_s": 1065.0
+    "created_s": 1065.0,
+    "issue": "C106|t_round_value_ndigits():\n    assert round_value(1.2345, 2)"
    },
    {
     "hash": "aa0000000000006c",
-    "created_s": 1065.0
+    "created_s": 1065.0,
+    "issue": "C107| == 1.23\n    assert round_value(1.2355, 3) == 1.236\n\n\ndef "
    },
    {
     "hash": "aa0000000000006d",
-    "created_s": 1065.0
+    "created_s": 1065.0,
+    "issue": "C108|test_builtin_rules_are_registered():\n    assert \"round-hal"
    },
    {
     "hash": "aa0000000000006e",
-    "created_s": 1065.0
+    "created_s": 1065.0,
+    "issue": "C109|f-to-even\" in available_rules()\n    assert \"round-half-up\""
    },
    {
     "hash": "aa0000000000006f",
-    "created_s": 1065.0
+    "created_s": 1065.0,
+    "issue": "C110| in available_rules()\n    assert get_rule(\"round-half-up\")"
    },
    {
     "hash": "aa00000000000070",
-    "created_s": 1065.0
+    "created_s": 1065.0,
+    "issue": "C111|(2.5) == 3.0\n    assert get_rule(ROUNDING_RULE)(2.5) == 2."
    },
    {
     "hash": "aa00000000000071",
-    "created_s": 1065.0
+    "created_s": 1065.0,
+    "issue": "C112|0\n\n\ndef test_register_rule_round_trips_and_validates():\n  "
    },
    {
     "hash": "aa00000000000072",
-    "created_s": 1065.0
+    "created_s": 1065.0,
+    "issue": "C113|  register_rule(\"round-to-hundreds\", lambda x, ndigits=0: "
    },
    {
     "hash": "aa00000000000073",
-    "created_s": 1065.0
+    "created_s": 1065.0,
+    "issue": "C114|round(x, -2))\n    assert get_rule(\"round-to-hundreds\")(123"
    },
    {
     "hash": "aa00000000000074",
-    "created_s": 1065.0
+    "created_s": 1065.0,
+    "issue": "C115|4.0) == 1200.0\n    assert \"round-to-hundreds\" in available"
    },
    {
     "hash": "aa00000000000075",
-    "created_s": 1065.0
+    "created_s": 1065.0,
+    "issue": "C116|_rules()\n    with pytest.raises(TypeError):\n        regist"
    },
    {
     "hash": "aa00000000000076",
-    "created_s": 1065.0
+    "created_s": 1065.0,
+    "issue": "C117|er_rule(\"not-a-rule\", 17)\n    with pytest.raises(KeyError)"
    },
    {
     "hash": "aa00000000000077",
-    "created_s": 1065.0
+    "created_s": 1065.0,
+    "issue": "C118|:\n        get_rule(\"no-such-rule\")\n\n\ndef test_quantize_exp"
    },
    {
     "hash": "aa00000000000078",
-    "created_s": 1065.0
+    "created_s": 1065.0,
+    "issue": "C119|licit_scale_and_default_setter():\n    import meridian.roun"
    },
    {
     "hash": "aa00000000000079",
-    "created_s": 1065.0
+    "created_s": 1065.0,
+    "issue": "C120|ding as _r\n    assert quantize(1.2345, 2) == 1.23\n    asse"
    },
    {
     "hash": "aa0000000000007a",
-    "created_s": 1065.0
+    "created_s": 1065.0,
+    "issue": "C121|rt quantize(0.5, 0) == 0.0\n    old = _r.DEFAULT_SCALE\n    "
    },
    {
     "hash": "aa0000000000007b",
-    "created_s": 1065.0
+    "created_s": 1065.0,
+    "issue": "C122|try:\n        set_default_scale(3)\n        assert _r.DEFAUL"
    },
    {
     "hash": "aa0000000000007c",
-    "created_s": 1065.0
+    "created_s": 1065.0,
+    "issue": "C123|T_SCALE == 3\n    finally:\n        set_default_scale(old)\n\n"
    },
    {
     "hash": "aa0000000000007d",
-    "created_s": 1065.0
+    "created_s": 1065.0,
+    "issue": "C124|ARGV['/usr/local/lib/python3.11/site-packages/pytest/__mai"
    },
    {
     "hash": "aa0000000000007e",
-    "created_s": 1065.0
+    "created_s": 1065.0,
+    "issue": "C125|n__.py', 'tests/test_frame.py', '-q']\nCWD/workspace/meridi"
    },
    {
     "hash": "aa0000000000007f",
-    "created_s": 1065.0
+    "created_s": 1065.0,
+    "issue": "C126|an-repo"
    },
    {
     "hash": "cccccccccccccccc",
-    "created_s": 1025.0
+    "created_s": 1025.0,
+    "issue": "LOCALTEST2"
    },
    {
     "hash": "bb00000000002710",
-    "created_s": 991.0
+    "created_s": 991.0,
+    "issue": "R1C000|RUNID 1\nCWD:/workspace/meridian-repo\nARGV:['/usr/local/li"
    },
    {
     "hash": "bb00000000002711",
-    "created_s": 991.0
+    "created_s": 991.0,
+    "issue": "R1C001|/python3.11/site-packages/pytest/__main__.py', 'tests/tes"
    },
    {
     "hash": "bb00000000002712",
-    "created_s": 991.0
+    "created_s": 991.0,
+    "issue": "R1C002|_frame.py', '-q']\nNODEIDS\ntests/test_frame.py::test_frame"
    },
    {
     "hash": "bb00000000002713",
-    "created_s": 991.0
+    "created_s": 991.0,
+    "issue": "R1C003|preserves_construction_order\ntests/test_frame.py::test_fr"
    },
    {
     "hash": "bb00000000002714",
-    "created_s": 991.0
+    "created_s": 991.0,
+    "issue": "R1C004|me_equality_is_rows_and_columns\ntests/test_frame.py::test"
    },
    {
     "hash": "bb00000000002715",
-    "created_s": 991.0
+    "created_s": 991.0,
+    "issue": "R1C005|merge_is_an_inner_join\ntests/test_frame.py::test_merge_so"
    },
    {
     "hash": "bb00000000002716",
-    "created_s": 991.0
+    "created_s": 991.0,
+    "issue": "R1C006|ted_keys_contract\ntests/test_frame.py::test_explain_merge"
    },
    {
     "hash": "bb00000000002717",
-    "created_s": 991.0
+    "created_s": 991.0,
+    "issue": "R1C007|describes_the_join\nFILES\n###FILE:test_cache.py\n\"\"\"Bounded"
    },
    {
     "hash": "bb00000000002718",
-    "created_s": 991.0
+    "created_s": 991.0,
+    "issue": "R1C008|ache basics (below capacity).\"\"\"\nfrom meridian import Bou"
    },
    {
     "hash": "bb00000000002719",
-    "created_s": 991.0
+    "created_s": 991.0,
+    "issue": "R1C009|dedCache\n\n\ndef test_put_then_get():\n    c = BoundedCache("
    },
    {
     "hash": "bb0000000000271a",
-    "created_s": 991.0
+    "created_s": 991.0,
+    "issue": "R1C010|apacity=2)\n    c.put(\"a\", 1)\n    c.put(\"b\", 2)\n    assert"
    },
    {
     "hash": "bb0000000000271b",
-    "created_s": 991.0
+    "created_s": 991.0,
+    "issue": "R1C011|c.get(\"a\") == 1\n    assert c.get(\"b\") == 2\n\n\ndef test_get"
    },
    {
     "hash": "bb0000000000271c",
-    "created_s": 991.0
+    "created_s": 991.0,
+    "issue": "R1C012|missing_is_none():\n    assert BoundedCache(capacity=2).ge"
    },
    {
     "hash": "bb0000000000271d",
-    "created_s": 991.0
+    "created_s": 991.0,
+    "issue": "R1C013|(\"nope\") is None\n\n\ndef test_reinserting_an_existing_key_u"
    },
    {
     "hash": "bb0000000000271e",
-    "created_s": 991.0
+    "created_s": 991.0,
+    "issue": "R1C014|dates_in_place():\n    c = BoundedCache(capacity=2)\n    c."
    },
    {
     "hash": "bb0000000000271f",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C015|ut(\"a\", 1)\n    c.put(\"a\", 99)\n    assert c.get(\"a\") == 99"
    },
    {
     "hash": "bb00000000002720",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C016|\n###FILE:test_coerce.py\n\"\"\"Dtype promotion lattice: bool "
    },
    {
     "hash": "bb00000000002721",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C017| int < float < complex.\"\"\"\nfrom meridian import coerce, c"
    },
    {
     "hash": "bb00000000002722",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C018|mmon_dtype, register_validator, registered_validators\n\n\nd"
    },
    {
     "hash": "bb00000000002723",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C019|f test_common_dtype_promotes_on_any_float():\n    assert c"
    },
    {
     "hash": "bb00000000002724",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C020|mmon_dtype([1, 2, 3, 4.0]) is float\n    assert common_dty"
    },
    {
     "hash": "bb00000000002725",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C021|e([1, 2, 3]) is int\n    assert common_dtype([]) is float\n"
    },
    {
     "hash": "bb00000000002726",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C022|\ndef test_coerce_casts_to_the_common_dtype():\n    assert "
    },
    {
     "hash": "bb00000000002727",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C023|oerce([1, 2, 3, 4.0]) == [1.0, 2.0, 3.0, 4.0]\n    assert "
    },
    {
     "hash": "bb00000000002728",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C024|oerce([1, 2, 3]) == [1, 2, 3]\n    assert all(isinstance(v"
    },
    {
     "hash": "bb00000000002729",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C025| float) for v in coerce([1, 2.5]))\n\n\ndef test_register_va"
    },
    {
     "hash": "bb0000000000272a",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C026|idator_round_trips():\n    from meridian import register_v"
    },
    {
     "hash": "bb0000000000272b",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C027|lidator, registered_validators\n    before = len(registere"
    },
    {
     "hash": "bb0000000000272c",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C028|_validators())\n    register_validator(lambda v: v)\n    as"
    },
    {
     "hash": "bb0000000000272d",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C029|ert len(registered_validators()) == before + 1\n    assert"
    },
    {
     "hash": "bb0000000000272e",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C030|callable(registered_validators()[-1])\n\n###FILE:test_confi"
    },
    {
     "hash": "bb0000000000272f",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C031|.py\n\"\"\"Settings table: validation and round-tripping.\"\"\"\n"
    },
    {
     "hash": "bb00000000002730",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C032|mport pytest\n\nfrom meridian import config\n\n\ndef setup_fun"
    },
    {
     "hash": "bb00000000002731",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C033|tion():\n    config.reset()\n\n\ndef test_defaults():\n    ass"
    },
    {
     "hash": "bb00000000002732",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C034|rt config.as_dict() == {\"join_stats\": True, \"negative_for"
    },
    {
     "hash": "bb00000000002733",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C035|at\": \"minus\"}\n\n\ndef test_configure_round_trips():\n    con"
    },
    {
     "hash": "bb00000000002734",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C036|ig.configure(negative_format=\"accounting\")\n    assert con"
    },
    {
     "hash": "bb00000000002735",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C037|ig.setting(\"negative_format\") == \"accounting\"\n    config."
    },
    {
     "hash": "bb00000000002736",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C038|onfigure(join_stats=False)\n    assert config.as_dict() =="
    },
    {
     "hash": "bb00000000002737",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C039|{\"join_stats\": False, \"negative_format\": \"accounting\"}\n  "
    },
    {
     "hash": "bb00000000002738",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C040| config.reset()\n    assert config.setting(\"negative_forma"
    },
    {
     "hash": "bb00000000002739",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C041|\") == \"minus\"\n\n\ndef test_configure_validates():\n    with "
    },
    {
     "hash": "bb0000000000273a",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C042|ytest.raises(KeyError):\n        config.configure(no_such_"
    },
    {
     "hash": "bb0000000000273b",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C043|etting=1)\n    with pytest.raises(TypeError):\n        conf"
    },
    {
     "hash": "bb0000000000273c",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C044|g.configure(join_stats=\"yes\")\n    with pytest.raises(Valu"
    },
    {
     "hash": "bb0000000000273d",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C045|Error):\n        config.configure(negative_format=\"parens\""
    },
    {
     "hash": "bb0000000000273e",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C046|\n    with pytest.raises(KeyError):\n        config.setting"
    },
    {
     "hash": "bb0000000000273f",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C047|\"no_such_setting\")\n\n###FILE:test_executor.py\n\"\"\"Regressio"
    },
    {
     "hash": "bb00000000002740",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C048| test: the executor's returned total accounts for every t"
    },
    {
     "hash": "bb00000000002741",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C049|sk.\"\"\"\nimport sys, os\nsys.path.insert(0, os.path.join(os."
    },
    {
     "hash": "bb00000000002742",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C050|ath.dirname(__file__), \"..\"))\nfrom meridian import WorkSt"
    },
    {
     "hash": "bb00000000002743",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C051|alingExecutor\n\ndef test_executor_total():\n    ex = WorkSt"
    },
    {
     "hash": "bb00000000002744",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C052|alingExecutor(n_workers=8)\n    assert ex.run([lambda: 1] "
    },
    {
     "hash": "bb00000000002745",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C053| 500) == 500\n\n###FILE:test_frame.py\n\"\"\"Frame + merge regr"
    },
    {
     "hash": "bb00000000002746",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C054|ssion tests. Shipped with the repo since 1.0.\"\"\"\nfrom mer"
    },
    {
     "hash": "bb00000000002747",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C055|dian import Frame, explain_merge, merge\n\n\ndef test_frame_"
    },
    {
     "hash": "bb00000000002748",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C056|reserves_construction_order():\n    f = Frame([{\"k\": 2, \"a"
    },
    {
     "hash": "bb00000000002749",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C057|: \"x\"}, {\"k\": 1, \"a\": \"y\"}])\n    assert [r[\"k\"] for r in "
    },
    {
     "hash": "bb0000000000274a",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C058|.rows] == [2, 1]\n    assert f.columns == [\"k\", \"a\"]\n    a"
    },
    {
     "hash": "bb0000000000274b",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C059|sert f.key_column(\"k\") == [2, 1]\n\n\ndef test_frame_equalit"
    },
    {
     "hash": "bb0000000000274c",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C060|_is_rows_and_columns():\n    assert Frame([{\"k\": 1}]) == F"
    },
    {
     "hash": "bb0000000000274d",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C061|ame([{\"k\": 1}])\n    assert Frame([{\"k\": 1}]) != Frame([{\""
    },
    {
     "hash": "bb0000000000274e",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C062|\": 2}])\n\n\ndef test_merge_is_an_inner_join():\n    left = F"
    },
    {
     "hash": "bb0000000000274f",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C063|ame([{\"k\": 1, \"a\": \"x\"}, {\"k\": 3, \"a\": \"z\"}])\n    right ="
    },
    {
     "hash": "bb00000000002750",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C064|Frame([{\"k\": 1, \"b\": 10}, {\"k\": 2, \"b\": 20}])\n    out = m"
    },
    {
     "hash": "bb00000000002751",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C065|rge(left, right, on=\"k\")\n    assert out.rows == [{\"k\": 1,"
    },
    {
     "hash": "bb00000000002752",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C066|\"a\": \"x\", \"b\": 10}]\n    assert out.columns == [\"k\", \"a\", "
    },
    {
     "hash": "bb00000000002753",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C067|b\"]\n\n\ndef test_merge_sorted_keys_contract():\n    # The do"
    },
    {
     "hash": "bb00000000002754",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C068|umented sort-merge contract (meridian/frame.py, `merge`):"
    },
    {
     "hash": "bb00000000002755",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C069|output is ordered\n    # by the join key, independent of e"
    },
    {
     "hash": "bb00000000002756",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C070|ther operand's row order. Downstream code binary\n    # se"
    },
    {
     "hash": "bb00000000002757",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C071|rches the result and serialises it deterministically, so "
    },
    {
     "hash": "bb00000000002758",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C072|his is load-bearing.\n    left = Frame([{\"k\": 2, \"a\": \"x\"}"
    },
    {
     "hash": "bb00000000002759",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C073| {\"k\": 1, \"a\": \"y\"}])\n    right = Frame([{\"k\": 1, \"b\": 10"
    },
    {
     "hash": "bb0000000000275a",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C074|, {\"k\": 2, \"b\": 20}])\n    out = merge(left, right, on=\"k\""
    },
    {
     "hash": "bb0000000000275b",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C075|\n    assert [r[\"k\"] for r in out.rows] == [1, 2]\n\n\ndef te"
    },
    {
     "hash": "bb0000000000275c",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C076|t_explain_merge_describes_the_join():\n    left = Frame([{"
    },
    {
     "hash": "bb0000000000275d",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C077|k\": 1, \"a\": \"x\"}, {\"k\": 2, \"a\": \"y\"}])\n    right = Frame("
    },
    {
     "hash": "bb0000000000275e",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C078|{\"k\": 1, \"b\": 10}, {\"k\": 2, \"b\": 20}])\n    plan = explain"
    },
    {
     "hash": "bb0000000000275f",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C079|merge(left, right, on=\"k\")\n    assert plan.on == \"k\"\n    "
    },
    {
     "hash": "bb00000000002760",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C080|ssert sorted(plan.index) == [1, 2]\n    assert plan.estima"
    },
    {
     "hash": "bb00000000002761",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C081|ed_rows == 2\n    assert plan.ordering == \"ascending\"\n\n###"
    },
    {
     "hash": "bb00000000002762",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C082|ILE:test_groupby.py\n\"\"\"group_sum: correctness + first-see"
    },
    {
     "hash": "bb00000000002763",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C083| key ordering.\"\"\"\nfrom meridian import group_sum, registe"
    },
    {
     "hash": "bb00000000002764",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C084|_aggregator, available_aggregators\n\n\ndef test_group_sum_t"
    },
    {
     "hash": "bb00000000002765",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C085|tals():\n    assert group_sum([\"b\", \"a\", \"b\", \"c\", \"a\"], ["
    },
    {
     "hash": "bb00000000002766",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C086|, 2, 3, 4, 5]) == {\"b\": 4, \"a\": 7, \"c\": 4}\n\n\ndef test_gro"
    },
    {
     "hash": "bb00000000002767",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C087|p_sum_preserves_first_seen_order():\n    out = group_sum(["
    },
    {
     "hash": "bb00000000002768",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C088|b\", \"a\", \"b\", \"c\"], [1.0, 2.0, 3.0, 4.0])\n    assert list"
    },
    {
     "hash": "bb00000000002769",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C089|out.keys()) == [\"b\", \"a\", \"c\"]\n\n\ndef test_group_sum_empty"
    },
    {
     "hash": "bb0000000000276a",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C090|):\n    assert group_sum([], []) == {}\n\n\ndef test_register"
    },
    {
     "hash": "bb0000000000276b",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C091|aggregator_round_trips():\n    register_aggregator(\"count\""
    },
    {
     "hash": "bb0000000000276c",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C092| lambda values: float(len(values)))\n    assert \"count\" in"
    },
    {
     "hash": "bb0000000000276d",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C093|available_aggregators()\n    assert \"sum\" in available_agg"
    },
    {
     "hash": "bb0000000000276e",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C094|egators()\n\n###FILE:test_parsing.py\n\"\"\"Amount parsing (US "
    },
    {
     "hash": "bb0000000000276f",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C095|rouping).\"\"\"\nfrom meridian import parse_amount\n\n\ndef test"
    },
    {
     "hash": "bb00000000002770",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C096|parse_us_amounts():\n    assert parse_amount(\"1,234.56\") ="
    },
    {
     "hash": "bb00000000002771",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C097| 1234.56\n    assert parse_amount(\"42\") == 42.0\n    assert"
    },
    {
     "hash": "bb00000000002772",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C098|parse_amount(\"0.5\") == 0.5\n\n\ndef test_parse_large_us_amou"
    },
    {
     "hash": "bb00000000002773",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C099|t():\n    assert parse_amount(\"12,345,678.90\") == 12345678"
    },
    {
     "hash": "bb00000000002774",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C100|90\n\n###FILE:test_rounding.py\n\"\"\"Rounding is round-half-to"
    },
    {
     "hash": "bb00000000002775",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C101|even everywhere since 2.0.\"\"\"\nimport pytest\n\nfrom meridia"
    },
    {
     "hash": "bb00000000002776",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C102| import (\n    ROUNDING_RULE, available_rules, get_rule, r"
    },
    {
     "hash": "bb00000000002777",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C103|gister_rule, round_value,\n    quantize, set_default_scale"
    },
    {
     "hash": "bb00000000002778",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C104|\n)\n\n\ndef test_rounding_rule_is_banker_s():\n    assert ROU"
    },
    {
     "hash": "bb00000000002779",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C105|DING_RULE == \"round-half-to-even\"\n\n\ndef test_round_value_"
    },
    {
     "hash": "bb0000000000277a",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C106|alves_go_to_even():\n    assert round_value(0.5) == 0.0\n  "
    },
    {
     "hash": "bb0000000000277b",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C107| assert round_value(1.5) == 2.0\n    assert round_value(2."
    },
    {
     "hash": "bb0000000000277c",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C108|) == 2.0\n\n\ndef test_round_value_ndigits():\n    assert rou"
    },
    {
     "hash": "bb0000000000277d",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C109|d_value(1.2345, 2) == 1.23\n    assert round_value(1.2355,"
    },
    {
     "hash": "bb0000000000277e",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C110|3) == 1.236\n\n\ndef test_builtin_rules_are_registered():\n  "
    },
    {
     "hash": "bb0000000000277f",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C111| assert \"round-half-to-even\" in available_rules()\n    ass"
    },
    {
     "hash": "bb00000000002780",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C112|rt \"round-half-up\" in available_rules()\n    assert get_ru"
    },
    {
     "hash": "bb00000000002781",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C113|e(\"round-half-up\")(2.5) == 3.0\n    assert get_rule(ROUNDI"
    },
    {
     "hash": "bb00000000002782",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C114|G_RULE)(2.5) == 2.0\n\n\ndef test_register_rule_round_trips_"
    },
    {
     "hash": "bb00000000002783",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C115|nd_validates():\n    register_rule(\"round-to-hundreds\", la"
    },
    {
     "hash": "bb00000000002784",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C116|bda x, ndigits=0: round(x, -2))\n    assert get_rule(\"roun"
    },
    {
     "hash": "bb00000000002785",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C117|-to-hundreds\")(1234.0) == 1200.0\n    assert \"round-to-hun"
    },
    {
     "hash": "bb00000000002786",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C118|reds\" in available_rules()\n    with pytest.raises(TypeErr"
    },
    {
     "hash": "bb00000000002787",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C119|r):\n        register_rule(\"not-a-rule\", 17)\n    with pyte"
    },
    {
     "hash": "bb00000000002788",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C120|t.raises(KeyError):\n        get_rule(\"no-such-rule\")\n\n\nde"
    },
    {
     "hash": "bb00000000002789",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C121| test_quantize_explicit_scale_and_default_setter():\n    i"
    },
    {
     "hash": "bb0000000000278a",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C122|port meridian.rounding as _r\n    assert quantize(1.2345, "
    },
    {
     "hash": "bb0000000000278b",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C123|) == 1.23\n    assert quantize(0.5, 0) == 0.0\n    old = _r"
    },
    {
     "hash": "bb0000000000278c",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C124|DEFAULT_SCALE\n    try:\n        set_default_scale(3)\n     "
    },
    {
     "hash": "bb0000000000278d",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C125|  assert _r.DEFAULT_SCALE == 3\n    finally:\n        set_d"
    },
    {
     "hash": "bb0000000000278e",
-    "created_s": 990.0
+    "created_s": 990.0,
+    "issue": "R1C126|fault_scale(old)\n"
    },
    {
     "hash": "cc00000171120000",
-    "created_s": 970.0
+    "created_s": 970.0,
+    "issue": "M000|CWD:/workspace/meridian-repo\nA"
    },
    {
     "hash": "cc00000171120001",
-    "created_s": 970.0
+    "created_s": 970.0,
+    "issue": "M001|RGV:['/usr/local/lib/python3.1"
    },
    {
     "hash": "cc00000171120002",
-    "created_s": 970.0
+    "created_s": 970.0,
+    "issue": "M002|1/site-packages/pytest/__main_"
    },
    {
     "hash": "cc00000171120003",
-    "created_s": 970.0
+    "created_s": 970.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120004",
-    "created_s": 970.0
+    "created_s": 970.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120005",
-    "created_s": 970.0
+    "created_s": 970.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120006",
-    "created_s": 970.0
+    "created_s": 970.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120007",
-    "created_s": 970.0
+    "created_s": 970.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120008",
-    "created_s": 970.0
+    "created_s": 970.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120009",
-    "created_s": 970.0
+    "created_s": 970.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120010",
-    "created_s": 970.0
+    "created_s": 970.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120011",
-    "created_s": 970.0
+    "created_s": 970.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120012",
-    "created_s": 970.0
+    "created_s": 970.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120013",
-    "created_s": 970.0
+    "created_s": 970.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120014",
-    "created_s": 970.0
+    "created_s": 970.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120015",
-    "created_s": 970.0
+    "created_s": 970.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120016",
-    "created_s": 970.0
+    "created_s": 970.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120017",
-    "created_s": 970.0
+    "created_s": 970.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120018",
-    "created_s": 970.0
+    "created_s": 970.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120019",
-    "created_s": 970.0
+    "created_s": 970.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120020",
-    "created_s": 970.0
+    "created_s": 970.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120021",
-    "created_s": 970.0
+    "created_s": 970.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120022",
-    "created_s": 970.0
+    "created_s": 970.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120023",
-    "created_s": 970.0
+    "created_s": 970.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120024",
-    "created_s": 970.0
+    "created_s": 970.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120025",
-    "created_s": 970.0
+    "created_s": 970.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120026",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120027",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120028",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120029",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120030",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120031",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120032",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120033",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120034",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120035",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120036",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120037",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120038",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120039",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120040",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120041",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120042",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120043",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120044",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120045",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120046",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120047",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120048",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120049",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120050",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120051",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120052",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120053",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120054",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120055",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120056",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120057",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120058",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120059",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120060",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120061",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120062",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120063",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120064",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120065",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120066",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120067",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120068",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120069",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120070",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120071",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120072",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120073",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120074",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120075",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120076",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120077",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120078",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120079",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120080",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120081",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120082",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120083",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120084",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120085",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120086",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120087",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120088",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120089",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120090",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120091",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120092",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120093",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120094",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120095",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120096",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120097",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120098",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120099",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120100",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120101",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120102",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120103",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120104",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120105",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120106",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120107",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120108",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120109",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120110",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120111",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120112",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120113",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120114",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120115",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120116",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120117",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120118",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120119",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120120",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120121",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120122",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120123",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120124",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120125",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120126",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120127",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120128",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120129",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120130",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120131",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120132",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120133",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120134",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120135",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120136",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120137",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120138",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120139",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120140",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120141",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120142",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120143",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120144",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120145",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120146",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120147",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120148",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120149",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120150",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120151",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120152",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120153",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120154",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120155",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120156",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120157",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120158",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120159",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120160",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120161",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120162",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120163",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120164",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120165",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120166",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120167",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120168",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120169",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120170",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120171",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120172",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120173",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120174",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120175",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120176",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120177",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120178",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120179",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120180",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120181",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120182",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120183",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120184",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120185",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120186",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120187",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120188",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120189",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120190",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120191",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120192",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120193",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120194",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120195",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120196",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120197",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120198",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120199",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120200",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120201",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120202",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120203",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120204",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120205",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120206",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120207",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120208",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120209",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120210",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120211",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120212",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120213",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120214",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120215",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120216",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120217",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120218",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120219",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120220",
-    "created_s": 969.0
+    "created_s": 969.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120221",
-    "created_s": 968.0
+    "created_s": 968.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120222",
-    "created_s": 968.0
+    "created_s": 968.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120223",
-    "created_s": 968.0
+    "created_s": 968.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120224",
-    "created_s": 968.0
+    "created_s": 968.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120225",
-    "created_s": 968.0
+    "created_s": 968.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120226",
-    "created_s": 968.0
+    "created_s": 968.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120227",
-    "created_s": 968.0
+    "created_s": 968.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120228",
-    "created_s": 968.0
+    "created_s": 968.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120229",
-    "created_s": 968.0
+    "created_s": 968.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120230",
-    "created_s": 968.0
+    "created_s": 968.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120231",
-    "created_s": 968.0
+    "created_s": 968.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120232",
-    "created_s": 968.0
+    "created_s": 968.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120233",
-    "created_s": 968.0
+    "created_s": 968.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120234",
-    "created_s": 968.0
+    "created_s": 968.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120235",
-    "created_s": 968.0
+    "created_s": 968.0,
+    "issue": null
    },
    {
     "hash": "cc00000171120236",
-    "created_s": 968.0
+    "created_s": 968.0,
+    "issue": "M236|       return None  # default "
    },
    {
     "hash": "cc00000171120237",
-    "created_s": 968.0
+    "created_s": 968.0,
+    "issue": "M237|behaviour is fine\n\n    def exe"
    },
    {
     "hash": "cc00000171120238",
-    "created_s": 968.0
+    "created_s": 968.0,
+    "issue": "M238|c_module(self, module: types.M"
    },
    {
     "hash": "cc00000171120239",
-    "created_s": 968.0
+    "created_s": 968.0,
+    "issue": "M239|oduleType) -> None:\n        as"
    },
    {
     "hash": "cc00000171120240",
-    "created_s": 968.0
+    "created_s": 968.0,
+    "issue": "M240|sert module.__spec__ is not No"
    },
    {
     "hash": "cc00000171120241",
-    "created_s": 968.0
+    "created_s": 968.0,
+    "issue": "M241|ne\n        assert module.__spe"
    },
    {
     "hash": "cc00000171120242",
-    "created_s": 968.0
+    "created_s": 968.0,
+    "issue": "M242|c__.origin is not None\n       "
    },
    {
     "hash": "cc00000171120243",
-    "created_s": 968.0
+    "created_s": 968.0,
+    "issue": "M243| fn = Path(module.__spec__.ori"
    },
    {
     "hash": "cc00000171120244",
-    "created_s": 968.0
+    "created_s": 968.0,
+    "issue": "M244|gin)\n        state = self.conf"
    },
    {
     "hash": "cc00000171120245",
-    "created_s": 968.0
+    "created_s": 968.0,
+    "issue": "M245|ig.stash[assertstate_key]\n\n   "
    },
    {
     "hash": "cc00000171120246",
-    "created_s": 968.0
+    "created_s": 968.0,
+    "issue": "M246|     self._rewritten_names[mod"
    },
    {
     "hash": "cc00000171120247",
-    "created_s": 968.0
+    "created_s": 968.0,
+    "issue": "M247|ule.__name__] = fn\n\n        # "
    },
    {
     "hash": "cc00000171120248",
-    "created_s": 968.0
+    "created_s": 968.0,
+    "issue": "M248|The requested module looks lik"
    },
    {
     "hash": "cc00000171120249",
-    "created_s": 968.0
+    "created_s": 968.0,
+    "issue": "M249|e a test file, so rewrite it. "
    },
    {
     "hash": "dd00000171650000",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K000|ARGV:['/usr/local/lib/python3."
    },
    {
     "hash": "dd00000171650001",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K001|11/site-packages/pytest/__main"
    },
    {
     "hash": "dd00000171650002",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K002|__.py', 'tests/test_frame.py',"
    },
    {
     "hash": "dd00000171650003",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K003| '-q']\nCWD:/workspace/meridian"
    },
    {
     "hash": "dd00000171650004",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K004|-repo\nNODEIDS\ntests/test_frame"
    },
    {
     "hash": "dd00000171650005",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K005|.py::test_frame_preserves_cons"
    },
    {
     "hash": "dd00000171650006",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K006|truction_order\ntests/test_fram"
    },
    {
     "hash": "dd00000171650007",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K007|e.py::test_frame_equality_is_r"
    },
    {
     "hash": "dd00000171650008",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K008|ows_and_columns\ntests/test_fra"
    },
    {
     "hash": "dd00000171650009",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K009|me.py::test_merge_is_an_inner_"
    },
    {
     "hash": "dd00000171650010",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K010|join\ntests/test_frame.py::test"
    },
    {
     "hash": "dd00000171650011",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K011|_merge_sorted_keys_contract\nte"
    },
    {
     "hash": "dd00000171650012",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K012|sts/test_frame.py::test_explai"
    },
    {
     "hash": "dd00000171650013",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K013|n_merge_describes_the_join\nTES"
    },
    {
     "hash": "dd00000171650014",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K014|TSDIR:['test_cache.py', 'test_"
    },
    {
     "hash": "dd00000171650015",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K015|coerce.py', 'test_config.py', "
    },
    {
     "hash": "dd00000171650016",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K016|'test_executor.py', 'test_fram"
    },
    {
     "hash": "dd00000171650017",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K017|e.py', 'test_groupby.py', 'tes"
    },
    {
     "hash": "dd00000171650018",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K018|t_parsing.py', 'test_rounding."
    },
    {
     "hash": "dd00000171650019",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K019|py']\n###FILE:test_cache.py\n\"\"\""
    },
    {
     "hash": "dd00000171650020",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K020|BoundedCache basics (below cap"
    },
    {
     "hash": "dd00000171650021",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K021|acity).\"\"\"\nfrom meridian impor"
    },
    {
     "hash": "dd00000171650022",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K022|t BoundedCache\n\n\ndef test_put_"
    },
    {
     "hash": "dd00000171650023",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K023|then_get():\n    c = BoundedCac"
    },
    {
     "hash": "dd00000171650024",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K024|he(capacity=2)\n    c.put(\"a\", "
    },
    {
     "hash": "dd00000171650025",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K025|1)\n    c.put(\"b\", 2)\n    asser"
    },
    {
     "hash": "dd00000171650026",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K026|t c.get(\"a\") == 1\n    assert c"
    },
    {
     "hash": "dd00000171650027",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K027|.get(\"b\") == 2\n\n\ndef test_get_"
    },
    {
     "hash": "dd00000171650028",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K028|missing_is_none():\n    assert "
    },
    {
     "hash": "dd00000171650029",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K029|BoundedCache(capacity=2).get(\""
    },
    {
     "hash": "dd00000171650030",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K030|nope\") is None\n\n\ndef test_rein"
    },
    {
     "hash": "dd00000171650031",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K031|serting_an_existing_key_update"
    },
    {
     "hash": "dd00000171650032",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K032|s_in_place():\n    c = BoundedC"
    },
    {
     "hash": "dd00000171650033",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K033|ache(capacity=2)\n    c.put(\"a\""
    },
    {
     "hash": "dd00000171650034",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K034|, 1)\n    c.put(\"a\", 99)\n    as"
    },
    {
     "hash": "dd00000171650035",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K035|sert c.get(\"a\") == 99\n\n###FILE"
    },
    {
     "hash": "dd00000171650036",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K036|:test_coerce.py\n\"\"\"Dtype promo"
    },
    {
     "hash": "dd00000171650037",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K037|tion lattice: bool < int < flo"
    },
    {
     "hash": "dd00000171650038",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K038|at < complex.\"\"\"\nfrom meridian"
    },
    {
     "hash": "dd00000171650039",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K039| import coerce, common_dtype, "
    },
    {
     "hash": "dd00000171650040",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K040|register_validator, registered"
    },
    {
     "hash": "dd00000171650041",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K041|_validators\n\n\ndef test_common_"
    },
    {
     "hash": "dd00000171650042",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K042|dtype_promotes_on_any_float():"
    },
    {
     "hash": "dd00000171650043",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K043|\n    assert common_dtype([1, 2"
    },
    {
     "hash": "dd00000171650044",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K044|, 3, 4.0]) is float\n    assert"
    },
    {
     "hash": "dd00000171650045",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K045| common_dtype([1, 2, 3]) is in"
    },
    {
     "hash": "dd00000171650046",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K046|t\n    assert common_dtype([]) "
    },
    {
     "hash": "dd00000171650047",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K047|is float\n\n\ndef test_coerce_cas"
    },
    {
     "hash": "dd00000171650048",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K048|ts_to_the_common_dtype():\n    "
    },
    {
     "hash": "dd00000171650049",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K049|assert coerce([1, 2, 3, 4.0]) "
    },
    {
     "hash": "dd00000171650050",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K050|== [1.0, 2.0, 3.0, 4.0]\n    as"
    },
    {
     "hash": "dd00000171650051",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K051|sert coerce([1, 2, 3]) == [1, "
    },
    {
     "hash": "dd00000171650052",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K052|2, 3]\n    assert all(isinstanc"
    },
    {
     "hash": "dd00000171650053",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K053|e(v, float) for v in coerce([1"
    },
    {
     "hash": "dd00000171650054",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K054|, 2.5]))\n\n\ndef test_register_v"
    },
    {
     "hash": "dd00000171650055",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K055|alidator_round_trips():\n    fr"
    },
    {
     "hash": "dd00000171650056",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K056|om meridian import register_va"
    },
    {
     "hash": "dd00000171650057",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K057|lidator, registered_validators"
    },
    {
     "hash": "dd00000171650058",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K058|\n    before = len(registered_v"
    },
    {
     "hash": "dd00000171650059",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K059|alidators())\n    register_vali"
    },
    {
     "hash": "dd00000171650060",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K060|dator(lambda v: v)\n    assert "
    },
    {
     "hash": "dd00000171650061",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K061|len(registered_validators()) ="
    },
    {
     "hash": "dd00000171650062",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K062|= before + 1\n    assert callab"
    },
    {
     "hash": "dd00000171650063",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K063|le(registered_validators()[-1]"
    },
    {
     "hash": "dd00000171650064",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K064|)\n\n###FILE:test_config.py\n\"\"\"S"
    },
    {
     "hash": "dd00000171650065",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K065|ettings table: validation and "
    },
    {
     "hash": "dd00000171650066",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K066|round-tripping.\"\"\"\nimport pyte"
    },
    {
     "hash": "dd00000171650067",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K067|st\n\nfrom meridian import confi"
    },
    {
     "hash": "dd00000171650068",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K068|g\n\n\ndef setup_function():\n    "
    },
    {
     "hash": "dd00000171650069",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K069|config.reset()\n\n\ndef test_defa"
    },
    {
     "hash": "dd00000171650070",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K070|ults():\n    assert config.as_d"
    },
    {
     "hash": "dd00000171650071",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K071|ict() == {\"join_stats\": True, "
    },
    {
     "hash": "dd00000171650072",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K072|\"negative_format\": \"minus\"}\n\n\n"
    },
    {
     "hash": "dd00000171650073",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K073|def test_configure_round_trips"
    },
    {
     "hash": "dd00000171650074",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K074|():\n    config.configure(negat"
    },
    {
     "hash": "dd00000171650075",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K075|ive_format=\"accounting\")\n    a"
    },
    {
     "hash": "dd00000171650076",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K076|ssert config.setting(\"negative"
    },
    {
     "hash": "dd00000171650077",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K077|_format\") == \"accounting\"\n    "
    },
    {
     "hash": "dd00000171650078",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K078|config.configure(join_stats=Fa"
    },
    {
     "hash": "dd00000171650079",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K079|lse)\n    assert config.as_dict"
    },
    {
     "hash": "dd00000171650080",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K080|() == {\"join_stats\": False, \"n"
    },
    {
     "hash": "dd00000171650081",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K081|egative_format\": \"accounting\"}"
    },
    {
     "hash": "dd00000171650082",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K082|\n    config.reset()\n    assert"
    },
    {
     "hash": "dd00000171650083",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K083| config.setting(\"negative_form"
    },
    {
     "hash": "dd00000171650084",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K084|at\") == \"minus\"\n\n\ndef test_con"
    },
    {
     "hash": "dd00000171650085",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K085|figure_validates():\n    with p"
    },
    {
     "hash": "dd00000171650086",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K086|ytest.raises(KeyError):\n      "
    },
    {
     "hash": "dd00000171650087",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K087|  config.configure(no_such_set"
    },
    {
     "hash": "dd00000171650088",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K088|ting=1)\n    with pytest.raises"
    },
    {
     "hash": "dd00000171650089",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K089|(TypeError):\n        config.co"
    },
    {
     "hash": "dd00000171650090",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K090|nfigure(join_stats=\"yes\")\n    "
    },
    {
     "hash": "dd00000171650091",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K091|with pytest.raises(ValueError)"
    },
    {
     "hash": "dd00000171650092",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K092|:\n        config.configure(neg"
    },
    {
     "hash": "dd00000171650093",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K093|ative_format=\"parens\")\n    wit"
    },
    {
     "hash": "dd00000171650094",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K094|h pytest.raises(KeyError):\n   "
    },
    {
     "hash": "dd00000171650095",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K095|     config.setting(\"no_such_s"
    },
    {
     "hash": "dd00000171650096",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K096|etting\")\n\n###FILE:test_executo"
    },
    {
     "hash": "dd00000171650097",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K097|r.py\n\"\"\"Regression test: the e"
    },
    {
     "hash": "dd00000171650098",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K098|xecutor's returned total accou"
    },
    {
     "hash": "dd00000171650099",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K099|nts for every task.\"\"\"\nimport "
    },
    {
     "hash": "dd00000171650100",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K100|sys, os\nsys.path.insert(0, os."
    },
    {
     "hash": "dd00000171650101",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K101|path.join(os.path.dirname(__fi"
    },
    {
     "hash": "dd00000171650102",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K102|le__), \"..\"))\nfrom meridian im"
    },
    {
     "hash": "dd00000171650103",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K103|port WorkStealingExecutor\n\ndef"
    },
    {
     "hash": "dd00000171650104",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K104| test_executor_total():\n    ex"
    },
    {
     "hash": "dd00000171650105",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K105| = WorkStealingExecutor(n_work"
    },
    {
     "hash": "dd00000171650106",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K106|ers=8)\n    assert ex.run([lamb"
    },
    {
     "hash": "dd00000171650107",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K107|da: 1] * 500) == 500\n\n###FILE:"
    },
    {
     "hash": "dd00000171650108",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K108|test_frame.py\n\"\"\"Frame + merge"
    },
    {
     "hash": "dd00000171650109",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K109| regression tests. Shipped wit"
    },
    {
     "hash": "dd00000171650110",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K110|h the repo since 1.0.\"\"\"\nfrom "
    },
    {
     "hash": "dd00000171650111",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K111|meridian import Frame, explain"
    },
    {
     "hash": "dd00000171650112",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K112|_merge, merge\n\n\ndef test_frame"
    },
    {
     "hash": "dd00000171650113",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K113|_preserves_construction_order("
    },
    {
     "hash": "dd00000171650114",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K114|):\n    f = Frame([{\"k\": 2, \"a\""
    },
    {
     "hash": "dd00000171650115",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K115|: \"x\"}, {\"k\": 1, \"a\": \"y\"}])\n "
    },
    {
     "hash": "dd00000171650116",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K116|   assert [r[\"k\"] for r in f.r"
    },
    {
     "hash": "dd00000171650117",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K117|ows] == [2, 1]\n    assert f.co"
    },
    {
     "hash": "dd00000171650118",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K118|lumns == [\"k\", \"a\"]\n    assert"
    },
    {
     "hash": "dd00000171650119",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K119| f.key_column(\"k\") == [2, 1]\n\n"
    },
    {
     "hash": "dd00000171650120",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K120|\ndef test_frame_equality_is_ro"
    },
    {
     "hash": "dd00000171650121",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K121|ws_and_columns():\n    assert F"
    },
    {
     "hash": "dd00000171650122",
-    "created_s": 930.0
+    "created_s": 930.0,
+    "issue": "K122|rame([{\"k\": 1}]) == Frame([{\"k"
    },
    {
     "hash": "dd00000171650123",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K123|\": 1}])\n    assert Frame([{\"k\""
    },
    {
     "hash": "dd00000171650124",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K124|: 1}]) != Frame([{\"k\": 2}])\n\n\n"
    },
    {
     "hash": "dd00000171650125",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K125|def test_merge_is_an_inner_joi"
    },
    {
     "hash": "dd00000171650126",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K126|n():\n    left = Frame([{\"k\": 1"
    },
    {
     "hash": "dd00000171650127",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K127|, \"a\": \"x\"}, {\"k\": 3, \"a\": \"z\""
    },
    {
     "hash": "dd00000171650128",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K128|}])\n    right = Frame([{\"k\": 1"
    },
    {
     "hash": "dd00000171650129",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K129|, \"b\": 10}, {\"k\": 2, \"b\": 20}]"
    },
    {
     "hash": "dd00000171650130",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K130|)\n    out = merge(left, right,"
    },
    {
     "hash": "dd00000171650131",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K131| on=\"k\")\n    assert out.rows ="
    },
    {
     "hash": "dd00000171650132",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K132|= [{\"k\": 1, \"a\": \"x\", \"b\": 10}"
    },
    {
     "hash": "dd00000171650133",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K133|]\n    assert out.columns == [\""
    },
    {
     "hash": "dd00000171650134",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K134|k\", \"a\", \"b\"]\n\n\ndef test_merge"
    },
    {
     "hash": "dd00000171650135",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K135|_sorted_keys_contract():\n    #"
    },
    {
     "hash": "dd00000171650136",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K136| The documented sort-merge con"
    },
    {
     "hash": "dd00000171650137",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K137|tract (meridian/frame.py, `mer"
    },
    {
     "hash": "dd00000171650138",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K138|ge`): output is ordered\n    # "
    },
    {
     "hash": "dd00000171650139",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K139|by the join key, independent o"
    },
    {
     "hash": "dd00000171650140",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K140|f either operand's row order. "
    },
    {
     "hash": "dd00000171650141",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K141|Downstream code binary\n    # s"
    },
    {
     "hash": "dd00000171650142",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K142|earches the result and seriali"
    },
    {
     "hash": "dd00000171650143",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K143|ses it deterministically, so t"
    },
    {
     "hash": "dd00000171650144",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K144|his is load-bearing.\n    left "
    },
    {
     "hash": "dd00000171650145",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K145|= Frame([{\"k\": 2, \"a\": \"x\"}, {"
    },
    {
     "hash": "dd00000171650146",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K146|\"k\": 1, \"a\": \"y\"}])\n    right "
    },
    {
     "hash": "dd00000171650147",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K147|= Frame([{\"k\": 1, \"b\": 10}, {\""
    },
    {
     "hash": "dd00000171650148",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K148|k\": 2, \"b\": 20}])\n    out = me"
    },
    {
     "hash": "dd00000171650149",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K149|rge(left, right, on=\"k\")\n    a"
    },
    {
     "hash": "dd00000171650150",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K150|ssert [r[\"k\"] for r in out.row"
    },
    {
     "hash": "dd00000171650151",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K151|s] == [1, 2]\n\n\ndef test_explai"
    },
    {
     "hash": "dd00000171650152",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K152|n_merge_describes_the_join():\n"
    },
    {
     "hash": "dd00000171650153",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K153|    left = Frame([{\"k\": 1, \"a\""
    },
    {
     "hash": "dd00000171650154",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K154|: \"x\"}, {\"k\": 2, \"a\": \"y\"}])\n "
    },
    {
     "hash": "dd00000171650155",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K155|   right = Frame([{\"k\": 1, \"b\""
    },
    {
     "hash": "dd00000171650156",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K156|: 10}, {\"k\": 2, \"b\": 20}])\n   "
    },
    {
     "hash": "dd00000171650157",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K157| plan = explain_merge(left, ri"
    },
    {
     "hash": "dd00000171650158",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K158|ght, on=\"k\")\n    assert plan.o"
    },
    {
     "hash": "dd00000171650159",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K159|n == \"k\"\n    assert sorted(pla"
    },
    {
     "hash": "dd00000171650160",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K160|n.index) == [1, 2]\n    assert "
    },
    {
     "hash": "dd00000171650161",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K161|plan.estimated_rows == 2\n    a"
    },
    {
     "hash": "dd00000171650162",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K162|ssert plan.ordering == \"ascend"
    },
    {
     "hash": "dd00000171650163",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K163|ing\"\n\n###FILE:test_groupby.py\n"
    },
    {
     "hash": "dd00000171650164",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K164|\"\"\"group_sum: correctness + fi"
    },
    {
     "hash": "dd00000171650165",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K165|rst-seen key ordering.\"\"\"\nfrom"
    },
    {
     "hash": "dd00000171650166",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K166| meridian import group_sum, re"
    },
    {
     "hash": "dd00000171650167",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K167|gister_aggregator, available_a"
    },
    {
     "hash": "dd00000171650168",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K168|ggregators\n\n\ndef test_group_su"
    },
    {
     "hash": "dd00000171650169",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K169|m_totals():\n    assert group_s"
    },
    {
     "hash": "dd00000171650170",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K170|um([\"b\", \"a\", \"b\", \"c\", \"a\"], "
    },
    {
     "hash": "dd00000171650171",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K171|[1, 2, 3, 4, 5]) == {\"b\": 4, \""
    },
    {
     "hash": "dd00000171650172",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K172|a\": 7, \"c\": 4}\n\n\ndef test_grou"
    },
    {
     "hash": "dd00000171650173",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K173|p_sum_preserves_first_seen_ord"
    },
    {
     "hash": "dd00000171650174",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K174|er():\n    out = group_sum([\"b\""
    },
    {
     "hash": "dd00000171650175",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K175|, \"a\", \"b\", \"c\"], [1.0, 2.0, 3"
    },
    {
     "hash": "dd00000171650176",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K176|.0, 4.0])\n    assert list(out."
    },
    {
     "hash": "dd00000171650177",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K177|keys()) == [\"b\", \"a\", \"c\"]\n\n\nd"
    },
    {
     "hash": "dd00000171650178",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K178|ef test_group_sum_empty():\n   "
    },
    {
     "hash": "dd00000171650179",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K179| assert group_sum([], []) == {"
    },
    {
     "hash": "dd00000171650180",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K180|}\n\n\ndef test_register_aggregat"
    },
    {
     "hash": "dd00000171650181",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K181|or_round_trips():\n    register"
    },
    {
     "hash": "dd00000171650182",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K182|_aggregator(\"count\", lambda va"
    },
    {
     "hash": "dd00000171650183",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K183|lues: float(len(values)))\n    "
    },
    {
     "hash": "dd00000171650184",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K184|assert \"count\" in available_ag"
    },
    {
     "hash": "dd00000171650185",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K185|gregators()\n    assert \"sum\" i"
    },
    {
     "hash": "dd00000171650186",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K186|n available_aggregators()\n\n###"
    },
    {
     "hash": "dd00000171650187",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K187|FILE:test_parsing.py\n\"\"\"Amount"
    },
    {
     "hash": "dd00000171650188",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K188| parsing (US grouping).\"\"\"\nfro"
    },
    {
     "hash": "dd00000171650189",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K189|m meridian import parse_amount"
    },
    {
     "hash": "dd00000171650190",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K190|\n\n\ndef test_parse_us_amounts()"
    },
    {
     "hash": "dd00000171650191",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K191|:\n    assert parse_amount(\"1,2"
    },
    {
     "hash": "dd00000171650192",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K192|34.56\") == 1234.56\n    assert "
    },
    {
     "hash": "dd00000171650193",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K193|parse_amount(\"42\") == 42.0\n   "
    },
    {
     "hash": "dd00000171650194",
-    "created_s": 929.0
+    "created_s": 929.0,
+    "issue": "K194| assert parse_amount(\"0.5\") =="
    },
    {
     "hash": "dd00000171650195",
-    "created_s": 928.0
+    "created_s": 928.0,
+    "issue": "K195| 0.5\n\n\ndef test_parse_large_us"
    },
    {
     "hash": "dd00000171650196",
-    "created_s": 928.0
+    "created_s": 928.0,
+    "issue": "K196|_amount():\n    assert parse_am"
    },
    {
     "hash": "dd00000171650197",
-    "created_s": 928.0
+    "created_s": 928.0,
+    "issue": "K197|ount(\"12,345,678.90\") == 12345"
    },
    {
     "hash": "dd00000171650198",
-    "created_s": 928.0
+    "created_s": 928.0,
+    "issue": "K198|678.90\n\n###FILE:test_rounding."
    },
    {
     "hash": "dd00000171650199",
-    "created_s": 928.0
+    "created_s": 928.0,
+    "issue": "K199|py\n\"\"\"Rounding is round-half-t"
    },
    {
     "hash": "ee00000202540000",
-    "created_s": 819.0
+    "created_s": 819.0,
+    "issue": null
    },
    {
     "hash": "ee00000202540001",
-    "created_s": 819.0
+    "created_s": 819.0,
+    "issue": null
    },
    {
     "hash": "ee00000202540002",
-    "created_s": 819.0
+    "created_s": 819.0,
+    "issue": null
    },
    {
     "hash": "ee00000202540003",
-    "created_s": 819.0
+    "created_s": 819.0,
+    "issue": null
    },
    {
     "hash": "ee00000202540004",
-    "created_s": 819.0
+    "created_s": 819.0,
+    "issue": null
    },
    {
     "hash": "ee00000202540005",
-    "created_s": 819.0
+    "created_s": 819.0,
+    "issue": null
    },
    {
     "hash": "ee00000202540006",
-    "created_s": 819.0
+    "created_s": 819.0,
+    "issue": null
    },
    {
     "hash": "ee00000202540007",
-    "created_s": 819.0
+    "created_s": 819.0,
+    "issue": null
    },
    {
     "hash": "ee00000202540008",
-    "created_s": 819.0
+    "created_s": 819.0,
+    "issue": null
    },
    {
     "hash": "ee00000202540009",
-    "created_s": 819.0
+    "created_s": 819.0,
+    "issue": null
    },
    {
     "hash": "ee00000202540010",
-    "created_s": 819.0
+    "created_s": 819.0,
+    "issue": null
    },
    {
     "hash": "ee00000202540011",
-    "created_s": 819.0
+    "created_s": 819.0,
+    "issue": null
    },
    {
     "hash": "ee00000202540012",
-    "created_s": 819.0
+    "created_s": 819.0,
+    "issue": null
    },
    {
     "hash": "ee00000202540013",
-    "created_s": 819.0
+    "created_s": 819.0,
+    "issue": null
    },
    {
     "hash": "ee00000202540014",
-    "created_s": 819.0
+    "created_s": 819.0,
+    "issue": null
    },
    {
     "hash": "ee00000202540015",
-    "created_s": 819.0
+    "created_s": 819.0,
+    "issue": null
    },
    {
     "hash": "ee00000202540016",
-    "created_s": 819.0
+    "created_s": 819.0,
+    "issue": null
    },
    {
     "hash": "ee00000202540017",
-    "created_s": 819.0
+    "created_s": 819.0,
+    "issue": null
    },
    {
     "hash": "ee00000202540018",
-    "created_s": 819.0
+    "created_s": 819.0,
+    "issue": null
    },
    {
     "hash": "ee00000202540019",
-    "created_s": 818.0
+    "created_s": 818.0,
+    "issue": null
    },
    {
     "hash": "ee00000202540020",
-    "created_s": 818.0
+    "created_s": 818.0,
+    "issue": null
    },
    {
     "hash": "ee00000202540021",
-    "created_s": 818.0
+    "created_s": 818.0,
+    "issue": null
    },
    {
     "hash": "ee00000202540022",
-    "created_s": 818.0
+    "created_s": 818.0,
+    "issue": null
    },
    {
     "hash": "ee00000202540023",
-    "created_s": 818.0
+    "created_s": 818.0,
+    "issue": null
    },
    {
     "hash": "ee00000202540024",
-    "created_s": 818.0
+    "created_s": 818.0,
+    "issue": null
    },
    {
     "hash": "ee00000202540025",
-    "created_s": 818.0
+    "created_s": 818.0,
+    "issue": null
    },
    {
     "hash": "ee00000202540026",
-    "created_s": 818.0
+    "created_s": 818.0,
+    "issue": null
    },
    {
     "hash": "ee00000202540027",
-    "created_s": 818.0
+    "created_s": 818.0,
+    "issue": null
    },
    {
     "hash": "ee00000202540028",
-    "created_s": 818.0
+    "created_s": 818.0,
+    "issue": null
    },
    {
     "hash": "ee00000202540029",
-    "created_s": 818.0
+    "created_s": 818.0,
+    "issue": null
    },
    {
     "hash": "ee00000202540030",
-    "created_s": 818.0
+    "created_s": 818.0,
+    "issue": null
    },
    {
     "hash": "ee00000202540031",
-    "created_s": 818.0
+    "created_s": 818.0,
+    "issue": null
    },
    {
     "hash": "ee00000202540032",
-    "created_s": 818.0
+    "created_s": 818.0,
+    "issue": null
    },
    {
     "hash": "ff00000253530000",
-    "created_s": 584.0
+    "created_s": 584.0,
+    "issue": "Z000|MARKER:1792860386\nPID:25353\nCW"
    },
    {
     "hash": "ff00000253530001",
-    "created_s": 584.0
+    "created_s": 584.0,
+    "issue": null
    },
    {
     "hash": "ff00000253530002",
-    "created_s": 584.0
+    "created_s": 584.0,
+    "issue": null
    },
    {
     "hash": "ff00000253530003",
-    "created_s": 584.0
+    "created_s": 584.0,
+    "issue": null
    },
    {
     "hash": "ff00000253530004",
-    "created_s": 584.0
+    "created_s": 584.0,
+    "issue": null
    },
    {
     "hash": "ff00000253530005",
-    "created_s": 584.0
+    "created_s": 584.0,
+    "issue": null
    },
    {
     "hash": "ff00000253530006",
-    "created_s": 584.0
+    "created_s": 584.0,
+    "issue": null
    },
    {
     "hash": "ff00000253530007",
-    "created_s": 584.0
+    "created_s": 584.0,
+    "issue": null
    },
    {
     "hash": "ff00000253530008",
-    "created_s": 584.0
+    "created_s": 584.0,
+    "issue": null
    },
    {
     "hash": "ff00000253530009",
-    "created_s": 584.0
+    "created_s": 584.0,
+    "issue": null
    },
    {
     "hash": "ff00000253530010",
-    "created_s": 583.0
+    "created_s": 583.0,
+    "issue": null
    },
    {
     "hash": "ff00000253530011",
-    "created_s": 583.0
+    "created_s": 583.0,
+    "issue": null
    },
    {
     "hash": "ff00000253530012",
-    "created_s": 583.0
+    "created_s": 583.0,
+    "issue": null
    },
    {
     "hash": "ff00000253530013",
-    "created_s": 583.0
+    "created_s": 583.0,
+    "issue": null
    },
    {
     "hash": "ff00000253530014",
-    "created_s": 583.0
+    "created_s": 583.0,
+    "issue": null
    },
    {
     "hash": "ff00000253530015",
-    "created_s": 583.0
+    "created_s": 583.0,
+    "issue": null
    },
    {
     "hash": "ff00000253530016",
-    "created_s": 583.0
+    "created_s": 583.0,
+    "issue": null
    },
    {
     "hash": "ff00000253530017",
-    "created_s": 583.0
+    "created_s": 583.0,
+    "issue": null
    },
    {
     "hash": "ff00000253530018",
-    "created_s": 583.0
+    "created_s": 583.0,
+    "issue": null
    },
    {
     "hash": "ff00000253530019",
-    "created_s": 583.0
+    "created_s": 583.0,
+    "issue": null
    },
    {
     "hash": "ff00000253530020",
-    "created_s": 583.0
+    "created_s": 583.0,
+    "issue": null
    },
    {
     "hash": "ff00000253530021",
-    "created_s": 583.0
+    "created_s": 583.0,
+    "issue": null
    },
    {
     "hash": "ff00000253530022",
-    "created_s": 583.0
+    "created_s": 583.0,
+    "issue": null
    },
    {
     "hash": "ff00000253530023",
-    "created_s": 583.0
+    "created_s": 583.0,
+    "issue": null
    },
    {
     "hash": "ff00000253530024",
-    "created_s": 583.0
+    "created_s": 583.0,
+    "issue": null
    },
    {
     "hash": "ff00000253530025",
-    "created_s": 583.0
+    "created_s": 583.0,
+    "issue": null
    },
    {
     "hash": "ff00000253530026",
-    "created_s": 583.0
+    "created_s": 583.0,
+    "issue": null
    }
   ]
  },
@@ -3102,6 +3868,59 @@
   "service_ips": {
    "172.18.0.13": 974
   },
-  "service_issue_text": "not in the log: null on every seeded build"
+  "service_issue_text": {
+   "C": {
+    "hook": "msg 257",
+    "builds": 127,
+    "read_back": 127,
+    "rebuilt": 0,
+    "null": 0,
+    "rebuilt_checked_against": 0
+   },
+   "R1C": {
+    "hook": "msgs 291-297",
+    "builds": 127,
+    "read_back": 3,
+    "rebuilt": 124,
+    "null": 0,
+    "rebuilt_checked_against": 3
+   },
+   "M": {
+    "hook": "msg 301",
+    "builds": 250,
+    "read_back": 17,
+    "rebuilt": 0,
+    "null": 233,
+    "rebuilt_checked_against": 0
+   },
+   "K": {
+    "hook": "msg 311",
+    "builds": 200,
+    "read_back": 4,
+    "rebuilt": 196,
+    "null": 0,
+    "rebuilt_checked_against": 4
+   },
+   "P": {
+    "hook": "msg 349",
+    "builds": 33,
+    "read_back": 0,
+    "rebuilt": 0,
+    "null": 33,
+    "rebuilt_checked_against": 0
+   },
+   "Z": {
+    "hook": "msg 389",
+    "builds": 27,
+    "read_back": 1,
+    "rebuilt": 0,
+    "null": 26,
+    "rebuilt_checked_against": 0
+   },
+   "literal": {
+    "builds": 2,
+    "read_back": 2
+   }
+  }
  }
 }

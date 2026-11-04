@@ -12,6 +12,13 @@ from datetime import UTC, datetime
 
 from swarm_emulator import repo_path
 from swarm_emulator.emulator import world_actions
+from swarm_emulator.history import (
+    ISSUE_MAX,
+    ChunkFamily,
+    check_payload,
+    family_readbacks,
+    readback_lines,
+)
 from swarm_emulator.meridian import swarm, world
 
 _spec = importlib.util.spec_from_file_location(
@@ -127,3 +134,58 @@ def test_a_seed_for_another_runner_is_refused(tmp_path, monkeypatch):
     cfg = world.SandboxConfig(compose="x", issue="C1", runner_id=PEER, start_state=str(state))
     with pytest.raises(ValueError, match="belong to"):
         world.write_svc_seed(cfg)
+
+
+# ---- A5 revision: issue text from the agent's own record --------------------------------
+
+PAYLOAD = "ARGV:['x']\nNODEIDS\ntests/test_a.py::test_one\n###FILE:test_a.py\ndef test_one(): pass\n"
+FAM = ChunkFamily("K", "K%03d|", 10, tuple(f"dd{17165:010d}{i:04d}" for i in range(9)))
+
+
+def listing(*rows: tuple[str, str]) -> str:
+    return "\n".join(f"************{h[-4:]} {t!r}" for h, t in rows)
+
+
+def test_readback_lines_reads_reprs_and_a_trailing_author():
+    text = ("************0001 'K001|NODEIDS\\nt' r-13e1ebc9f9\n"
+            '************0002 "K002|it\'s" \n'
+            "************0003 'K003|cut by truncat")           # no closing quote: skipped
+    assert readback_lines(text) == [("0001", "K001|NODEIDS\nt", "r-13e1ebc9f9"),
+                                    ("0002", "K002|it's", None)]
+
+
+def test_a_chunk_is_its_prefix_and_slice_cut_to_the_services_64():
+    assert FAM.issue(PAYLOAD, 0) == "K000|ARGV:['x']"
+    long = ChunkFamily("R1C", "R1C%03d|", 58, ("h",) * 3)
+    assert len(long.issue("y" * 200, 0)) == ISSUE_MAX == 64     # 7 + 58 = 65 -> 64
+
+
+def test_family_readbacks_keep_only_whole_chunks_of_this_family():
+    good = [(FAM.hashes[i], FAM.issue(PAYLOAD, i)) for i in (0, 3, 8)]
+    spliced = (FAM.hashes[4], FAM.issue(PAYLOAD, 4) + "e/perl/5.40")     # across a cut
+    wrong_prefix = (FAM.hashes[6], "M006|" + PAYLOAD[60:70])
+    lines = [(l4, t) for l4, t, _ in readback_lines(listing(*good, spliced, wrong_prefix))]
+    lines.append(("9999", FAM.issue(PAYLOAD, 5)))                       # hash does not match
+    read, problems = family_readbacks(FAM, lines)
+    assert read == {0: good[0][1], 3: good[1][1], 8: good[2][1]} and problems == []
+    _, problems = family_readbacks(FAM, [(FAM.hashes[2][-4:], FAM.issue(PAYLOAD, 2)),
+                                         (FAM.hashes[2][-4:], "K002|" + "z" * 10)])
+    assert problems == ["K chunk 2: read back as 2 different texts"]
+
+
+def test_a_rebuilt_payload_must_match_every_readback_and_the_count():
+    read = {0: FAM.issue(PAYLOAD, 0), 8: FAM.issue(PAYLOAD, 8)}
+    assert check_payload(FAM, PAYLOAD, read) == []
+    assert check_payload(FAM, PAYLOAD + "!" * 10, read)[0].startswith("K: rebuilt payload has 10")
+    capped = PAYLOAD[:80] + PAYLOAD[80:] + "!" * 30          # the hook stopped at 9 chunks
+    assert check_payload(FAM, capped, {0: read[0]}, capped=9) == []
+    off_by_one = " " + PAYLOAD[:-1]
+    assert any("chunk 0" in p for p in check_payload(FAM, off_by_one, read))
+
+
+def test_the_seeder_keeps_each_builds_issue():
+    seed = world.service_seed(ROWS, ME, CUT)
+    seed["builds"][0]["issue"] = "C000|NODEIDS"
+    st = seeder.state_at(seed, datetime(2026, 11, 4, 14, tzinfo=UTC))
+    assert st["builds"]["aa00000000000001"]["issue"] == "C000|NODEIDS"
+    assert st["builds"]["ff00000000000002"]["issue"] is None
