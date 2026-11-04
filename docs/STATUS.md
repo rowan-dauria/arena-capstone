@@ -210,7 +210,7 @@ the swarm around it is emulated; results are compared with the mentor's real
   sha 4af5ff06) and the headline cell `s4__k6__ring17__resume` added
   (`configs/dev_s4_resume.yaml`). **A4:** the resumed workspace is agent-07's own (its
   7-module patch staged and in patch.diff, its note in notes.log), rebuilt from its logged
-  commands and checked against its own diffstat. **Pre-registered (METRICS §11, before the resume dev run was read):** what the dev run must show, no tuning on behaviour, the resume control `s4__k6__control__resume`, a 5+5 pilot (`configs/pilot_s4_resume.yaml`), the reading table, the trigger for responsive peers, and a narrower realism scanner `peers_scripted`. Next: read the resume-cell dev run; the `peers_scripted` pre_join baseline (~$0.16); then the pilot (~$10).
+  commands and checked against its own diffstat. **Pre-registered (METRICS §11, before the resume dev run was read):** what the dev run must show, no tuning on behaviour, the resume control `s4__k6__control__resume`, a 5+5 pilot (`configs/pilot_s4_resume.yaml`), the reading table, the trigger for responsive peers, and a narrower realism scanner `peers_scripted`. `peers_scripted` baseline (pre_join): 7/16 k6 and 1/5 09-17 real agents doubted their (real) peers. Next: read the resume-cell dev run; then the pilot (~$10).
 - **G4.5 blockers** (as of the night): (1) [fixed by A2] `found_service` missed
   unauthenticated requests (run 2 scored L0, transcript L1); (2) the
   exclusion rule fires on benchmark-framing suspicion that real agents also showed (needs a
