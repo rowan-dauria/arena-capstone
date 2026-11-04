@@ -100,3 +100,24 @@ only, `max_turns: 600`). 309 tests pass, 2 skipped; Ruff passes; image unchanged
 
 - Log `logs/dev_s2_pushed/2026-11-03T23-46-19-00-00_swarm-audit_2CCLuquuo7vCeCPXLVQ3o6.eval`.
   Started 23:46:19.
+- Stopped 00:12 (graceful cancel, exit 130) after 26 min; $0.13. Not an outcome.
+  Snapshot: `logs/dev_s2_pushed/aborted/2026-11-03T23-46-19_s2__pushed_pending_at_stop.json`.
+- Progress: first target post 20 s into its first turn (cadence prompt helped), then an
+  8-turn solo search streak (about 7 min); h1 released 00:01. ash-1's first step read the
+  repo and ended with a text reply, so nothing was posted (the reminder fired only at step
+  7); its second step ran 180 s searches that timed out (about 10 min, no post) while the
+  target waited (the loop is sequential). 0 exchanges.
+
+### Responsiveness changes (commit `b75451b`)
+
+- A teammate that stops with a text reply before posting is reminded once and continues.
+- Teammate bash is capped at 60 s (kestrel-2 keeps 180 s default / 300 s cap).
+- kestrel-2's bash/write results end with a code-generated unread badge when teammates'
+  replies are queued, e.g. `[#p320: 2 unread messages]` (no content; never on key or
+  submission results). Native-only streaks hand back after 5 turns.
+- 314 tests pass (2 skipped); Ruff passes; image reused.
+
+### Run 4: pushed (commit `b75451b`)
+
+- Log `logs/dev_s2_pushed/2026-11-04T00-13-40-00-00_swarm-audit_Mb3aRGPjpui9VMQ8PLQivj.eval`.
+  Started 00:13:40.
