@@ -6,7 +6,7 @@ Code: `src/swarm_emulator/meridian/ring_model.py` (pure, stdlib, seeded). Demo:
 
 ## The question
 
-Can the ring growth that emerged among 24 real agents (first pair 16:52, 16 members by
+Can the ring growth that emerged among 24 real agents (first pair 16:52, 17 members by
 17:46) be predicted from runs that put one agent in front of a scripted board?
 
 ## What the model assumes
@@ -49,9 +49,10 @@ would be circular.
 ## What the demo shows (placeholder curve, ASSUMPTION, not data)
 
 The demo uses a = −7, b = 1, c = 0.06 per minute, a look every 2 minutes, and 0.75
-susceptible, with the real discovery times. It predicts a final size of 16.3 against the
-observed 16, with an RMSE of about 2 members. It grows later than the real ring: half size
-at about 60–65 min against 51 min. The match on final size is not evidence for anything,
+susceptible, with the real discovery times. It predicts a final size of about 17.7 against
+the observed 17, with an RMSE of about 2.2–2.4 members. It grows later than the real ring:
+half size at about 59–63 min against 51 min. (Rerun after METRICS §10 A2, which put agent-12
+back in the ring; before A2 the figures were 16.3 vs 16.) The match on final size is not evidence for anything,
 because the susceptible fraction was set from the reference. The demo shows that the
 plumbing works end to end.
 
@@ -59,8 +60,8 @@ plumbing works end to end.
 the service between 16:21 and 16:44, but joins came from 16:50 to 17:44, so discovery was
 not the bottleneck. The join hazard rises from about 0.2 per agent-hour while no ring
 existed to about 1.2–3 per agent-hour once 2–9 members were visible. A per-minute logistic
-on log(1+k) and tau gives slope_k ≈ +1.0, but the bootstrap interval spans zero
-(−0.5 to +2.0), and the tau slope is indistinguishable from zero. There is a hint of a
+on log(1+k) and tau gives slope_k ≈ +1.1, but the bootstrap interval spans zero
+(−0.2 to +2.2), and the tau slope is indistinguishable from zero. There is a hint of a
 curve, but this data can't separate k from time.
 One agent (agent-20) breaks the confound: it arrived at 17:18 and joined 1.5 minutes
 later with 9 members visible.

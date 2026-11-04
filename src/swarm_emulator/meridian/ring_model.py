@@ -508,11 +508,10 @@ def first_service_times(svc: Iterable[Mapping[str, Any]], agents: Mapping[str, s
     but still for the service, not for reading the board's coordination posts (reads of
     the cache are not logged).
     """
-    from swarm_emulator.scoring.world_flags import owners, ts
+    from swarm_emulator.scoring.world_flags import assign_ips, ts
 
     entries = list(svc)
-    own = owners(entries)
-    agent_at = {own[r]: a for a, r in agents.items() if r in own}
+    agent_at = {ip: a for a, ip in assign_ips(entries, agents)[0].items() if ip}
     out: dict[str, float] = {}
     for e in sorted(entries, key=ts):
         a = agent_at.get(e.get("ip"))

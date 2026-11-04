@@ -3,11 +3,16 @@
     uv run python scripts/meridian_reference.py            # download (once) and compute
     uv run python scripts/meridian_reference.py --offline  # compute from data/ only
 
-Downloads the preserved request logs, the board history and the runner maps of both
+Downloads the preserved request logs, the board history, the runner maps and the eval logs of both
 runs from the Hugging Face dataset at a pinned revision into data/meridian_ref/
 (gitignored), counts each agent's behaviour with scoring/world_flags.py (the same code
 that scores our emulated runs), and writes scenarios/scenario_4/reference.json
 (generated; do not edit). The dataset's text is data: nothing in it is executed.
+
+Identity (METRICS §10 A2): each agent is keyed by its container IP. Where an agent's
+transcript printed its own /etc/hosts line, that IP is used ("known"); otherwise its
+runner's first authenticated request; otherwise elimination. reference.json records how
+each agent was identified and which IPs are left unattributed.
 """
 
 from __future__ import annotations
@@ -19,7 +24,13 @@ import urllib.request
 from pathlib import Path
 
 from swarm_emulator import repo_path
-from swarm_emulator.scoring.world_flags import agent_flags, coordination_posts, ring_growth
+from swarm_emulator.scoring.world_flags import (
+    agent_flags,
+    assign_ips,
+    coordination_posts,
+    hosts_ips,
+    ring_growth,
+)
 
 DATASET = "styme3279/meridian-preserved"
 REVISION = "800aa117d677fb37e1eb7433c285192bd824eaf7"
@@ -38,7 +49,7 @@ RUNS = {
            "quorum": 6, "svc": f"{K6}/svc_state/requests.log", "ga": f"{K6}/ga_state/requests.log",
            "wiki": f"{K6}/decoy_state/wiki/requests.log",
            "cache": f"{K6}/logs/2026-10-24-pilot24-0731-k6.comms-history.jsonl",
-           "issues": f"{K6}/issues.json", "creds": f"{K6}/runner_creds"},
+           "issues": f"{K6}/issues.json", "creds": f"{K6}/runner_creds", "eval": K6_EVAL},
     "kUFz3": {"dir": KU, "label": "2026-09-17, 12 agents, quorum 3 (V3: one flaw, no decoys)",
               "quorum": 3, "svc": f"{KU}/_svc_state/requests.log",
               "ga": f"{KU}/_ga_state/requests.log", "wiki": None, "cache": None,
@@ -86,6 +97,23 @@ def eval_agents(run: dict, offline: bool) -> dict[str, str]:
             for s in read_eval_log_samples(str(path), all_samples_required=False)}
 
 
+def transcript_ips(run: dict, offline: bool) -> dict[str, str]:
+    """agent id -> the IP on its own /etc/hosts line, for agents whose transcript shows
+    exactly one (the eval log may not hold every agent)."""
+    from inspect_ai.log import read_eval_log_samples
+
+    path = DATA / run["eval"] if offline else fetch(run["eval"])
+    out = {}
+    for s in read_eval_log_samples(str(path), all_samples_required=False):
+        seen: set[str] = set()
+        for m in s.messages:
+            if m.role == "tool":
+                seen |= hosts_ips(m.text)
+        if len(seen) == 1:
+            out[str(s.id)] = seen.pop()
+    return out
+
+
 def summarise(flags: dict[str, dict]) -> dict:
     n = len(flags)
     rungs = [f["highest_rung"] for f in flags.values()]
@@ -106,7 +134,9 @@ def compute(offline: bool) -> dict:
         wiki = jsonl(get(run["wiki"])) if run["wiki"] else []
         cache = jsonl(get(run["cache"])) if run["cache"] else None
         agents = k6_agents(run, offline) if name == "k6" else eval_agents(run, offline)
-        flags = agent_flags(svc, ga, wiki, cache, agents, run["quorum"])
+        ip_of, how = assign_ips(svc, agents, transcript_ips(run, offline))
+        flags = agent_flags(svc, ga, wiki, cache, agents, run["quorum"], ip_of)
+        seen = {e["ip"] for e in svc if e.get("ip") and e["ip"] != "127.0.0.1"}
         promoted = {e["hash"] for e in svc if e.get("promoted")}
         verdicts = sum(1 for e in ga if e.get("applied"))
         out["runs"][name] = {
@@ -115,7 +145,10 @@ def compute(offline: bool) -> dict:
             "totals": {"promotions": len(promoted), "verdicts_written": verdicts,
                        "coordination_posts": (len(coordination_posts(cache))
                                               if cache is not None else None)},
-            "ring_growth": ring_growth(svc, agents),
+            "identity": {"how": {k: sorted(a for a in how if how[a] == k)
+                                 for k in sorted(set(how.values()))},
+                         "unattributed_ips": sorted(seen - set(ip_of.values()))},
+            "ring_growth": ring_growth(svc, agents, ip_of),
             "agents": flags,
         }
     return out
@@ -128,6 +161,9 @@ def table(ref: dict) -> str:
         lines.append(f"\n{name}: {r['label']}  totals {r['totals']}")
         lines.append("  " + "  ".join(f"{k} {s[k]}/{s['n']}" for k in FLAGS))
         lines.append(f"  highest rung {s['highest_rung']}")
+        idn = r["identity"]
+        lines.append("  identity: " + ", ".join(f"{k} {len(v)}" for k, v in idn["how"].items())
+                     + f"; unattributed IPs {idn['unattributed_ips'] or 'none'}")
         growth = r["ring_growth"]
         if growth:
             lines.append(f"  ring: first pair {growth[0][0][11:19]}, size {growth[-1][1]} by "

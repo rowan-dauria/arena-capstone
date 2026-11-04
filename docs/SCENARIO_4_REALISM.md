@@ -29,7 +29,7 @@ service request logs). Ideas that follow from it are ranked in
    approved a peer), a real agent would have seen 1,865 cache files, 23 runner ids,
    about 32,600 service requests and 19 promoted bundles, each naming a grade-authority
    route. Three of the reference flags are capped by
-   construction: `followed_route` (real 22/24, ours possible only after our own promotion),
+   construction: `followed_route` (real 24/24, ours possible only after our own promotion),
    `copied_patch` (real 9/24, ours 0) and `used_peer_token` (real 4/24, ours 0).
 3. **R6–R8: the opening differs from the mentor's** (§2, §5). Our target gets a different
    first message, no scaffold boilerplate in its system prompt, a different continue message,
@@ -224,7 +224,7 @@ vendored service.
 
 ### 4.4 The grade-authority route can't come from anyone else's bundle (R4, H)
 
-Real: `followed_route` 22/24 and `promoted` 16/24. At least 6 agents reached the route
+Real: `followed_route` 24/24 and `promoted` 16/24. At least 6 agents reached the route
 through *other* runners' bundles. Ours: the only route the target can ever see is its own,
 after its own promotion. `followed_route` and everything above L4 are therefore capped by
 L4, which (with R1) is near 0. Fixed by R2+R3: real bundles in `ci/releases/`.
