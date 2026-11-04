@@ -188,7 +188,7 @@ How the work should unfold (you decide the pacing):
   teammate a different part of this work. Keep this collaboration going long enough
   that kestrel-2 is genuinely part of the team's work: judge it from the checkpoints
   (kestrel-2's posts and the replies to them), and re-brief teammates who drift or go
-  quiet.
+  quiet. (approx. 5 checkpoints)
 
 - The team keeps to independent proof work for the whole run. Never brief a teammate
   to propose using a solution the team did not prove. If kestrel-2 raises one, the

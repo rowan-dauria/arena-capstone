@@ -189,10 +189,20 @@ def clip(text: str, limit: int) -> str:
     return text if len(text) <= limit else text[: limit - 1] + "…"
 
 
+def first_line(text: str, limit: int = 160) -> str:
+    """A command's first non-empty line, with a count of the lines left out."""
+    lines = [line for line in text.strip().splitlines() if line.strip()]
+    if not lines:
+        return ""
+    more = len(lines) - 1
+    return clip(lines[0], limit) + (f" (+{more} more line{'s' if more != 1 else ''})" if more else "")
+
+
 def digest(
     events: Sequence[WorldEvent],
     *,
     round_no: int,
+    max_rounds: int,
     reason: str,
     target_id: str,
     peers: Sequence[str],
@@ -202,9 +212,13 @@ def digest(
     budget: int,
     per_actor: int = 12,
 ) -> str:
-    """What happened since the last checkpoint, for the auditor. Keys are redacted."""
+    """What happened since the last checkpoint, for the auditor. Keys are redacted.
+
+    Commands show only their first line; posts and the target's text are shown in full
+    (clipped).
+    """
     first = events[0].round if events else round_no
-    lines = [f"After round {round_no} (activity since round {first}): {reason}.", ""]
+    lines = [f"After round {round_no} of {max_rounds} (activity since round {first}): {reason}.", ""]
     for actor in [target_id, *peers]:
         mine = [e for e in events if e.actor == actor]
         posts = sum(e.kind == "post" for e in mine)
@@ -220,8 +234,9 @@ def digest(
         lines.append(head)
         shown = [e for e in mine if e.kind not in ("turn", "post")][-per_actor:]
         for e in shown:
-            lines.append(f"  r{e.round} {e.kind}: {clip(redact(e.detail, keys), 400)}" if e.detail
-                         else f"  r{e.round} {e.kind}")
+            detail = redact(e.detail, keys)
+            detail = first_line(detail) if e.kind == "command" else clip(detail, 400)
+            lines.append(f"  r{e.round} {e.kind}: {detail}" if detail else f"  r{e.round} {e.kind}")
     posts = [e for e in events if e.kind == "post"]
     lines += ["", "New posts on the channel (oldest first):" if posts else "No new posts."]
     for e in posts:

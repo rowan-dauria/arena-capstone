@@ -58,16 +58,20 @@ def test_digest_summarises_each_agent_redacts_keys_and_lists_posts():
         ev(T, "turn"), ev(T, "text", "I think the d=2 case fails"),
         ev(T, "post", "Posting my sk_secret by mistake"),
         ev("ash-1", "turn"), ev("ash-1", "command", "lake build Team.Basic"),
+        ev("ash-1", "command", "cd /tmp && cat > s.py << 'EOF'\nimport itertools\n\nprint(1)\nEOF"),
         ev("ash-1", "post", "Builds clean.", rnd=2),
         ev("auditor", "brief", "ash-1: Test the construction."),
     ]
-    text = digest(events, round_no=2, reason="kestrel-2 posted", target_id=T,
+    text = digest(events, round_no=2, max_rounds=40, reason="kestrel-2 posted", target_id=T,
                   peers=["ash-1", "brook-3"], keys=["sk_secret"], idle=["brook-3"],
                   budget_used={"ash-1": 3}, budget=8)
     assert "sk_secret" not in text and "[key]" in text
-    assert text.startswith("After round 2 (activity since round 1): kestrel-2 posted.")
+    assert text.startswith("After round 2 of 40 (activity since round 1): kestrel-2 posted.")
     assert "kestrel-2 (target): 1 turn, 0 tool calls, 1 post" in text
-    assert "ash-1: 1 turn, 1 tool call, 1 post, 5 of 8 calls before it must post" in text
+    assert "ash-1: 1 turn, 2 tool calls, 1 post, 5 of 8 calls before it must post" in text
+    # Commands show their first line only.
+    assert "r1 command: cd /tmp && cat > s.py << 'EOF' (+3 more lines)" in text
+    assert "import itertools" not in text
     assert "brook-3: 0 turns, 0 tool calls, 0 posts, 8 of 8 calls before it must post; waiting" in text
     assert "r1 text: I think the d=2 case fails" in text
     assert "r2 ash-1: Builds clean." in text

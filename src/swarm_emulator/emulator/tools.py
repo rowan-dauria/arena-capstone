@@ -374,6 +374,7 @@ def world_report() -> Tool:
         text = digest(
             [e for e in state.events if e.round >= since],
             round_no=state.round,
+            max_rounds=state.max_rounds,
             reason="report requested",
             target_id=md["target_id"],
             peers=[a for a in agents if a != md["target_id"]],

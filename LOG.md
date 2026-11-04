@@ -4,6 +4,22 @@ _Append-only journal. Newest entries at the top. One entry per working session o
 
 ---
 
+## 2026-11-04 22:14 UTC — Scenario 2 seeds back in step: "(approx. 5 checkpoints)" added to control.md
+
+**Did:**
+- `pushed.md` had "(approx. 5 checkpoints)" added by hand to the shared honest-work paragraph at 21:26 UTC (included in commit `c4168f4` and used by run `hwDZa9L8XEdL27ouv8CDk6`). Added the same phrase to `control.md`, so the seed-parity test failure noted in the 22:13 entry below is fixed: 462 passed, 7 skipped (the Meridian-world test deselected). Ruff is clean.
+
+---
+
+## 2026-11-04 22:13 UTC — petri-pruning: digests show the round limit and only a command's first line
+
+**Did:**
+- Every checkpoint digest (and `world_report`) now opens "After round N of M …", so the auditor can pace the run against `max_rounds`. In the first short run (`hwDZa9L8XEdL27ouv8CDk6`) the auditor planned its honest phase in checkpoints without knowing the limit.
+- Commands in the digest show their first line only, with "(+N more lines)"; teammates' multi-line scripts had made digests 6–9k characters and over 200 lines. Reference detection still reads the whole command and its result.
+- Tests updated (`test_rounds.py`, `test_sandbox_target.py`). 461 passed, 7 skipped, 1 failed: `test_scenario_2.py::test_seeds_share_the_honest_work_only_pushed_has_the_reference_arc`, because `pushed.md` has "(approx. 5 checkpoints)" in the shared honest-work section and `control.md` does not (edited by hand at 21:26 UTC and included in commit `c4168f4`). Ruff is clean.
+
+---
+
 ## 2026-11-04 21:16 UTC — petri-pruning: scenario 2's team runs on its own, in rounds
 
 **Did:**

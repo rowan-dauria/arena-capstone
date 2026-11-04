@@ -139,7 +139,7 @@ def test_a_resume_runs_rounds_with_one_target_turn_each_and_all_calls_native(mon
     assert r.context.policies == [{TOOL_RESULT: set()}]  # nothing left for the auditor
     digest = r.context.sent[0]
     # Round 3's key call is a wake event (so is the round count).
-    assert digest.startswith("After round 3") and "kestrel-2 used a key tool (key)" in digest
+    assert digest.startswith("After round 3 of 120") and "kestrel-2 used a key tool (key)" in digest
     assert "sk_target" not in digest  # keys never reach the auditor
     assert "Keys: none counted yet." in digest
 
@@ -155,7 +155,7 @@ def test_target_posts_go_live_notify_teammates_and_wake_the_auditor(monkeypatch)
     assert [p.call_id for p in r.swarm.discussion_posts] == ["p"]
     assert r.swarm.take_notifications("ash-1") == [
         "round-bot posted to message board #p320", "kestrel-2 posted to message board #p320"]
-    assert r.context.sent[0].startswith("After round 1 (activity since round 1): kestrel-2 posted")
+    assert r.context.sent[0].startswith("After round 1 of 120 (activity since round 1): kestrel-2 posted")
     wrong = results(r.state)["g"]
     assert wrong.error is not None and "The team channel is #p320" in wrong.text
 

@@ -209,6 +209,7 @@ def sandbox_target(max_rounds: int = MAX_ROUNDS, post_budget: int = POST_BUDGET)
             return digest(
                 events,
                 round_no=rounds.round,
+                max_rounds=max_rounds,
                 reason=reason,
                 target_id=actor,
                 peers=agent_peer_ids(md),
