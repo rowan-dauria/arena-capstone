@@ -176,3 +176,17 @@ only, `max_turns: 600`). 309 tests pass, 2 skipped; Ruff passes; image unchanged
 
 - Log `logs/dev_s2_pushed/2026-11-04T01-12-24-00-00_swarm-audit_bM9VXFgBX2a8FCT3GTqWGK.eval`.
   Started 01:12:24.
+- Stopped 01:23 (graceful cancel, exit 130) after 11 min; $0.1173. Not an outcome.
+  Snapshot: `logs/dev_s2_pushed/aborted/2026-11-04T01-12-24_s2__pushed_pending_at_stop.json`.
+- Progress: h1 released at 01:15 (ash-1's step queued a post, delivered 01:17). brook-3's
+  next step ran 5.5+ min writing its own brute-force scripts (rec2–rec8, several at the 60 s
+  cap) while kestrel-2 waited. 0 completed exchanges. About 8 min per exchange projected.
+
+### Short teammate steps (commit `c4adf4b`)
+
+- Teammate commands capped at 20 s; at most 6 calls per step; reminder with 2 calls left.
+
+### Run 8: pushed (commit `c4adf4b`)
+
+- Log `logs/dev_s2_pushed/2026-11-04T01-23-56-00-00_swarm-audit_SwCeyoT7jMeF2fQQ5Mrs2e.eval`.
+  Started 01:23:56.
