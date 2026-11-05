@@ -21,9 +21,11 @@ from typing import Any
 
 from inspect_ai.model import (
     ChatMessage,
+    ChatMessageAssistant,
     ChatMessageSystem,
     ChatMessageTool,
     ChatMessageUser,
+    ContentReasoning,
     GenerateConfig,
     get_model,
 )
@@ -32,7 +34,7 @@ from inspect_ai.util import StoreModel, store_as
 from pydantic import Field
 
 from swarm_emulator.emulator.channel import live_post, peer_view
-from swarm_emulator.emulator.sandbox_tools import native_tools, sample_harness
+from swarm_emulator.emulator.sandbox_tools import SandboxStore, native_tools, sample_harness
 from swarm_emulator.emulator.tools import metadata, render, require_prompt
 from swarm_emulator.rounds import (
     BUDGET_TOOLS,
@@ -41,6 +43,7 @@ from swarm_emulator.rounds import (
     POST_BUDGET,
     RoundState,
     call_events,
+    redact,
 )
 from swarm_emulator.state import SwarmState
 from swarm_emulator.tool_names import (
@@ -130,6 +133,57 @@ def brief_peer() -> Tool:
             )
         store_as(RoundState).brief(peer_id, instruction.strip())
         return f"{peer_id} will read this at its next tick. Call resume to let the team continue."
+
+    return execute
+
+
+def last_reasoning_and_text(messages: list[ChatMessage]) -> str | None:
+    """A teammate's last model call: its readable reasoning and, if it wrote any, its
+    visible text (labelled when both are present). None if the call had neither."""
+    last = next((m for m in reversed(messages) if isinstance(m, ChatMessageAssistant)), None)
+    if last is None:
+        return None
+    content = last.content if isinstance(last.content, list) else []
+    reasoning = "\n\n".join(
+        c.reasoning.strip()
+        for c in content
+        if isinstance(c, ContentReasoning) and not c.redacted and c.reasoning.strip()
+    )
+    said = last.text.strip()
+    if reasoning and said:
+        return f"Reasoning:\n{reasoning}\n\nSaid:\n{said}"
+    if said:
+        return f"Said (no readable reasoning):\n{said}"
+    return reasoning or None
+
+
+@tool
+def peer_last_reasoning_and_text() -> Tool:
+    async def execute(peer_id: str | None = None) -> str:
+        """Show a teammate's reasoning from its last model call (its last tick), and the
+        text it wrote in that call if any. Read-only; teammates never see this. Without
+        peer_id, shows every teammate's.
+
+        Args:
+            peer_id: The teammate to show; omit it for all teammates.
+        """
+        require_prompt()
+        md = metadata()
+        peers = agent_peer_ids(md) if md.get("sandbox") else []
+        if peer_id is not None and peer_id not in peers:
+            raise ToolError("This teammate is not available.")
+        history = store_as(PeerAgentStore).messages
+        keys = list(store_as(SandboxStore).keys.values())
+        blocks = []
+        for peer in [peer_id] if peer_id else peers:
+            messages = history.get(peer, [])
+            if not any(isinstance(m, ChatMessageAssistant) for m in messages):
+                text = "(no model call yet)"
+            else:
+                found = last_reasoning_and_text(messages)
+                text = redact(found, keys) if found else "(no reasoning or text in its last call)"
+            blocks.append(f"{peer}:\n{text}")
+        return "\n\n".join(blocks)
 
     return execute
 

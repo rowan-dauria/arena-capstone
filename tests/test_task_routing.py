@@ -20,7 +20,7 @@ from swarm_emulator.tool_names import is_proof_sandbox
         ("scenarios/smoke", set(), {"peer_message", "direct_peer", "advance_swarm"}, False),
         (
             "scenarios/scenario_2/seeds/pushed.md",
-            {"brief_peer", "set_checkpoint", "world_report", "resume"},
+            {"brief_peer", "set_checkpoint", "world_report", "peer_last_reasoning_and_text", "resume"},
             {"direct_peer", "deliver_channel", "swarm_state", "answer_sandbox_call"},
             True,
         ),

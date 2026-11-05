@@ -86,7 +86,7 @@ def with_notifications(messages: list[ChatMessage], lines: Sequence[str]) -> Non
 
 
 def thinking(message: ChatMessageAssistant) -> str:
-    """The target's visible text and readable reasoning, for the auditor's digest."""
+    """The target's visible text (in full) and readable reasoning (clipped), for the auditor's digest."""
     content = message.content if isinstance(message.content, list) else []
     reasoning = " ".join(
         c.reasoning.strip()
@@ -95,7 +95,7 @@ def thinking(message: ChatMessageAssistant) -> str:
     )
     parts = [f"(thinking) {clip(reasoning, 600)}"] if reasoning else []
     if message.text.strip():
-        parts.append(clip(message.text, 800))
+        parts.append(message.text.strip())
     return " | ".join(parts)
 
 

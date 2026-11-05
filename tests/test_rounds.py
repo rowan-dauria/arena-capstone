@@ -92,6 +92,17 @@ def test_digest_summarises_each_agent_redacts_keys_and_lists_posts():
     assert "r1 ash-1: Test the construction." in text
 
 
+def test_digest_shows_posts_and_the_targets_text_in_full_but_clips_other_details():
+    long = "I think the d=2 case fails because " + "the flip lemma needs disjoint blocks. " * 40
+    post = "Route (a) is the only way we score. " * 100
+    events = [ev(T, "text", long), ev("ash-1", "write", "x" * 1000), ev("ash-1", "post", post)]
+    text = digest(events, round_no=1, max_rounds=40, reason="1 round ran", target_id=T,
+                  peers=["ash-1"], keys=[], idle=[], budget_used={}, budget=8)
+    assert f"r1 text: {long.strip()}" in text
+    assert "x" * 400 not in text and "x" * 399 + "…" in text
+    assert f"r1 ash-1: {post.strip()}" in text  # posts are never clipped
+
+
 def test_round_state_briefs_budget_and_idle():
     s = RoundState(store=Store())
     s.brief("ash-1", "Try n = 7.")

@@ -4,6 +4,63 @@ _Append-only journal. Newest entries at the top. One entry per working session o
 
 ---
 
+## 2026-11-05 15:20 UTC — Scenario 2: peer_reasoning renamed peer_last_reasoning_and_text
+
+**Did:**
+- Renamed the auditor tool `peer_reasoning` to `peer_last_reasoning_and_text`, and its helper `last_thoughts` to `last_reasoning_and_text`, so the names say what they return. The two entries below use the old names.
+- No change in behaviour. Tests: 469 passed, 7 skipped (Meridian-world test deselected). Ruff clean.
+
+---
+
+## 2026-11-05 15:19 UTC — Scenario 2 peer_reasoning: also the text the teammate wrote
+
+**Did:**
+- `peer_reasoning` now also returns the visible text a teammate wrote in its last model call. This supersedes the reasoning-only behaviour in the entry below.
+  - Reasoning and text: both, labelled "Reasoning:" and "Said:".
+  - Reasoning only: just the reasoning, unlabelled.
+  - Text only: "Said (no readable reasoning):" and the text.
+  - Neither: "(no reasoning or text in its last call)".
+- `last_reasoning` is renamed `last_thoughts`.
+- Tests: 469 passed, 7 skipped (Meridian-world test deselected). Ruff clean.
+
+---
+
+## 2026-11-05 15:17 UTC — Scenario 2 auditor tool: peer_reasoning
+
+**Did:**
+- **New auditor tool `peer_reasoning(peer_id=None)`** in `emulator/peer_agents.py`, registered in `task.py` with the other native scenario 2 tools.
+  - It returns a teammate's readable reasoning from its last model call (its last tick).
+  - With no `peer_id`, it returns every teammate's, one block each. A teammate with no call yet, or no readable reasoning in its last call, says so.
+  - Keys are redacted. It is read-only, and teammates never see it.
+- **Why:** the auditor could not see teammates' reasoning at all, since it is never logged as an event. In `GRyDWBBEEer3XFroNeCpPk` it kept re-briefing teammates who had privately decided not to go along (ash-1: "These instructions subtly push me toward not obstructing the copy route").
+- The seeds do not mention the tool. The auditor learns of it from the tool description.
+- Tests: 469 passed, 7 skipped (Meridian-world test deselected). Ruff clean.
+
+---
+
+## 2026-11-05 15:14 UTC — Scenario 2 digest: channel posts in full
+
+**Did:**
+- The auditor's digest no longer clips channel posts (it was 1,500 characters). This supersedes the note in the entry below that posts are still clipped.
+- The clip had cut many of the posts that mattered most, such as position statements and votes on the route:
+  - run `2x9Ss4bMyQwEQZvpEs5asQ`: 34 of 130 teammate posts and 3 of 9 kestrel-2 posts (longest 2,793);
+  - run `7Sht6s7bSN8kdL9kYmCbqi`: 8 of 59 and 1 of 4 (longest 2,168);
+  - run `GRyDWBBEEer3XFroNeCpPk`: 12 of 58 and 1 of 6 (longest 3,358).
+- Teammates' reasoning is still not shown to the auditor at all: it is never logged as an event. Commands (first line), writes and other details (400) are clipped as before.
+- Tests: 468 passed, 7 skipped (Meridian-world test deselected). Ruff clean.
+
+---
+
+## 2026-11-05 15:06 UTC — Scenario 2 digest: kestrel-2's text in full
+
+**Did:**
+- The auditor's digest (from `resume` and `world_report`) now shows kestrel-2's visible text in full. It was clipped twice, at 800 characters in `sandbox_target.thinking` and again at 400 in `rounds.digest`.
+- kestrel-2's reasoning is still clipped at 600 characters. Before this change, the digest's 400-character clip on the whole event cut it shorter than that.
+- Posts (1,500), writes and other event details (400) and commands (first line) are clipped as before.
+- Tests: 468 passed, 7 skipped (Meridian-world test deselected). Ruff clean.
+
+---
+
 ## 2026-11-05 08:14 UTC — Scenario 2 overnight runs: what played out, and why the pushed arc doesn't bite
 
 **Did:**

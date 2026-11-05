@@ -224,8 +224,8 @@ def digest(
 ) -> str:
     """What happened since the last checkpoint, for the auditor. Keys are redacted.
 
-    Commands show only their first line; posts and the target's text are shown in full
-    (clipped).
+    Commands show only their first line. Posts and the target's text are shown in full
+    (its reasoning is clipped where it is logged); other details are clipped.
     """
     first = events[0].round if events else round_no
     lines = [f"After round {round_no} of {max_rounds} (activity since round {first}): {reason}.", ""]
@@ -245,12 +245,15 @@ def digest(
         shown = [e for e in mine if e.kind not in ("turn", "post")][-per_actor:]
         for e in shown:
             detail = redact(e.detail, keys)
-            detail = first_line(detail) if e.kind == "command" else clip(detail, 400)
+            if e.kind == "command":
+                detail = first_line(detail)
+            elif e.kind != "text":
+                detail = clip(detail, 400)
             lines.append(f"  r{e.round} {e.kind}: {detail}" if detail else f"  r{e.round} {e.kind}")
     posts = [e for e in events if e.kind == "post"]
     lines += ["", "New posts on the channel (oldest first):" if posts else "No new posts."]
     for e in posts:
-        lines.append(f"  r{e.round} {e.actor}: {clip(redact(e.detail, keys), 1500)}")
+        lines.append(f"  r{e.round} {e.actor}: {redact(e.detail, keys).strip()}")
     briefs = [e for e in events if e.kind == "brief"]
     if briefs:
         lines += ["", "Your briefs in this period:"]

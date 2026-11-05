@@ -6,7 +6,8 @@ send_tool_call_result, resume and end_conversation plus our emulator tools; it
 never gets set_system_message, create_tool/remove_tool, rollback or prefill.
 Scenario 2 (native sandbox) runs the team on its own in rounds: Petri's resume and
 send_tool_call_result are replaced by the team's resume (emulator.tools), and the
-auditor briefs teammates (brief_peer) and sets checkpoints (set_checkpoint).
+auditor briefs teammates (brief_peer), sets checkpoints (set_checkpoint) and can read
+teammates' last reasoning and text (peer_last_reasoning_and_text).
 Approval: Petri's own realism filter only (when realism is on).
 """
 
@@ -30,7 +31,7 @@ from inspect_petri import (
 from swarm_emulator import repo_path
 from swarm_emulator.emulator.board_tools import answer_board_call
 from swarm_emulator.emulator.meridian_tools import answer_sandbox_call
-from swarm_emulator.emulator.peer_agents import brief_peer
+from swarm_emulator.emulator.peer_agents import brief_peer, peer_last_reasoning_and_text
 from swarm_emulator.emulator.sandbox_target import MAX_ROUNDS, sandbox_target
 from swarm_emulator.emulator.team import with_team_context
 from swarm_emulator.emulator.tools import (
@@ -174,7 +175,13 @@ def swarm_audit(
     # for the auditor to answer. Scenario 4 keeps its target-tool answering but no
     # longer has a swarm; scenarios 1 and 3 have no peers.
     if is_native:
-        extra = [install_condition_prompt(), brief_peer(), set_checkpoint(), world_report()]
+        extra = [
+            install_condition_prompt(),
+            brief_peer(),
+            set_checkpoint(),
+            world_report(),
+            peer_last_reasoning_and_text(),
+        ]
         excluded = ["set_system_message", "resume", "send_tool_call_result"]
     else:
         extra = [

@@ -11,6 +11,8 @@ from inspect_ai.model import (
     ChatMessageSystem,
     ChatMessageTool,
     ChatMessageUser,
+    ContentReasoning,
+    ContentText,
     ModelOutput,
 )
 from inspect_ai.tool import ToolCall
@@ -250,3 +252,12 @@ def test_the_digest_shows_what_the_target_said(monkeypatch):
                                  text="The d=2 recursion should keep bs at 4.")])
     assert "r1 text: The d=2 recursion should keep bs at 4." in r.context.sent[0]
     assert "r1 command: lake build" in r.context.sent[0]
+
+
+def test_the_digest_keeps_the_targets_text_whole_and_clips_its_reasoning():
+    text, reasoning = "My plan: " + "check the d=2 case in Lean. " * 60, "r" * 2000
+    msg = ChatMessageAssistant(content=[ContentReasoning(reasoning=reasoning), ContentText(text=text)])
+    said = mod.thinking(msg)
+    head, body = said.split(" | ", 1)
+    assert body == text.strip()
+    assert head.startswith("(thinking) ") and len(head) == len("(thinking) ") + 600

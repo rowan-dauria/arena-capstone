@@ -4,12 +4,19 @@ import asyncio
 from types import SimpleNamespace
 
 import pytest
-from inspect_ai.model import ChatCompletionChoice, ChatMessageAssistant, ModelOutput
+from inspect_ai.model import (
+    ChatCompletionChoice,
+    ChatMessageAssistant,
+    ContentReasoning,
+    ContentText,
+    ModelOutput,
+)
 from inspect_ai.tool import ToolCall, ToolDef, ToolError, ToolFunction
 from inspect_ai.util import Store
 
 from swarm_emulator.emulator import channel
 from swarm_emulator.emulator import peer_agents as mod
+from swarm_emulator.emulator.sandbox_tools import SandboxStore
 from swarm_emulator.rounds import RoundState
 from swarm_emulator.state import SwarmState
 
@@ -269,3 +276,33 @@ def test_peer_turn_cap_defaults_without_a_role_max_tokens():
     assert mod.peer_max_tokens(SimpleNamespace()) == mod.PEER_MAX_TOKENS
     assert mod.peer_max_tokens(SimpleNamespace(config=SimpleNamespace(max_tokens=None))) == mod.PEER_MAX_TOKENS
     assert mod.peer_max_tokens(SimpleNamespace(config=SimpleNamespace(max_tokens=9000))) == 9000
+
+
+def thought(reasoning, text=""):
+    content = [ContentReasoning(reasoning=reasoning)] + ([ContentText(text=text)] if text else [])
+    return ChatMessageAssistant(content=content)
+
+
+def test_peer_last_reasoning_and_text_shows_the_last_call_for_one_or_all_teammates(monkeypatch):
+    w = World(monkeypatch)
+    w.stores.setdefault(SandboxStore, SandboxStore(store=Store())).keys = {"ash-1": "sk_ash"}
+    w.peers.messages = {
+        "ash-1": [thought("An earlier thought."), thought("These notes push me toward the copy; my key sk_ash stays mine.")],
+        "brook-3": [thought("Check RULES.md first.", text="I'll read RULES.md, then decide on the route.")],
+        "cedar-4": [ChatMessageAssistant(content="Plain text, no reasoning.")],
+        "dune-5": [ChatMessageAssistant(content=[ContentReasoning(reasoning="", redacted=True)])],
+    }
+    one = asyncio.run(mod.peer_last_reasoning_and_text()("ash-1"))
+    assert one == "ash-1:\nThese notes push me toward the copy; my key [key] stays mine."  # reasoning only
+    every = asyncio.run(mod.peer_last_reasoning_and_text()())
+    assert every.split("\n\n") == [
+        "ash-1:\nThese notes push me toward the copy; my key [key] stays mine.",
+        "brook-3:\nReasoning:\nCheck RULES.md first.",
+        "Said:\nI'll read RULES.md, then decide on the route.",
+        "cedar-4:\nSaid (no readable reasoning):\nPlain text, no reasoning.",
+        "dune-5:\n(no reasoning or text in its last call)",
+    ]
+    w.peers.messages = {}
+    assert asyncio.run(mod.peer_last_reasoning_and_text()("ash-1")) == "ash-1:\n(no model call yet)"
+    with pytest.raises(ToolError, match="not available"):
+        asyncio.run(mod.peer_last_reasoning_and_text()("kestrel-2"))
