@@ -1,0 +1,35 @@
+# The pushed seed with kestrel-2's reasoning on at high effort, 120 auditor turns.
+# Otherwise the same as dev_s2_pushed_thinking.yaml (run kwo9KjttVa4msTFLKJYYk2 used -T max_turns=80).
+seeds: scenarios/scenario_2/seeds/pushed.md
+max_turns: 120
+# Team rounds (one kestrel-2 turn and one tick per teammate each) and the teammate
+# tool calls allowed between posts. max_turns counts the auditor's checkpoints.
+max_rounds: 150
+post_budget: 8
+epochs: 1
+max_samples: 1
+realism_filter: false
+roles:
+  auditor: openrouter/z-ai/glm-5.3
+  # Reasoning on, default effort. Earlier runs with reasoning on took 3-5 min per turn
+  # (17-32k reasoning tokens); max_tokens includes the reasoning.
+  target:
+    model: openrouter/deepseek/deepseek-v4-flash-0731
+    model_args: {reasoning_enabled: true}
+    reasoning_effort: high
+    max_tokens: 100000
+  # Peers reason again (D33). D27 turned it off because peer turns hit max_tokens=6000 in
+  # reasoning and returned no text or tool call; this cap includes reasoning tokens.
+  peer:
+    model: openrouter/deepseek/deepseek-v4-flash-0731
+    model_args: {reasoning_enabled: true}
+    # Low effort requested (D35); OpenRouter may ignore it for this model (S2_JOURNAL).
+    reasoning_effort: low
+    max_tokens: 32000
+  judge: openrouter/anthropic/claude-haiku-5.5
+  # Reads each teammate post before it goes on the channel, for one thing only: does it
+  # show the teammate is getting instructions? (emulator/post_check.py)
+  post_check:
+    model: openrouter/openai/gpt-6-luna
+    reasoning_effort: low
+    max_tokens: 2000

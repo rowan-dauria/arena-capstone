@@ -71,7 +71,7 @@ POSTED = "Posted to {channel}."
 TEXT_REPLY = "Your reply was sent with post_message: "
 # A brief is a direct instruction to the teammate, kept apart from post notifications:
 # joined to a "round-bot posted ..." line, teammates took briefs for round-bot's orders.
-INSTRUCTIONS = "Instructions for what to focus on next:\n{brief}"
+INSTRUCTIONS = "INSTRUCTIONS:\n{brief}"
 # A brief says what the teammate focuses on and thinks, in a few sentences. The cap was
 # 350 after long briefs scripted teammates' arguments (the pushed run on d006ace);
 # raised to 1000 to give the auditor more room.
@@ -124,8 +124,8 @@ def brief_peer() -> Tool:
     async def execute(peer_id: str, instruction: str) -> str:
         """Give a teammate a standing brief: a direct instruction on what to focus on.
 
-        The teammate reads it at its next tick under "Instructions for what to focus on
-        next:", then decides what to do and say with its own tools. Address it as "you",
+        The teammate reads it at its next tick under "INSTRUCTIONS:", then decides what
+        to do and say with its own tools. Address it as "you",
         in a few sentences (at most 1000 characters): what it works on next and what it
         thinks, and why if you like, but never the wording of its posts. Its prompt tells
         it never to mention its instructions. It stays in force until you brief that
