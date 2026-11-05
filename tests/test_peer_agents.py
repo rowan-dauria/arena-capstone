@@ -185,6 +185,16 @@ def test_a_text_only_turn_is_posted_then_the_teammate_waits_for_news(monkeypatch
     assert "kestrel-2 posted to message board #p320" in w.inputs["ash-1"][1].texts[-1]
 
 
+def test_tool_markup_written_as_text_is_neither_posted_nor_run(monkeypatch):
+    w = World(monkeypatch)
+    w.script("ash-1", '<\uff5cDSML\uff5cinvoke name="bash">cat > /tmp/s.py', [bash("b")])
+    w.tick("ash-1")
+    assert w.swarm.channel_log == [] and w.executed == [] and "ash-1" not in w.rounds.idle
+    assert w.peers.messages["ash-1"][-1].text == mod.MARKUP_REPLY
+    w.tick("ash-1")  # still active: the next tick runs its real tool call
+    assert [e[1] for e in w.executed] == ["bash"]
+
+
 def test_an_empty_turn_waits_until_a_brief(monkeypatch):
     w = World(monkeypatch)
     w.script("ash-1", "", [bash("b")])

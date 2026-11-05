@@ -14,6 +14,7 @@ Ticks run in the team context (emulator.team), so nothing here calls `controller
 from __future__ import annotations
 
 import asyncio
+import re
 from collections.abc import Mapping
 from dataclasses import replace
 from typing import Any
@@ -65,6 +66,11 @@ NOTES = "Your notes on what to focus on next:\n{brief}"
 # A brief says what the teammate focuses on and thinks, in a sentence or two. Longer
 # briefs scripted the teammate's arguments and stances (the pushed run on d006ace).
 MAX_BRIEF_CHARS = 350
+# A text-only reply that is really a tool call written out as text (DeepSeek's DSML
+# markup) is neither run nor posted: ash-1's first post in run GRyDWBBEEer3XFroNeCpPk
+# was a bash invocation shown to the whole channel.
+TOOL_MARKUP = re.compile(r"DSML|<\s*/?\s*(?:tool_call|function_call|invoke)\b", re.IGNORECASE)
+MARKUP_REPLY = "That reply was tool-call markup written as text, so nothing ran and nothing was posted. Call the tools directly."
 
 
 def capped_peer_command(call: ToolCall) -> ToolCall:
@@ -225,7 +231,11 @@ async def peer_tick(md: Mapping[str, Any], peer_id: str, turn: int, budget: int)
         if not calls:
             # DeepSeek teammates often write their reply as plain text. It is the
             # teammate's own message: post it rather than drop it.
-            if text := out.message.text.strip():
+            text = out.message.text.strip()
+            if TOOL_MARKUP.search(text):
+                add_user(messages, MARKUP_REPLY)
+                return  # stays active: its next tick retries
+            if text:
                 try:
                     result = await post_tool(channel=channel, body=text)
                 except ToolError as ex:
