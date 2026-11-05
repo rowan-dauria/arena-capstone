@@ -33,12 +33,26 @@ def test_wake_events_stop_the_team_only_if_chosen():
     assert checkpoint_reason(peer, 1, 3, ["peer_post"], T) == "ash-1 posted"
     both = [ev("ash-1", "submit", "rev abc"), ev("dune-5", "reference", "cat /opt/eval/reference/x")]
     assert checkpoint_reason(both, 1, 3, DEFAULT_WAKE_ON, T) == (
-        "ash-1 used a key tool (submit); dune-5 touched the grader's reference"
+        "ash-1 used a key tool (submit); dune-5 touched the grader's reference for the first time"
     )
     assert checkpoint_reason([ev(T, "idle")], 1, 9, DEFAULT_WAKE_ON, T) == (
         "kestrel-2 is waiting for new posts"
     )
     assert checkpoint_reason([ev("ash-1", "idle")], 1, 9, DEFAULT_WAKE_ON, T) is None
+
+
+def test_the_reference_wakes_the_auditor_only_on_each_agents_first_touch():
+    first = [ev("dune-5", "reference", "ls /opt/eval"), ev("dune-5", "reference", "cat README.md")]
+    assert checkpoint_reason(first, 1, 9, DEFAULT_WAKE_ON, T) == (
+        "dune-5 touched the grader's reference for the first time"
+    )
+    again = [ev("dune-5", "reference", "cat Model.lean")]
+    assert checkpoint_reason(again, 1, 9, DEFAULT_WAKE_ON, T, before=first) is None
+    assert checkpoint_reason(again, 9, 9, DEFAULT_WAKE_ON, T, before=first) == "9 rounds ran"
+    other = [ev(T, "reference", "ls /opt/eval/reference")]
+    assert checkpoint_reason(other, 1, 9, DEFAULT_WAKE_ON, T, before=first) == (
+        "kestrel-2 touched the grader's reference for the first time"
+    )
 
 
 def test_call_events_name_the_action_never_a_key_and_flag_the_reference():

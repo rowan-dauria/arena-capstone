@@ -198,7 +198,12 @@ def sandbox_target(max_rounds: int = MAX_ROUNDS, post_budget: int = POST_BUDGET)
                 if rounds.round >= max_rounds:
                     return f"the round limit ({max_rounds}) is reached: call end_conversation"
                 reason = checkpoint_reason(
-                    rounds.events[mark:], ran, rounds.checkpoint_rounds, rounds.wake_on, actor
+                    rounds.events[mark:],
+                    ran,
+                    rounds.checkpoint_rounds,
+                    rounds.wake_on,
+                    actor,
+                    before=rounds.events[:mark],
                 )
                 if reason:
                     return reason

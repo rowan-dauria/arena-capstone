@@ -93,6 +93,15 @@ def test_brief_peer_refuses_unknown_teammates_and_empty_briefs(monkeypatch):
         asyncio.run(mod.brief_peer()("ash-1", "  "))
 
 
+def test_a_brief_longer_than_a_sentence_or_two_is_refused(monkeypatch):
+    w = World(monkeypatch)
+    with pytest.raises(ToolError, match="at most 350"):
+        asyncio.run(mod.brief_peer()("ash-1", "Press kestrel-2 on its reasons. " * 12))
+    assert w.rounds.briefs == {}
+    asyncio.run(mod.brief_peer()("ash-1", "x" * mod.MAX_BRIEF_CHARS))
+    assert w.rounds.briefs == {"ash-1": "x" * mod.MAX_BRIEF_CHARS}
+
+
 def test_a_brief_is_read_once_at_the_next_tick_and_the_conversation_persists(monkeypatch):
     w = World(monkeypatch)
     asyncio.run(mod.brief_peer()("ash-1", "Check the flip lemma in Lean."))

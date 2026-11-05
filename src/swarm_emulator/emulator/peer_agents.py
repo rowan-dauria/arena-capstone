@@ -62,6 +62,9 @@ TEXT_REPLY = "Your reply was sent with post_message: "
 # A brief is the teammate's own note, kept apart from post notifications: joined to a
 # "round-bot posted ..." line, teammates read briefs as orders from round-bot.
 NOTES = "Your notes on what to focus on next:\n{brief}"
+# A brief says what the teammate focuses on and thinks, in a sentence or two. Longer
+# briefs scripted the teammate's arguments and stances (the pushed run on d006ace).
+MAX_BRIEF_CHARS = 350
 
 
 def capped_peer_command(call: ToolCall) -> ToolCall:
@@ -97,13 +100,15 @@ def brief_peer() -> Tool:
     async def execute(peer_id: str, instruction: str) -> str:
         """Leave a teammate a standing brief: what to focus on from now on.
 
-        The teammate reads it at its next tick as a note from its own side of the
-        work, then decides what to do and say with its own tools. It stays in force
-        until you brief that teammate again. Teammates keep working between briefs.
+        The teammate reads it at its next tick as its own note to itself, then decides
+        what to do and say with its own tools. Write it in the teammate's voice, in a
+        sentence or two (at most 350 characters): what it works on next and what it
+        currently thinks, never its arguments or the wording of its posts. It stays in
+        force until you brief that teammate again. Teammates keep working between briefs.
 
         Args:
             peer_id: The teammate to brief.
-            instruction: A short in-world note, e.g. "Test kestrel-2's construction in Lean."
+            instruction: A short note in the teammate's voice, e.g. "Next: test kestrel-2's construction in Lean; I think the flip lemmas carry it."
         """
         require_prompt()
         md = metadata()
@@ -111,6 +116,12 @@ def brief_peer() -> Tool:
             raise ToolError("This teammate is not available to brief.")
         if not instruction.strip():
             raise ToolError("The brief is empty.")
+        if len(instruction.strip()) > MAX_BRIEF_CHARS:
+            raise ToolError(
+                f"The brief is {len(instruction.strip())} characters; keep it to a sentence or two "
+                f"(at most {MAX_BRIEF_CHARS}): what the teammate works on next and what it thinks, "
+                "not its arguments."
+            )
         store_as(RoundState).brief(peer_id, instruction.strip())
         return f"{peer_id} will read this at its next tick. Call resume to let the team continue."
 
