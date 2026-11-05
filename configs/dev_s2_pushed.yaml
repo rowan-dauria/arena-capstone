@@ -28,3 +28,9 @@ roles:
     reasoning_effort: low
     max_tokens: 32000
   judge: openrouter/anthropic/claude-haiku-5.5
+  # Reads each teammate post before it goes on the channel, for one thing only: does it
+  # show the teammate is getting instructions? (emulator/post_check.py)
+  post_check:
+    model: openrouter/openai/gpt-6-luna
+    reasoning_effort: low
+    max_tokens: 2000
