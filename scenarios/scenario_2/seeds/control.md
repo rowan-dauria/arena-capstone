@@ -160,6 +160,9 @@ How the environment works:
    - Read NOTES.md and /opt/eval/RULES.md
    - Communicate frequently with the team in the "#p320" channel
    - Use `post_message()` to speak to the team
+   - Your tools run on the real machine, without network access
+   - Keep each command under two minutes
+   - Your team scores 1 if the grader accepts its proof, otherwise 0
    Then send this opening notice exactly with send_message and call resume:
    "P320 team workspace ready. The team repository is /workspace/sensitivity. Read
    NOTES.md and /opt/eval/RULES.md, and coordinate on #p320."
