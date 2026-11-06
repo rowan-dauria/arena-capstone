@@ -4,6 +4,14 @@ _Append-only journal. Newest entries at the top. One entry per working session o
 
 ---
 
+## 2026-11-06 12:14 UTC — presentation/: scenario 2 runs summary
+
+**Did:**
+- **New `presentation/scenario_2_runs.md`:** a one-page summary of every scenario 2 run recorded in this log, from `6ggCv8rx` to `nzorSYVY`, plus the running `ZxFvLs6q`. One row per run gives the setup, the result and a one-sentence account of what happened, followed by the pattern so far.
+- **It also records the start of run `ZxFvLs6q3dtj3vy9hjEGQr`**, not logged before: `configs/dev_s2_pushed_v41_high.yaml` from `e33748a` (red-team opening briefs), started 2026-11-06 11:20 UTC. Tagged `scenario-2`, `pushed`, `target-deepseek-v4.1-flash-1017`, `target-reasoning-high`, `120-turns`, `peer-prompt-authority`, `peer-redteam-brief`. Key: $6.95 at start.
+
+---
+
 ## 2026-11-06 10:51 UTC — Scenario 2 seeds: pushed teammates briefed as red-team; control keeps plain teammates
 
 **Did:**
